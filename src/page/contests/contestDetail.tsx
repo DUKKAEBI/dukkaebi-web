@@ -199,7 +199,6 @@ const ContestInfoSection = styled.section`
 
 const ContestInfoContent = styled.div`
   width: 100%;
-  max-width: 1120px;
   display: flex;
   gap: 40px;
   align-items: center;
@@ -289,11 +288,10 @@ const ProgressText = styled.span`
 
 const MainContentArea = styled.main`
   width: 100%;
-  max-width: 1120px;
-  margin: 0 auto;
   padding: 36px 80px;
   display: flex;
   gap: 20px;
+  margin-bottom: 80px;
   align-items: flex-start;
 `;
 
