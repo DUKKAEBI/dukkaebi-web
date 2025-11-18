@@ -1,5 +1,58 @@
 import { useState } from 'react';
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
+
+// 글로벌 스타일
+const GlobalStyle = createGlobalStyle`
+  * {
+    box-sizing: border-box;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Pretendard', system-ui, Avenir, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    font-weight: 400;
+    color: #213547;
+    background-color: #ffffff;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-width: 320px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  a {
+    font-weight: 500;
+    color: #646cff;
+    text-decoration: inherit;
+  }
+
+  a:hover {
+    color: #747bff;
+  }
+
+  h1 {
+    font-size: 3.2em;
+    line-height: 1.1;
+  }
+
+  button {
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color 0.25s;
+  }
+`;
 
 // 대회 타입 정의
 interface Contest {
@@ -46,9 +99,11 @@ const ContestPage = () => {
   };
 
   return (
-    <Container>
-      {/* Header */}
-      <Header>
+    <>
+      <GlobalStyle />
+      <Container>
+        {/* Header */}
+        <Header>
         <HeaderContent>
           <HeaderLeft>
             <LogoImage src="https://i.ibb.co/ycw6HTQF/image.png" alt="DUKKAEBI Logo"/>
@@ -173,12 +228,15 @@ const ContestPage = () => {
         </FooterContent>
       </Footer>
     </Container>
+    </>
   );
 };
 
 // Styled Components
 const Container = styled.div`
-  width: 100vw;
+  margin:0;
+  padding:0;
+  width: 100%;
   min-height: 100vh;
   background: white;
   display: flex;
@@ -187,13 +245,12 @@ const Container = styled.div`
 `;
 
 const Header = styled.header`
-  width: 100%;
   height: 80px;
-  background: white;
+  background: #FFFFFF;
   border-bottom: 1px solid #EDEDED;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
 `;
 
 const HeaderContent = styled.div`
@@ -240,7 +297,7 @@ const UserIcon = styled.div`
 `;
 
 const HeroBanner = styled.div`
-  width: 100%;
+  width: 100vw;
   height: 240px;
   background: #315374;
   position: relative;
