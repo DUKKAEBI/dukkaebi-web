@@ -198,11 +198,10 @@ const Header = styled.header`
 
 const HeaderContent = styled.div`
   width: 100%;
-  max-width: 1280px;
-  padding: 0 40px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 40px;
 `;
 
 const HeaderLeft = styled.div`
@@ -213,8 +212,7 @@ const HeaderLeft = styled.div`
 
 const LogoImage = styled.img`
   width: 80px;
-  height: 24px;
-  width: auto;
+  object-fit: contain;
 `;
 
 const Nav = styled.nav`

@@ -49,7 +49,8 @@ const ContestDetailPage = () => {
           
           {/* Contest Details */}
           <ContestDetails>
-            <ContestTitle>DGSW 프로그래밍 대회</ContestTitle>
+            <div style={{display: 'flex',flexDirection:'column', gap: 12}}>
+              <ContestTitle>DGSW 프로그래밍 대회</ContestTitle>
             <ContestDescription>
               <DescriptionText>
                 DGSW 프로그래밍 대회는 교육봉사 동아리 '두카미'에서 진행하는<br />
@@ -57,6 +58,8 @@ const ContestDetailPage = () => {
               </DescriptionText>
               <ContestMeta>2025.11.10 ~ 2025.11.14 ・100명 참여중</ContestMeta>
             </ContestDescription>
+            </div>
+            
             
             {/* Progress Bar */}
             <ProgressSection>
@@ -142,7 +145,6 @@ const Header = styled.header`
 
 const HeaderContent = styled.div`
   width: 100%;
-  max-width: 1200px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -157,7 +159,6 @@ const HeaderLeft = styled.div`
 
 const LogoImage = styled.img`
   width: 80px;
-  height: 32px;
   object-fit: contain;
 `;
 
@@ -171,13 +172,13 @@ const NavItem = styled.a<{ $active: boolean }>`
   font-family: 'Pretendard', sans-serif;
   font-weight: 500;
   font-size: 16px;
-  color: ${props => props.$active ? '#1D1D1D' : '#828282'};
+  color: ${props => props.$active ? '#00B4B7' : '#1D1D1D'};
   text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
 
   &:hover {
-    color: #1D1D1D;
+    color: #00B4B7;
   }
 `;
 
@@ -274,7 +275,7 @@ const ProgressBar = styled.div<{ progress: number }>`
   top: 0;
   height: 100%;
   width: ${props => props.progress}%;
-  background: linear-gradient(90deg, #00B4B7 0%, #2CB0FF 100%);
+  background-color: #00B4B7;
   transition: width 0.3s ease;
 `;
 
