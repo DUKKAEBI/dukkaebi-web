@@ -6,6 +6,17 @@ const axiosInstance = axios.create({
   baseURL: apiUrl,
 });
 
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const accessToken = localStorage.getItem("accessToken");
+    if (accessToken) {
+      config.headers.token = accessToken;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
