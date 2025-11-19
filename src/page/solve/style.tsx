@@ -61,7 +61,7 @@ export const LeftPanel = styled.div`
   min-width: 20%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   text-align: left;
   height: 100%;
 `;
@@ -70,10 +70,12 @@ export const LeftPanelContent = styled.div`
   flex: 1 1 auto;
   overflow-y: auto;
   padding-right: 4px;
+  width: 100%;
 `;
 
 export const Section = styled.div`
   margin-bottom: 32px;
+  width: 100%;
 
   &:last-of-type {
     margin-bottom: 0;
@@ -104,6 +106,9 @@ export const ProblemStatus = styled.div<{ $variant?: 'error' | 'info' }>`
 
 export const ExampleTextarea = styled.textarea`
   width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
@@ -115,21 +120,25 @@ export const ExampleTextarea = styled.textarea`
   min-height: 70px;
   box-sizing: border-box;
   cursor: default;
+  pointer-events: none;
 `;
 
-export const ExampleOutput = styled.div`
+export const ExampleOutput = styled.pre`
+  width: 100%;
+  max-width: 100%;
+  align-self: stretch;
+  min-width: 0;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 12px;
+  color: #e8eaed;
   font-family: Menlo, Monaco, "Courier New", monospace;
   font-size: 14px;
-  color: #e8eaed;
-  min-height: 40px;
-  display: flex;
-  align-items: center;
-  width: 100%;
+  min-height: 70px;
   box-sizing: border-box;
+  white-space: pre-wrap;
+  margin: 0;
 `;
 
 export const Divider = styled.div<{ $isResizing: boolean }>`
@@ -229,6 +238,12 @@ export const SubmitButton = styled.button`
   &:hover {
     background: #00969a;
   }
+
+  &:disabled {
+    background: #4a6b70;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
 `;
 
 export const AIAssistantWrapper = styled.button`
@@ -243,6 +258,11 @@ export const AIAssistantWrapper = styled.button`
   border: none;
   padding: 0;
   cursor: pointer;
+  outline: none;
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 export const AIAssistantAvatarWrapper = styled.div`
@@ -289,7 +309,7 @@ export const ChatModal = styled.div`
 `;
 
 export const ChatModalHeader = styled.div`
-  padding: 16px;
+  padding: 20px;
   display: flex;
   justify-content: flex-end;
   position: relative;
