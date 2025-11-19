@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 import * as S from "./styles";
-import tablerUserIcon from "../../assets/image/profile/tabler_user.svg";
-import duckkaebiLogo from "../../assets/image/profile/duckkaebi_logo.svg";
-import dubiProfileImage from "../../assets/image/profile/dubi-profile.png";
-import profileImage from "../../assets/image/profile/profile_image.svg";
-import fireIcon from "../../assets/image/profile/solar_fire-bold-duotone.svg";
-import instagramIcon from "../../assets/image/profile/mdi_instagram.svg";
-import ducamiLogo from "../../assets/image/profile/ducami_logo.svg";
+import tablerUserIcon from "../../assets/image/main/tabler_user.svg";
+import duckkaebiLogo from "../../assets/image/main/duckkaebi_logo.svg";
+import dubiProfileImage from "../../assets/image/main/dubi-profile.png";
+import profileImage from "../../assets/image/main/profile_image.svg";
+import fireIcon from "../../assets/image/main/solar_fire-bold-duotone.svg";
+import instagramIcon from "../../assets/image/main/mdi_instagram.svg";
+import ducamiLogo from "../../assets/image/main/ducami_logo.svg";
 
 const Profile = () => {
   // Mock data for heatmap

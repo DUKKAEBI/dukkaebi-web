@@ -33,8 +33,6 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // TODO: API call to login
-      // const response = await axios.post('/api/login', formData);
       console.log("Login attempt:", formData);
       // Navigate to main page on success
       navigate("/main");
@@ -46,14 +44,14 @@ export default function Login() {
   };
 
   const handleSignup = () => {
-    navigate("/signup");
+    navigate("/login");
   };
 
   return (
     <S.LoginContainer>
       <S.LeftSection>
-        <S.Title>로그인</S.Title>
-        <S.Subtitle>서비스를 시작하려면 로그인 하세요.</S.Subtitle>
+        <S.Title>회원가입</S.Title>
+        <S.Subtitle>서비스에 가입하려면 회원가입 하세요.</S.Subtitle>
 
         <form onSubmit={handleLogin}>
           <S.FormGroup>
@@ -98,15 +96,15 @@ export default function Login() {
 
           <S.FormGroup>
             <S.LoginButton type="submit" disabled={isLoading}>
-              {isLoading ? "로그인 중..." : "로그인"}
+              {isLoading ? "회원가입중..." : "회원가입"}
             </S.LoginButton>
           </S.FormGroup>
         </form>
 
         <S.SignupSection>
-          <S.SignupText>아직 계정이 없으신가요?</S.SignupText>
+          <S.SignupText>이미 계정이 있으신가요?</S.SignupText>
           <S.SignupLink type="button" onClick={handleSignup}>
-            회원가입
+            로그인
           </S.SignupLink>
         </S.SignupSection>
       </S.LeftSection>
