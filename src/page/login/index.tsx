@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import * as S from "./style";
 import iconMessage from "../../assets/image/auth/Message.png";
 import iconChat from "../../assets/image/auth/Chat.png";
@@ -33,11 +34,17 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      // TODO: API call to login
-      // const response = await axios.post('/api/login', formData);
-      console.log("Login attempt:", formData);
-      // Navigate to main page on success
-      navigate("/main");
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await axios.post(`${apiUrl}/auth/sign-in`, {
+        loginId: formData.id,
+        password: formData.password,
+      });
+
+      const { refreshToken, accessToken } = response.data;
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("accessToken", accessToken);
+
+      navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
     } finally {

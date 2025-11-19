@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Login from "../page/login";
-import Signup from "../page/sigup";
+import Signup from "../page/signup";
 import Main from "../page/main";
 import ContestDetail from "../page/contestDetail/contestDetail";
 import { ContestPage } from "../page/contests/index";

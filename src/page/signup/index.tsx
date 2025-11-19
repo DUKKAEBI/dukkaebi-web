@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import * as S from "./style";
 import iconMessage from "../../assets/image/auth/Message.png";
 import iconChat from "../../assets/image/auth/Chat.png";
@@ -7,11 +8,12 @@ import iconHide from "../../assets/image/auth/Hide.png";
 import iconFilled from "../../assets/image/auth/Filled.png";
 
 // Main Component
-export default function Login() {
+export default function Signup() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     id: "",
     password: "",
+    nickname: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -33,11 +35,18 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      console.log("Login attempt:", formData);
-      // Navigate to main page on success
-      navigate("/main");
+      const apiUrl = import.meta.env.VITE_API_URL;
+      const response = await axios.post(`${apiUrl}/auth/sign-up`, {
+        loginId: formData.id,
+        password: formData.password,
+        nickname: formData.nickname,
+      });
+
+      if (response.status === 200) {
+        navigate("/login");
+      }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Signup failed:", error);
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +100,26 @@ export default function Login() {
                   alt="Toggle password"
                 />
               </S.TogglePasswordBtn>
+            </S.PasswordInputWrapper>
+          </S.FormGroup>
+
+          <S.FormGroup>
+            <S.PasswordInputWrapper>
+              <S.InputIcon src={iconChat} alt="Nickname icon" />
+              <S.Input
+                id="nickname"
+                name="nickname"
+                type="text"
+                placeholder="Nickname"
+                value={formData.nickname}
+                onChange={handleInputChange}
+                required
+              />
+              <S.TogglePasswordBtn
+                type="button"
+                onClick={handleTogglePassword}
+                aria-label="Toggle password visibility"
+              ></S.TogglePasswordBtn>
             </S.PasswordInputWrapper>
           </S.FormGroup>
 
