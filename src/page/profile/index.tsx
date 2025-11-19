@@ -1,12 +1,11 @@
 import { Link } from "react-router-dom";
 import * as S from "./styles";
-import tablerUserIcon from "../../assets/image/profile/tabler_user.svg";
-import duckkaebiLogo from "../../assets/image/profile/duckkaebi_logo.svg";
+
 import dubiProfileImage from "../../assets/image/profile/dubi-profile.png";
 import profileImage from "../../assets/image/profile/profile_image.svg";
 import fireIcon from "../../assets/image/profile/solar_fire-bold-duotone.svg";
-import instagramIcon from "../../assets/image/profile/mdi_instagram.svg";
-import ducamiLogo from "../../assets/image/profile/ducami_logo.svg";
+import { Header } from "../../components/header";
+import { Footer } from "../../components/footer";
 
 const Profile = () => {
   // Mock data for heatmap
@@ -33,24 +32,7 @@ const Profile = () => {
   return (
     <S.PageWrapper>
       {/* Header */}
-      <S.Header>
-        <S.HeaderContent>
-          <S.HeaderLeft>
-            <S.Logo as={Link} to="/">
-              <img src={duckkaebiLogo} alt="Duckkaebi Logo" />
-            </S.Logo>
-            <S.Nav>
-              <S.NavLink>문제풀기</S.NavLink>
-              <S.NavLink as={Link} to="/contests">
-                알고리즘 대회
-              </S.NavLink>
-            </S.Nav>
-          </S.HeaderLeft>
-          <S.UserIcon>
-            <img src={tablerUserIcon} alt="user" />
-          </S.UserIcon>
-        </S.HeaderContent>
-      </S.Header>
+      <Header />
 
       {/* Main Content */}
       <S.MainContent>
@@ -163,26 +145,7 @@ const Profile = () => {
       </S.MainContent>
 
       {/* Footer */}
-      <S.Footer>
-        <S.FooterContent>
-          <S.FooterTop>
-            <S.FooterLogo src={ducamiLogo} alt="ducami logo" />
-          </S.FooterTop>
-          <S.FooterInfo>
-            <S.FooterText>두카미</S.FooterText>
-            <S.FooterText>대구광역시 달성군 구지면 창리로11길 93</S.FooterText>
-            <S.FooterText>ducami@dgsw.hs.kr</S.FooterText>
-            <S.FooterLinks>
-              <S.FooterLink>서비스 이용약관</S.FooterLink>
-              <S.FooterLink>개인정보 처리방침</S.FooterLink>
-            </S.FooterLinks>
-          </S.FooterInfo>
-          <S.FooterBottom>
-            <S.Copyright>© 2025 두카미. All rights reserved.</S.Copyright>
-            <S.SocialIcon src={instagramIcon} alt="instagram" />
-          </S.FooterBottom>
-        </S.FooterContent>
-      </S.Footer>
+      <Footer />
     </S.PageWrapper>
   );
 };

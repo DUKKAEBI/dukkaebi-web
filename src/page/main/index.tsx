@@ -1,12 +1,11 @@
-import { Link } from "react-router-dom";
 import * as S from "./styles";
-import tablerUserIcon from "../../assets/image/main/tabler_user.svg";
-import duckkaebiLogo from "../../assets/image/main/duckkaebi_logo.svg";
 import dubiImage from "../../assets/image/main/dubi.png";
 import instagramIcon from "../../assets/image/main/mdi_instagram.svg";
 import ducamiLogo from "../../assets/image/main/ducami_logo.svg";
 import fireIcon from "../../assets/image/main/solar_fire-bold-duotone.svg";
 import arrowIcon from "../../assets/image/main/arrow.svg";
+import { Header } from "../../components/header";
+import { Footer } from "../../components/footer";
 
 const Main = () => {
   // Mock data for learning streak heatmap
@@ -27,32 +26,7 @@ const Main = () => {
   return (
     <S.PageWrapper>
       {/* Header */}
-      <S.Header>
-        <S.HeaderContent>
-          <S.HeaderLeft>
-            <S.Logo as={Link} to="/">
-              <img
-                src={duckkaebiLogo}
-                alt="Duckkaebi Logo"
-                style={{ width: "100%", height: "100%" }}
-              />
-            </S.Logo>
-            <S.Nav>
-              <S.NavLink>문제풀기</S.NavLink>
-              <S.NavLink as={Link} to="/contests">
-                알고리즘 대회
-              </S.NavLink>
-            </S.Nav>
-          </S.HeaderLeft>
-          <S.UserIcon>
-            <img
-              src={tablerUserIcon}
-              alt="user"
-              style={{ width: "100%", height: "100%" }}
-            />
-          </S.UserIcon>
-        </S.HeaderContent>
-      </S.Header>
+      <Header />
 
       {/* Main Content */}
       <S.MainContent>
@@ -148,27 +122,7 @@ const Main = () => {
         </S.LearningSection>
       </S.MainContent>
 
-      {/* Footer */}
-      <S.Footer>
-        <S.FooterContent>
-          <S.FooterTop>
-            <S.FooterLogo src={ducamiLogo} alt="Ducami Logo" />
-          </S.FooterTop>
-          <S.FooterInfo>
-            <S.FooterText>두카미</S.FooterText>
-            <S.FooterText>대구광역시 달성군 구지면 창리로11길 93</S.FooterText>
-            <S.FooterText>ducami@dgsw.hs.kr</S.FooterText>
-            <S.FooterLinks>
-              <S.FooterLink>서비스 이용약관</S.FooterLink>
-              <S.FooterLink>개인정보 처리방침</S.FooterLink>
-            </S.FooterLinks>
-          </S.FooterInfo>
-          <S.FooterBottom>
-            <S.Copyright>© 2025 두카미. All rights reserved.</S.Copyright>
-            <S.SocialIcon src={instagramIcon} alt="Instagram" />
-          </S.FooterBottom>
-        </S.FooterContent>
-      </S.Footer>
+      <Footer />
     </S.PageWrapper>
   );
 };
