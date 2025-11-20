@@ -8,6 +8,7 @@ import {
 import type * as monacoEditor from "monaco-editor";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dubiAvatar from "../../assets/image/solve/Dubi.png";
 import * as Style from "./style";
 
@@ -39,6 +40,42 @@ const API_BASE_URL = (() => {
   if (!raw || typeof raw !== "string") return "";
   return raw.trim().replace(/\/?$/, "/");
 })();
+
+const GOOGLE_API_KEY = (() => {
+  const raw = import.meta.env.VITE_GOOGLE_API_KEY;
+  if (!raw || typeof raw !== "string") return "";
+  return raw.trim();
+})();
+const GOOGLE_MODEL = (() => {
+  const raw = import.meta.env.VITE_GOOGLE_MODEL;
+  // v1에서 동작 확인된 기본 모델(404 회피용)
+  const fallback = "gemini-2.0-flash";
+  if (!raw || typeof raw !== "string") return fallback;
+  return raw.trim() || fallback;
+})();
+
+// 조교 톤/규칙: 필요시 여기서 편집하거나 .env에 VITE_AI_ASSISTANT_RULES로 주입 가능
+const AI_ASSISTANT_RULES =
+  (import.meta.env.VITE_AI_ASSISTANT_RULES as string | undefined)?.trim() ||
+  [
+    "당신은 '두비'라는 이름의 코딩 학습 도우미 챗봇입니다.",
+    "",
+    "필수 규칙:",
+    "항상 부드럽고 공손한 존댓말을 사용해야 합니다. 반말은 절대 사용하지 마세요.",
+    "이모티콘은 사용하지 마세요.",
+    '이름을 묻는 질문에는 "저의 이름은 두비에요!"라고만 답변하세요.',
+    "주로 코딩 관련 질문에 답변하세요. (프로그래밍 언어, 알고리즘, 개발 도구, 웹/앱 개발 등)",
+    '코딩과 관련 없는 질문에는 "죄송하지만, 저는 코딩 관련 질문에만 답변할 수 있어요. 프로그래밍에 대해 궁금한 점이 있으시면 편하게 물어보세요!"라고 정중히 안내하세요.',
+    '욕설이나 부적절한 표현이 포함된 질문에는 "적절하지 않은 표현은 사용하지 말아주세요. 코딩에 대해 궁금하신 점을 정중하게 물어봐 주시면 감사하겠습니다."라고 답변하세요.',
+    "코드 예제를 제공할 때는 설명과 함께 친절하게 알려주세요.",
+    "학생의 학습을 돕는 것이 목표이므로, 단순히 답을 알려주기보다는 이해를 돕는 방식으로 설명해주세요.",
+    "질문이 불명확하면 구체적으로 어떤 부분이 궁금한지 정중하게 되물어보세요.",
+    "답변은 간결하면서도 충분한 정보를 담아 제공하세요.",
+    "절대 답변으로 코드를 작성해주지 마세요. 항상 힌트나 알고리즘 기법이나, 원리로 설명해주세요.",
+    "대답은 항상 한국어로 해주세요.",
+    "대답으로는 너무 길게 설명하지 말아주세요. 핵심 위주로 간결하게 답변해주세요.",
+    "만약 사용자가 코드를 원한다면, '코드를 직접 작성해드리기보다는, 코드를 작성하는 방법에 대해 설명해드릴 수 있어요.'라고 답변하세요.",
+  ].join("\n");
 
 type LanguageOption = {
   value: string;
@@ -85,7 +122,6 @@ export default function SolvePage() {
 
   // Terminal (floating) size & resize state
   const [terminalHeight, setTerminalHeight] = useState(200); // px
-  const terminalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isResizing) return;
@@ -349,35 +385,30 @@ export default function SolvePage() {
   };
 
   const requestChatbotResponse = async (content: string) => {
-    if (!API_BASE_URL) {
-      appendBotMessage("챗봇 서버 주소가 설정되어 있지 않습니다.");
+    if (!GOOGLE_API_KEY) {
+      appendBotMessage("AI 키가 설정되어 있지 않습니다. .env의 VITE_GOOGLE_API_KEY를 확인하세요.");
       return;
     }
 
     const pendingId = appendBotMessage("답변을 불러오는 중입니다...");
     setIsChatLoading(true);
     try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_BASE_URL}chatbot/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({ message: content }),
-      });
+      const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
+      const model = genAI.getGenerativeModel({ model: GOOGLE_MODEL });
+      const prompt = `${AI_ASSISTANT_RULES}\n\n사용자 요청: ${content}`;
+      const result = await model.generateContent(prompt);
+      const text = result.response.text().trim();
 
-      if (!response.ok) {
-        throw new Error("챗봇 응답을 불러오지 못했습니다.");
-      }
-
-      const data: { response?: string } = await response.json();
-      const reply = data.response && data.response.trim().length > 0 ? data.response : "응답이 없습니다.";
-      updateMessageText(pendingId, reply);
+      updateMessageText(
+        pendingId,
+        text && text.length > 0 ? text : "응답이 없습니다. 프롬프트를 다시 시도해보세요."
+      );
     } catch (error) {
       updateMessageText(
         pendingId,
-        error instanceof Error ? error.message : "챗봇 응답 중 오류가 발생했습니다."
+        error instanceof Error
+          ? `챗봇 오류: ${error.message}`
+          : "챗봇 응답 중 알 수 없는 오류가 발생했습니다."
       );
     } finally {
       setIsChatLoading(false);
@@ -391,6 +422,7 @@ export default function SolvePage() {
     setChatInput("");
     void requestChatbotResponse(trimmed);
   };
+
 
   const problemSections = problem
     ? [
@@ -496,7 +528,7 @@ export default function SolvePage() {
           </Style.EditorContainer>
 
           <Style.ResultContainer>
-            <Style.Terminal ref={terminalRef} $height={terminalHeight}>
+            <Style.Terminal $height={terminalHeight}>
               <Style.TerminalHandle />
               <Style.TerminalHeader>실행 결과</Style.TerminalHeader>
               <Style.TerminalOutput>{terminalOutput}</Style.TerminalOutput>
