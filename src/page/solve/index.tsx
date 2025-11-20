@@ -7,7 +7,7 @@ import {
 } from "react";
 import type * as monacoEditor from "monaco-editor";
 import Editor from "@monaco-editor/react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import dubiAvatar from "../../assets/image/solve/Dubi.png";
 import * as Style from "./style";
 
@@ -54,6 +54,7 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 
 export default function SolvePage() {
   const { problemId } = useParams<{ problemId?: string }>();
+  const navigate = useNavigate();
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
   const [terminalOutput, setTerminalOutput] = useState("실행 결과가 이곳에 표시됩니다.");
@@ -406,10 +407,16 @@ export default function SolvePage() {
       ? problemError || "문제를 불러오지 못했습니다."
       : "";
 
+  const handleExitSolvePage = () => {
+    navigate("/problems");
+  };
+
   return (
     <Style.SolveContainer ref={containerRef}>
       <Style.Header>
-        <Style.BackButton>‹</Style.BackButton>
+        <Style.BackButton type="button" aria-label="문제 풀고 나가기" onClick={handleExitSolvePage}>
+          ‹
+        </Style.BackButton>
         <Style.HeaderTitle>
           {problem?.name ?? (problemStatus === "loading" ? "문제를 불러오는 중..." : "문제 정보 없음")}
         </Style.HeaderTitle>
