@@ -112,7 +112,7 @@ export const MainContent = styled.div`
 
 // Search Box
 export const SearchBox = styled.div`
-  width: 795px;
+  width: 840px;
   height: 46px;
   background-color: ${COLORS.white};
   border: 1px solid ${COLORS.white};

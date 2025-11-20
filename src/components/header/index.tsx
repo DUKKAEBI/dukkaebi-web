@@ -24,7 +24,7 @@ export const Header = () => {
             </S.NavLink>
           </S.Nav>
         </S.HeaderLeft>
-        <S.UserIcon>
+        <S.UserIcon as={Link} to="/profile">
           <img
             src={tablerUserIcon}
             alt="user"
