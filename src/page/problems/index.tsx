@@ -54,7 +54,7 @@ export default function Problems() {
 
   const difficultyMap: Record<string, number> = {
     GOLD: 1,
-    SILVER: 2,
+    SLIVER: 2,
     COPPER: 3,
     IRON: 4,
     JADE: 5,
@@ -79,11 +79,19 @@ export default function Problems() {
     fetchProblems();
   }, []);
 
+  const extractProblemList = (payload: any): any[] => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.results)) return payload.results;
+    return [];
+  };
+
   const fetchProblems = async () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.get(`/problems`);
-      mapProblems(response.data);
+      const list = extractProblemList(response.data);
+      mapProblems(list);
     } catch (error) {
       console.error("Failed to fetch problems:", error);
     } finally {
@@ -106,7 +114,8 @@ export default function Problems() {
       }
 
       const response = await axiosInstance.get(`/problems/filter`, { params });
-      mapProblems(response.data);
+      const list = extractProblemList(response.data);
+      mapProblems(list);
     } catch (error) {
       console.error("Failed to fetch filtered problems:", error);
     } finally {
@@ -120,7 +129,8 @@ export default function Problems() {
       const response = await axiosInstance.get(`/problems/search`, {
         params: { name: query },
       });
-      mapProblems(response.data);
+      const list = extractProblemList(response.data);
+      mapProblems(list);
     } catch (error) {
       console.error("Failed to search problems:", error);
     } finally {
@@ -129,6 +139,10 @@ export default function Problems() {
   };
 
   const mapProblems = (apiProblems: any[]) => {
+    if (!Array.isArray(apiProblems)) {
+      setProblems([]);
+      return;
+    }
     const mapped = apiProblems.map((p) => ({
       id: p.problemId,
       title: p.name,
