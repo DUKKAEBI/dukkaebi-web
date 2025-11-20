@@ -1,17 +1,12 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import Main from './page/main'
-import Profile from './page/profile'
-import './App.css'
+import { BrowserRouter } from "react-router-dom";
+import AppRoutes from "./router/router.js";
 
 function App() {
-	return (
-		<BrowserRouter>
-			<Routes>
-				<Route path="/" element={<Main />} />
-				<Route path="/profile" element={<Profile />} />
-			</Routes>
-		</BrowserRouter>
-	)
+  return (
+    <BrowserRouter>
+      <AppRoutes />
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
