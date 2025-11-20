@@ -34,16 +34,22 @@ export const ContestPage = () => {
   
   const ITEMS_PER_PAGE = 16;
   
-  // 전체 페이지 수 계산
-  const totalPages = Math.ceil(contests.length / ITEMS_PER_PAGE);
+  const filteredContests = contests.filter((contest) =>
+    contest.title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
   
-  // 현재 페이지의 대회 목록
-  const currentContests = contests.slice(
+  const totalPages = Math.ceil(filteredContests.length / ITEMS_PER_PAGE);
+  
+  const currentContests = filteredContests.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
   
-  // 페이지 번호 배열 생성 (최대 5개만 표시)
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+  
   const getPageNumbers = () => {
     const maxVisiblePages = 5;
     const pages = [];
@@ -54,11 +60,10 @@ export const ContestPage = () => {
         pages.push(i);
       }
     } else {
-      // 현재 페이지를 중심으로 5개 표시
+
       let startPage = Math.max(1, currentPage - 2);
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
       
-      // 끝에서 2페이지 이내면 마지막 5개 표시
       if (endPage - startPage < maxVisiblePages - 1) {
         startPage = Math.max(1, endPage - maxVisiblePages + 1);
       }
@@ -99,12 +104,6 @@ export const ContestPage = () => {
     return status === "JOINED" ? "#828282" : "#FFFFFF";
   };
 
-  const getFilteredContests = ()=> {
-    return contests.filter((contest) =>
-      contest.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }
-
   const joinConest = async (contestCode: string) => {
     const targetContest = contests.find(contests => contestCode === contests.code);
     if (!targetContest || targetContest.status !== "JOINABLE") {
@@ -144,13 +143,11 @@ export const ContestPage = () => {
     const getContests = async (): Promise<Contest[]> => {
       try {
         const response = await axiosInstance.get(`/contest/list`);
-        // API 응답이 배열인지 확인
         const data = Array.isArray(response.data) ? response.data : [];
         setContests(data);
         return data;
       } catch (error) {
         console.error("Error fetching contests:", error);
-        // 에러 발생 시 목업 데이터 사용
         setContests(MOCK_CONTESTS);
         return [];
       }
@@ -230,7 +227,7 @@ export const ContestPage = () => {
         <S.MainContent>
           {/* Search Bar */}
           <S.SearchBar>
-            <S.SearchInput type="text" placeholder="대회 이름을 검색하세요.." onChange={(e)=> { setSearchTerm(e.target.value)} }/>
+            <S.SearchInput type="text" placeholder="대회 이름을 검색하세요.." value={searchTerm} onChange={handleSearchChange} />
             <S.SearchIcon>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -257,7 +254,10 @@ export const ContestPage = () => {
                     <S.CardImageWrapper>
                       <S.CardImage src={"https://i.ibb.co/bgdgkTBG/image.png"} alt={contest.title} />
                       <S.CardBadge
-                        onClick={() =>joinConest(contest.code)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          joinConest(contest.code);
+                        }}
                         $status={contest.status}
                         $bgColor={getStatusColor(contest.status)}
                         $textColor={getStatusTextColor(contest.status)}
@@ -274,30 +274,10 @@ export const ContestPage = () => {
                     </S.CardContent>
                   </S.ContestCard>
                 ))
-              ) : searchTerm ? (
-                  getFilteredContests().map((contest) => (
-                    <S.ContestCard key={contest.code}>
-                      <S.CardImageWrapper>
-                        <S.CardImage src={"https://i.ibb.co/bgdgkTBG/image.png"} alt={contest.title} />
-                        <S.CardBadge
-                          $status={contest.status}
-                          $bgColor={getStatusColor(contest.status)}
-                          $textColor={getStatusTextColor(contest.status)}
-                        >
-                          {getStatusText(contest.status)}
-                        </S.CardBadge>
-                      </S.CardImageWrapper>
-                      <S.CardContent>
-                        <S.CardTitle>{contest.title}</S.CardTitle>
-                        <S.CardInfo>
-                          {contest.dDay} ・{contest.participantCount}명
-                          참여중
-                        </S.CardInfo>
-                      </S.CardContent>
-                    </S.ContestCard>
-                  ))
               ) : (
-                <div>아직 대회가 없습니다.</div>
+                <S.NoResultsMessage>
+                  {searchTerm ? `"${searchTerm}"에 대한 검색 결과가 없습니다.` : "아직 대회가 없습니다."}
+                </S.NoResultsMessage>
               )}
             </S.ContestsGrid>
 

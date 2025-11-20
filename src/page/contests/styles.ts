@@ -168,7 +168,7 @@ export const ContestsSection = styled.section`
   display: flex;
   flex-direction: column;
   gap: 60px;
-  padding:20px;
+  padding: 20px;
 `;
 
 export const ContestsGrid = styled.div`
@@ -237,7 +237,6 @@ export const CardBadge = styled.button<{
   &:hover {
     outline: none;
   }
-
 `;
 
 export const CardContent = styled.div`
@@ -344,4 +343,14 @@ export const NoContestsMessage = styled.div`
   color: #bdbdbd;
   text-align: center;
   padding: 40px;
+`;
+
+export const NoResultsMessage = styled.div`
+  font-family: "Pretendard", sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: #bdbdbd;
+  text-align: center;
+  padding: 40px;
+  grid-column: 1 / -1;
 `;
