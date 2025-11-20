@@ -48,17 +48,23 @@ export const ContestDetailPage = () => {
       return;
     }
     
-    if (contestDetails.startDate > new Date().toISOString()) {
+    const now = new Date();
+    
+    const startDateTime = new Date(contestDetails.startDate);
+    startDateTime.setHours(0, 0, 0, 0);
+    
+    const endDateTime = new Date(contestDetails.endDate);
+    endDateTime.setHours(23, 59, 59, 999);
+    
+    if (now < startDateTime) {
       alert("아직 대회가 시작되지 않았습니다.");
       return;
-    }else if (contestDetails.endDate < new Date().toISOString()) {
+    } else if (now > endDateTime) {
       alert("이미 대회가 종료되었습니다.");
       return;
-    }else{
+    } else {
       navigate('/solve');
     }
-    
-    
   };
 
   useEffect(() => {
