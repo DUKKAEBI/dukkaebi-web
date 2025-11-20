@@ -87,6 +87,20 @@ const getTierImage = (score: number): string => {
   return wispDubi;
 };
 
+// Get tier background color based on score
+const getTierBackgroundColor = (score: number): string => {
+  if (score >= 5000) {
+    // godDubi: gradient
+    return "linear-gradient(180deg, #EBD7B6 0%, #BA98C1 50%, #868BB7 75%, #537FAC 100%)";
+  }
+  if (score >= 3000) return "#11541F"; // jadeDubi
+  if (score >= 1000) return "#98712B"; // goldDubi
+  if (score >= 500) return "#919191"; // silverDubi
+  if (score >= 150) return "#312925"; // ironDubi
+  if (score >= 50) return "#AC846E"; // copperDubi
+  return "#0191F8"; // wispDubi
+};
+
 // Get tier name based on score
 const getTierName = (score: number): string => {
   if (score >= 5000) return "신깨비";
@@ -244,7 +258,7 @@ const Profile = () => {
           {/* Right Content Area */}
           <S.RightContent>
             {/* Tier Card */}
-            <S.TierCard>
+            <S.TierCard backgroundColor={getTierBackgroundColor(score)}>
               <S.TierCharacter src={getTierImage(score)} alt="tier character" />
               <S.TierInfo>
                 <S.TierBadge>
@@ -274,6 +288,7 @@ const Profile = () => {
               </S.StreakIcon>
               <S.StreakInfo>
                 <S.StreakLabel>연속 학습일</S.StreakLabel>
+
                 <S.StreakValue>{streak}일</S.StreakValue>
               </S.StreakInfo>
             </S.StreakCard>
@@ -330,5 +345,4 @@ const Profile = () => {
     </S.PageWrapper>
   );
 };
-
 export default Profile;
