@@ -45,6 +45,37 @@ export const HeaderTitle = styled.h1`
   color: #e8eaed;
 `;
 
+export const HeaderActions = styled.div`
+  margin-left: auto;
+`;
+
+export const LanguageSelect = styled.select`
+  background: #3c4b55;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 5px;
+  width: 90px;
+  height: 33px;
+  padding: 4px 28px 4px 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  appearance: none;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='7' viewBox='0 0 12 7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23ffffff' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::-ms-expand {
+    display: none;
+  }
+`;
+
 export const PageContent = styled.div`
   display: flex;
   flex: 1;

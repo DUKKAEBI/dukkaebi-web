@@ -40,13 +40,25 @@ const API_BASE_URL = (() => {
   return raw.trim().replace(/\/?$/, "/");
 })();
 
+type LanguageOption = {
+  value: string;
+  label: string;
+  monaco: string;
+};
+
+const LANGUAGE_OPTIONS: LanguageOption[] = [
+  { value: "python", label: "Python", monaco: "python" },
+  { value: "cpp", label: "C++", monaco: "cpp" },
+  { value: "java", label: "Java", monaco: "java" },
+];
+
 export default function SolvePage() {
   const { problemId } = useParams<{ problemId?: string }>();
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
   const [terminalOutput, setTerminalOutput] = useState("실행 결과가 이곳에 표시됩니다.");
   const [code, setCode] = useState(``);
-  const [language] = useState("python");
+  const [language, setLanguage] = useState(LANGUAGE_OPTIONS[0].value);
   const [rightPanelWidth, setRightPanelWidth] = useState(65);
   const [isResizing, setIsResizing] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -63,6 +75,12 @@ export default function SolvePage() {
   const messageIdRef = useRef(INITIAL_CHAT_MESSAGES.length);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const exampleInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const currentLanguageOption =
+    LANGUAGE_OPTIONS.find((option) => option.value === language) ||
+    LANGUAGE_OPTIONS[0];
+  const handleLanguageChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    setLanguage(event.target.value);
+  };
 
   // Terminal (floating) size & resize state
   const [terminalHeight, setTerminalHeight] = useState(200); // px
@@ -395,6 +413,15 @@ export default function SolvePage() {
         <Style.HeaderTitle>
           {problem?.name ?? (problemStatus === "loading" ? "문제를 불러오는 중..." : "문제 정보 없음")}
         </Style.HeaderTitle>
+        <Style.HeaderActions>
+          <Style.LanguageSelect value={language} onChange={handleLanguageChange}>
+            {LANGUAGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Style.LanguageSelect>
+        </Style.HeaderActions>
       </Style.Header>
 
       <Style.PageContent>
@@ -445,7 +472,7 @@ export default function SolvePage() {
             <Editor
               height="100%"
               width="100%"
-              language="python"
+              language={currentLanguageOption.monaco}
               value={code}
               onChange={(value) => setCode(value || "")}
               beforeMount={handleEditorBeforeMount}
