@@ -16,7 +16,9 @@ export const Header = () => {
             />
           </S.Logo>
           <S.Nav>
-            <S.NavLink>문제풀기</S.NavLink>
+            <S.NavLink as={Link} to="/problems">
+              문제풀기
+            </S.NavLink>
             <S.NavLink as={Link} to="/contests">
               알고리즘 대회
             </S.NavLink>

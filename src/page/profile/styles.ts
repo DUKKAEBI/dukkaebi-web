@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 // Page Layout
 export const PageWrapper = styled.div`
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   background: white;
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
@@ -22,6 +22,7 @@ export const Header = styled.header`
 `;
 
 export const HeaderContent = styled.div`
+  width: 100%;
   height: 100%;
   padding: 0 40px;
   display: flex;
@@ -86,7 +87,7 @@ export const UserIcon = styled.div`
 
 // Main Content
 export const MainContent = styled.main`
-  padding: 60px 40px;
+  padding: 72px 40px;
   display: flex;
   justify-content: center;
 `;
@@ -145,8 +146,8 @@ export const StatItem = styled.div`
   align-items: center;
 `;
 
-export const StatLabel = styled.div<{ error?: boolean }>`
-  color: ${(props) => (props.error ? "#EB5757" : "#1d1d1d")};
+export const StatLabel = styled.div<{ $error?: boolean }>`
+  color: ${(props) => (props.$error ? "#EB5757" : "#1d1d1d")};
   font-size: 14px;
   font-weight: 500;
 `;
@@ -167,10 +168,11 @@ export const RightContent = styled.div`
 `;
 
 // Tier Card
-export const TierCard = styled.div`
+export const TierCard = styled.div<{ $backgroundColor: string }>`
   width: 100%;
+  height: 160px;
   padding: 20px 24px 20px 20px;
-  background: #ac846e;
+  background: ${(props) => props.$backgroundColor};
   border-radius: 8px;
   display: flex;
   align-items: flex-end;
@@ -178,8 +180,8 @@ export const TierCard = styled.div`
 `;
 
 export const TierCharacter = styled.img`
-  width: 173px;
-  height: 166px;
+  width: 160px;
+  height: 160px;
   object-fit: contain;
   margin-bottom: -20px;
 `;
@@ -189,12 +191,14 @@ export const TierInfo = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+  margin-bottom: 12px;
 `;
 
 export const TierBadge = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  margin-bottom: 16px;
 `;
 
 export const TierName = styled.div`
@@ -337,12 +341,12 @@ export const HeatmapWeek = styled.div`
   display: inline-flex;
 `;
 
-export const HeatmapCell = styled.div<{ intensity: string }>`
+export const HeatmapCell = styled.div<{ $intensity: string }>`
   align-self: stretch;
   height: 16px;
   border-radius: 2px;
   background: ${(props) => {
-    switch (props.intensity) {
+    switch (props.$intensity) {
       case "100":
         return "#00b4b7";
       case "60":
@@ -353,6 +357,45 @@ export const HeatmapCell = styled.div<{ intensity: string }>`
         return "#e0e0e0";
     }
   }};
+  position: relative;
+  cursor: pointer;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 10;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.85);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 10;
+  }
+
+  &:hover::after,
+  &:hover::before {
+    opacity: 1;
+    transform: translate(-50%, -4px);
+  }
 `;
 
 // Footer Styles
@@ -364,6 +407,7 @@ export const Footer = styled.footer`
 `;
 
 export const FooterContent = styled.div`
+  width: 100%;
   padding: 0 40px;
   margin: 0 auto;
   display: flex;

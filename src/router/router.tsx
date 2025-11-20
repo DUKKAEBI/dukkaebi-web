@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "../page/login";
 import Signup from "../page/signup";
 import Main from "../page/main";
-import ContestDetail from "../page/contestDetail/contestDetail";
+import { ContestDetailPage } from "../page/contestDetail";
 import { ContestPage } from "../page/contests/index";
 import Profile from "../page/profile";
 import SolvePage from "../page/solve";
@@ -18,7 +18,7 @@ export default function AppRoutes() {
       <Route path="/solve" element={<SolvePage />} />
       <Route path="/problems" element={<Problems />} />
       <Route path="/contests" element={<ContestPage />} />
-      <Route path="/contests/:contestId" element={<ContestDetail />} />
+      <Route path="/contests/:contestId" element={<ContestDetailPage />} />
     </Routes>
   );
 }

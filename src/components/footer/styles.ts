@@ -77,3 +77,9 @@ export const SocialIcon = styled.img`
     opacity: 0.7;
   }
 `;
+
+export const SocialLink = styled.a`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+`;
