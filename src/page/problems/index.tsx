@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import axiosInstance from "../../api/axiosInstance";
 import * as S from "./style";
 import SearchIcon from "../../assets/image/problems/search.png";
 import ArrowDownIcon from "../../assets/image/problems/arrow-down.png";
@@ -29,82 +31,8 @@ interface Problem {
   failed: boolean;
 }
 
-const mockProblems: Problem[] = [
-  {
-    id: 1,
-    title: "숫자야구",
-    difficulty: 1,
-    completedCount: 91,
-    successRate: 3,
-    solved: true,
-    failed: false,
-  },
-  {
-    id: 2,
-    title: "문자열과 알파벳 쿼리",
-    difficulty: 2,
-    completedCount: 31,
-    successRate: 0,
-    solved: false,
-    failed: false,
-  },
-  {
-    id: 3,
-    title: "문자열과 알파벳 쿼리",
-    difficulty: 3,
-    completedCount: 31,
-    successRate: 0,
-    solved: false,
-    failed: true,
-  },
-  {
-    id: 4,
-    title: "문자열과 알파벳 쿼리",
-    difficulty: 4,
-    completedCount: 31,
-    successRate: 0,
-    solved: false,
-    failed: false,
-  },
-  {
-    id: 5,
-    title: "문자열과 알파벳 쿼리",
-    difficulty: 5,
-    completedCount: 31,
-    successRate: 0,
-    solved: false,
-    failed: false,
-  },
-  {
-    id: 6,
-    title: "문자열과 알파벳 쿼리",
-    difficulty: 2,
-    completedCount: 31,
-    successRate: 0,
-    solved: true,
-    failed: false,
-  },
-  {
-    id: 7,
-    title: "문자열과 알파벳 쿼리",
-    difficulty: 2,
-    completedCount: 31,
-    successRate: 0,
-    solved: false,
-    failed: false,
-  },
-  {
-    id: 8,
-    title: "문자열과 알파벳 쿼리",
-    difficulty: 2,
-    completedCount: 31,
-    successRate: 0,
-    solved: false,
-    failed: false,
-  },
-];
-
 export default function Problems() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -114,9 +42,126 @@ export default function Problems() {
     "asc" | "desc" | null
   >(null);
   const [successRateLabel, setSuccessRateLabel] = useState<string | null>(null);
+  const [problems, setProblems] = useState<Problem[]>([]);
+  const [timeLabel, setTimeLabel] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (difficultyFilter !== null || successRateFilter || sortBy) {
+      fetchFilteredProblems();
+    }
+  }, [difficultyFilter, successRateFilter, sortBy]);
+
+  const difficultyMap: Record<string, number> = {
+    GOLD: 1,
+    SLIVER: 2,
+    COPPER: 3,
+    IRON: 4,
+    JADE: 5,
+  };
+
+  const difficultyReverseMap: Record<number, string> = {
+    1: "GOLD",
+    2: "SLIVER",
+    3: "COPPER",
+    4: "IRON",
+    5: "JADE",
+  };
+
+  const solvedStatusMap: Record<string, { solved: boolean; failed: boolean }> =
+    {
+      SOLVED: { solved: true, failed: false },
+      FAILED: { solved: false, failed: true },
+      NOT_SOLVED: { solved: false, failed: false },
+    };
+
+  useEffect(() => {
+    fetchProblems();
+  }, []);
+
+  const extractProblemList = (payload: any): any[] => {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.data)) return payload.data;
+    if (Array.isArray(payload?.results)) return payload.results;
+    return [];
+  };
+
+  const fetchProblems = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.get(`/problems`);
+      const list = extractProblemList(response.data);
+      mapProblems(list);
+    } catch (error) {
+      console.error("Failed to fetch problems:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchFilteredProblems = async () => {
+    setIsLoading(true);
+    try {
+      const params: Record<string, string> = {};
+      if (difficultyFilter !== null) {
+        params.difficulty = difficultyReverseMap[difficultyFilter];
+      }
+      if (successRateFilter) {
+        params.correctRate = successRateFilter === "asc" ? "low" : "high";
+      }
+      if (sortBy) {
+        params.time = sortBy;
+      }
+
+      const response = await axiosInstance.get(`/problems/filter`, { params });
+      const list = extractProblemList(response.data);
+      mapProblems(list);
+    } catch (error) {
+      console.error("Failed to fetch filtered problems:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchSearchProblems = async (query: string) => {
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.get(`/problems/search`, {
+        params: { name: query },
+      });
+      const list = extractProblemList(response.data);
+      mapProblems(list);
+    } catch (error) {
+      console.error("Failed to search problems:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const mapProblems = (apiProblems: any[]) => {
+    if (!Array.isArray(apiProblems)) {
+      setProblems([]);
+      return;
+    }
+    const mapped = apiProblems.map((p) => ({
+      id: p.problemId,
+      title: p.name,
+      difficulty: difficultyMap[p.difficulty],
+      completedCount: p.solvedCount,
+      successRate: p.correctRate,
+      ...solvedStatusMap[p.solvedResult],
+    }));
+    setProblems(mapped);
+  };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    const value = e.target.value;
+    setSearchTerm(value);
+    if (value.trim()) {
+      fetchSearchProblems(value);
+    } else {
+      fetchProblems();
+    }
   };
 
   const handleDifficultySelect = (
@@ -125,6 +170,12 @@ export default function Problems() {
   ) => {
     setDifficultyFilter(level);
     setDifficultyLabel(label);
+    setOpenDropdown(null);
+  };
+
+  const handleTimeSelect = (time: string | null, label: string | null) => {
+    setSortBy(time);
+    setTimeLabel(label); // 추가
     setOpenDropdown(null);
   };
 
@@ -137,7 +188,7 @@ export default function Problems() {
     setOpenDropdown(null);
   };
 
-  let filteredProblems = mockProblems.filter((problem) =>
+  let filteredProblems = problems.filter((problem) =>
     problem.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -259,20 +310,29 @@ export default function Problems() {
                   setOpenDropdown(openDropdown === "time" ? null : "time")
                 }
               >
-                시간
+                {timeLabel || "시간"}
                 <S.ArrowIcon src={ArrowDownIcon} alt="드롭다운" />
               </S.FilterButton>
 
               {/* Dropdown Menu - Time */}
               {openDropdown === "time" && (
                 <S.DropdownMenu>
-                  <S.DropdownItem data-is-selected={false}>
+                  <S.DropdownItem
+                    data-is-selected={sortBy === null}
+                    onClick={() => handleTimeSelect(null, null)}
+                  >
                     선택 안함
                   </S.DropdownItem>
-                  <S.DropdownItem data-is-selected={false}>
+                  <S.DropdownItem
+                    data-is-selected={sortBy === "recent"}
+                    onClick={() => handleTimeSelect("recent", "최신순")}
+                  >
                     최신순
                   </S.DropdownItem>
-                  <S.DropdownItem data-is-selected={false}>
+                  <S.DropdownItem
+                    data-is-selected={sortBy === "old"}
+                    onClick={() => handleTimeSelect("old", "오래된순")}
+                  >
                     오래된순
                   </S.DropdownItem>
                 </S.DropdownMenu>
@@ -339,6 +399,7 @@ export default function Problems() {
             {filteredProblems.map((problem, index) => (
               <S.TableRow
                 key={problem.id}
+                onClick={() => navigate(`/solve/${problem.id}`)}
                 data-is-last={index === filteredProblems.length - 1}
               >
                 <S.TableCell>
@@ -351,16 +412,10 @@ export default function Problems() {
                 </S.TableCell>
                 <S.TableCell>{problem.title}</S.TableCell>
                 <S.TableCellRight>
-                  {difficultyLabel ? (
-                    <S.DifficultyBadge level={problem.difficulty}>
-                      {difficultyLabels[problem.difficulty]}
-                    </S.DifficultyBadge>
-                  ) : (
-                    <S.DifficultyImage
-                      src={difficultyImages[problem.difficulty]}
-                      alt={difficultyLabels[problem.difficulty]}
-                    />
-                  )}
+                  <S.DifficultyImage
+                    src={difficultyImages[problem.difficulty]}
+                    alt={difficultyLabels[problem.difficulty]}
+                  />
                 </S.TableCellRight>
                 <S.TableCellRight>{problem.completedCount}명</S.TableCellRight>
                 <S.TableCellRight>{problem.successRate}%</S.TableCellRight>

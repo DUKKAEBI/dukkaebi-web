@@ -195,18 +195,57 @@ export const HeatmapGrid = styled.div`
   grid-auto-flow: column;
 `;
 
-export const HeatmapCell = styled.div<{ intensity: string }>`
+export const HeatmapCell = styled.div<{ $intensity: string }>`
   width: 16px;
   height: 16px;
   border-radius: 2px;
-  background: ${({ intensity }) =>
-    intensity === "100"
+  background: ${({ $intensity }) =>
+    $intensity === "100"
       ? "#00B4B7"
-      : intensity === "60"
+      : $intensity === "60"
       ? "rgba(0, 180, 183, 0.6)"
-      : intensity === "20"
+      : $intensity === "20"
       ? "rgba(0, 180, 183, 0.2)"
       : "#E0E0E0"};
+  position: relative;
+  cursor: pointer;
+
+  &::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 5;
+  }
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translate(-50%, 0);
+    border: 6px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.85);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    z-index: 5;
+  }
+
+  &:hover::after,
+  &:hover::before {
+    opacity: 1;
+    transform: translate(-50%, -4px);
+  }
 `;
 
 // Learning Section Styles
@@ -256,12 +295,23 @@ export const ArrowIcon = styled.div`
 
 // Course Card Styles
 export const CourseGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(224px, 1fr));
+  display: flex;
   gap: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+
+  /* 스크롤바 숨기기 */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 export const CourseCard = styled.article`
+  height: 240px;
+  width: 224px;
   background: #f6f6f6;
   border: 1px solid #ededed;
   border-radius: 8px;
@@ -292,6 +342,7 @@ export const CardHeader = styled.div`
 `;
 
 export const Difficulty = styled.div`
+  display: flex;
   color: #00b4b7;
   font-size: 12px;
   font-weight: 500;
@@ -300,6 +351,7 @@ export const Difficulty = styled.div`
 `;
 
 export const CardTitle = styled.h3`
+  display: flex;
   color: black;
   font-size: 16px;
   font-weight: 500;

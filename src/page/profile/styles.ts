@@ -2,7 +2,7 @@ import styled from "styled-components";
 
 // Page Layout
 export const PageWrapper = styled.div`
-  width: 100vw;
+  width: 100%;
   min-height: 100vh;
   background: white;
   font-family: Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
@@ -22,6 +22,7 @@ export const Header = styled.header`
 `;
 
 export const HeaderContent = styled.div`
+  width: 100%;
   height: 100%;
   padding: 0 40px;
   display: flex;
@@ -406,6 +407,7 @@ export const Footer = styled.footer`
 `;
 
 export const FooterContent = styled.div`
+  width: 100%;
   padding: 0 40px;
   margin: 0 auto;
   display: flex;

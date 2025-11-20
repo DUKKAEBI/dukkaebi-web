@@ -4,7 +4,7 @@ import styled from "styled-components";
 export const Container = styled.div`
   margin: 0;
   padding: 0;
-  width: 100%;
+  width: 100vw;
   min-height: 100vh;
   background: white;
   display: flex;
@@ -18,7 +18,7 @@ export const UserIcon = styled.div`
 `;
 
 export const HeroBanner = styled.div`
-  width: 100vw;
+  width: 100%;
   height: 240px;
   background: #315374;
   position: relative;
@@ -27,9 +27,13 @@ export const HeroBanner = styled.div`
 
 export const HeroContent = styled.div`
   position: absolute;
-  left: calc(16.67% + 37.67px);
+  left: 80px;
   top: 40px;
   z-index: 10;
+
+  @media (max-width: 768px) {
+    left: 40px;
+  }
 `;
 
 export const HeroTitle = styled.h1`
@@ -56,12 +60,16 @@ export const HeroSubtitle = styled.p`
 
 export const CarouselControls = styled.div`
   position: absolute;
-  left: calc(16.67% + 28.67px);
+  left: 80px;
   bottom: 24px;
   display: flex;
   align-items: center;
   gap: 8px;
   z-index: 10;
+
+  @media (max-width: 768px) {
+    left: 40px;
+  }
 `;
 
 export const CarouselButton = styled.button`
@@ -123,7 +131,8 @@ export const MainContent = styled.main`
 `;
 
 export const SearchBar = styled.div`
-  width: 388px;
+  width: 100%;
+  max-width: 388px;
   background: #f6f6f6;
   border: 1px solid #ededed;
   border-radius: 8px;
@@ -154,39 +163,52 @@ export const SearchIcon = styled.div`
 `;
 
 export const ContestsSection = styled.section`
-  width: 794px;
+  width: 100%;
+  max-width: 794px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 60px;
+  padding: 20px;
 `;
 
 export const ContestsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 183px);
+  grid-template-columns: repeat(auto-fill, 183px);
+
   gap: 20px;
+  width: 100%;
+  justify-content: center;
+
+  @media (max-width: 850px) {
+    grid-template-columns: repeat(auto-fill, 150px);
+  }
 `;
 
 export const ContestCard = styled.div`
-  width: 183px;
+  width: 100%;
   display: flex;
   flex-direction: column;
 `;
 
 export const CardImageWrapper = styled.div`
   position: relative;
-  width: 183px;
-  height: 128px;
+  width: 100%;
+  height: 0;
+  padding-bottom: 69.95%; /* 128/183 비율 유지 */
   border-radius: 8px 8px 0 0;
   overflow: hidden;
 `;
 
 export const CardImage = styled.img`
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
 `;
 
-export const CardBadge = styled.div<{
+export const CardBadge = styled.button<{
   $status: string;
   $bgColor: string;
   $textColor: string;
@@ -202,6 +224,19 @@ export const CardBadge = styled.div<{
   color: ${(props) => props.$textColor};
   background: ${(props) => props.$bgColor};
   white-space: nowrap;
+  outline: none;
+
+  &:focus {
+    outline: none;
+  }
+
+  &:active {
+    outline: none;
+  }
+
+  &:hover {
+    outline: none;
+  }
 `;
 
 export const CardContent = styled.div`
@@ -299,4 +334,23 @@ export const PageNumber = styled.button<{ $active: boolean }>`
   &:focus-visible {
     outline: none;
   }
+`;
+
+export const NoContestsMessage = styled.div`
+  font-family: "Pretendard", sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: #bdbdbd;
+  text-align: center;
+  padding: 40px;
+`;
+
+export const NoResultsMessage = styled.div`
+  font-family: "Pretendard", sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  color: #bdbdbd;
+  text-align: center;
+  padding: 40px;
+  grid-column: 1 / -1;
 `;
