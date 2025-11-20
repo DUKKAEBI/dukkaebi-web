@@ -1,31 +1,166 @@
+import { useEffect, useMemo, useState } from "react";
 import * as S from "./styles";
 import dubiImage from "../../assets/image/main/dubi.png";
-import instagramIcon from "../../assets/image/main/mdi_instagram.svg";
-import ducamiLogo from "../../assets/image/main/ducami_logo.svg";
 import fireIcon from "../../assets/image/main/solar_fire-bold-duotone.svg";
 import arrowIcon from "../../assets/image/main/arrow.svg";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
+import axiosInstance from "../../api/axiosInstance";
+
+type ContributionsResponse = Record<string, number>;
+
+interface StreakResponse {
+  streak?: number;
+}
+
+interface HeatmapCellData {
+  date: string;
+  intensity: string;
+  solved: number;
+}
+
+const WEEKS_TO_DISPLAY = 17;
+
+const formatDate = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const mapSolvedToIntensity = (solved: number): string => {
+  if (solved >= 3) return "100";
+  if (solved >= 2) return "60";
+  if (solved >= 1) return "20";
+  return "0";
+};
+
+const generateHeatmapData = (
+  contributions: ContributionsResponse = {}
+): HeatmapCellData[] => {
+  const today = new Date();
+  const startDate = new Date(today);
+  startDate.setDate(today.getDate() - (WEEKS_TO_DISPLAY * 7 - 1));
+
+  const cells: HeatmapCellData[] = [];
+
+  for (let index = 0; index < WEEKS_TO_DISPLAY * 7; index++) {
+    const cellDate = new Date(startDate);
+    cellDate.setDate(startDate.getDate() + index);
+
+    const dateStr = formatDate(cellDate);
+    const solved = contributions[dateStr] || 0;
+
+    cells.push({
+      date: dateStr,
+      solved,
+      intensity: mapSolvedToIntensity(solved),
+    });
+  }
+
+  return cells;
+};
+
+const recommendedCourses = [
+  {
+    id: 1,
+    difficulty: "난이도 : 상",
+    title: "자료구조 알고리즘",
+    tags: ["#큐", "#스택", "#이진탐색", "#그래프"],
+  },
+  {
+    id: 2,
+    difficulty: "난이도 : 중",
+    title: "DP 집중 연습",
+    tags: ["#dp", "#동적계획법", "#냅색", "#계단오르기"],
+  },
+  {
+    id: 3,
+    difficulty: "난이도 : 중상",
+    title: "그리디 & 구현",
+    tags: ["#그리디", "#시뮬레이션", "#구현", "#정렬"],
+  },
+  {
+    id: 4,
+    difficulty: "난이도 : 하",
+    title: "입출력 리마인드",
+    tags: ["#입출력", "#문자열", "#기본구현"],
+  },
+  {
+    id: 5,
+    difficulty: "난이도 : 상",
+    title: "그래프 최단거리",
+    tags: ["#다익스트라", "#벨만포드", "#플로이드워셜"],
+  },
+];
 
 const Main = () => {
-  // Mock data for learning streak heatmap
-  const generateHeatmapData = () => {
-    const data = [];
-    for (let week = 0; week < 17; week++) {
-      for (let day = 0; day < 7; day++) {
-        const intensity =
-          week === 10 && day >= 0 && day <= 3
-            ? ["20", "60", "100", "20"][day]
-            : "0";
-        data.push(intensity);
+  const [streak, setStreak] = useState(0);
+  const [contributions, setContributions] = useState<ContributionsResponse>({});
+
+  useEffect(() => {
+    const fetchActivity = async () => {
+      try {
+        const today = new Date();
+        const contributionsStart = new Date(
+          today.getFullYear(),
+          today.getMonth() - 1,
+          1
+        );
+        const contributionsEnd = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          1
+        );
+
+        const [contributionsResponse, streakResponse] = await Promise.all([
+          axiosInstance.get<ContributionsResponse>(
+            "/user/activity/contributions",
+            {
+              params: {
+                start: formatDate(contributionsStart),
+                end: formatDate(contributionsEnd),
+              },
+            }
+          ),
+          axiosInstance.get<StreakResponse>("/user/activity/streak"),
+        ]);
+
+        const contributionsData =
+          (
+            contributionsResponse.data as ContributionsResponse & {
+              data?: ContributionsResponse;
+            }
+          )?.data ||
+          contributionsResponse.data ||
+          {};
+        setContributions(contributionsData);
+
+        const streakData =
+          (streakResponse.data as StreakResponse & { data?: StreakResponse })
+            ?.data || streakResponse.data;
+        setStreak(
+          typeof streakData?.streak === "number" ? streakData.streak : 0
+        );
+      } catch (error) {
+        console.error("Failed to load home activity data:", error);
+        setContributions({});
+        setStreak(0);
       }
-    }
-    return data;
-  };
+    };
+
+    fetchActivity();
+  }, []);
+
+  const heatmapData = useMemo(
+    () => generateHeatmapData(contributions),
+    [contributions]
+  );
 
   return (
     <S.PageWrapper>
       {/* Header */}
+
       <Header />
 
       {/* Main Content */}
@@ -62,7 +197,7 @@ const Main = () => {
                 </S.StreakIcon>
                 <S.StreakText>
                   <S.StreakLabel>연속 학습일</S.StreakLabel>
-                  <S.StreakValue>3일</S.StreakValue>
+                  <S.StreakValue>{streak}일</S.StreakValue>
                 </S.StreakText>
               </S.StreakContent>
               <S.Divider />
@@ -76,8 +211,14 @@ const Main = () => {
               </S.DayLabels>
 
               <S.HeatmapGrid>
-                {generateHeatmapData().map((intensity, idx) => (
-                  <S.HeatmapCell key={idx} intensity={intensity} />
+                {heatmapData.map((cell) => (
+                  <S.HeatmapCell
+                    key={cell.date}
+                    $intensity={cell.intensity}
+                    data-tooltip={`${cell.date} · ${cell.solved} 문제`}
+                    aria-label={`${cell.date} · ${cell.solved} 문제`}
+                    title={`${cell.date} · ${cell.solved} 문제`}
+                  />
                 ))}
               </S.HeatmapGrid>
             </S.HeatmapSection>
@@ -101,18 +242,17 @@ const Main = () => {
           </S.SectionHeader>
 
           <S.CourseGrid>
-            {[1, 2, 3, 4].map((item) => (
-              <S.CourseCard key={item}>
+            {recommendedCourses.map((course) => (
+              <S.CourseCard key={course.id}>
                 <S.CardContent>
                   <S.CardHeader>
-                    <S.Difficulty>난이도 : 상</S.Difficulty>
-                    <S.CardTitle>자료구조 알고리즘</S.CardTitle>
+                    <S.Difficulty>{course.difficulty}</S.Difficulty>
+                    <S.CardTitle>{course.title}</S.CardTitle>
                   </S.CardHeader>
                   <S.TagList>
-                    <S.Tag>#큐</S.Tag>
-                    <S.Tag>#스택</S.Tag>
-                    <S.Tag>#이진탐색</S.Tag>
-                    <S.Tag>#그래프</S.Tag>
+                    {course.tags.map((tag) => (
+                      <S.Tag key={`${course.id}-${tag}`}>{tag}</S.Tag>
+                    ))}
                   </S.TagList>
                 </S.CardContent>
                 <S.SolveButton>문제 풀기 →</S.SolveButton>
