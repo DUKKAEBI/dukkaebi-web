@@ -150,10 +150,9 @@ export const ContestPage = () => {
           setContests(contestsWithImages);
           return;
         }
-      } catch (_) {}
-
-      // 실패하면 MOCK 데이터 사용
-      setContests(MOCK_CONTESTS);
+      } catch (_) {
+        console.error("대회 목록 불러오기 실패");
+      }
     };
 
     fetchContests();
