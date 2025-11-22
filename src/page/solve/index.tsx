@@ -54,7 +54,7 @@ const GOOGLE_MODEL = (() => {
   return raw.trim() || fallback;
 })();
 
-// 조교 톤/규칙: 필요시 여기서 편집하거나 .env에 VITE_AI_ASSISTANT_RULES로 주입 가능
+// AI 규칙: 필요시 여기서 편집하거나 .env에 VITE_AI_ASSISTANT_RULES로 주입 가능
 const AI_ASSISTANT_RULES =
   (import.meta.env.VITE_AI_ASSISTANT_RULES as string | undefined)?.trim() ||
   [
@@ -75,6 +75,7 @@ const AI_ASSISTANT_RULES =
     "대답은 항상 한국어로 해주세요.",
     "대답으로는 너무 길게 설명하지 말아주세요. 핵심 위주로 간결하게 답변해주세요.",
     "만약 사용자가 코드를 원한다면, '코드를 직접 작성해드리기보다는, 코드를 작성하는 방법에 대해 설명해드릴 수 있어요.'라고 답변하세요.",
+    "절대 코드를 작성해주지 마세요."
   ].join("\n");
 
 type LanguageOption = {
@@ -122,6 +123,7 @@ export default function SolvePage() {
 
   // Terminal (floating) size & resize state
   const [terminalHeight, setTerminalHeight] = useState(200); // px
+  const terminalRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isResizing) return;
@@ -528,7 +530,7 @@ export default function SolvePage() {
           </Style.EditorContainer>
 
           <Style.ResultContainer>
-            <Style.Terminal $height={terminalHeight}>
+            <Style.Terminal ref={terminalRef} $height={terminalHeight}>
               <Style.TerminalHandle />
               <Style.TerminalHeader>실행 결과</Style.TerminalHeader>
               <Style.TerminalOutput>{terminalOutput}</Style.TerminalOutput>
