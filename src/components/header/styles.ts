@@ -46,10 +46,10 @@ export const Nav = styled.nav`
   gap: 20px;
 `;
 
-export const NavLink = styled.a`
-  color: #1d1d1d;
+export const NavLink = styled.a<{ $active?: boolean }>`
+  color: ${(p) => (p.$active ? "#00b4b7" : "#1d1d1d")};
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   text-decoration: none;
   transition: color 0.2s;
