@@ -583,7 +583,7 @@ export default function CoursesPage() {
             <S.PaginationButton
               onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
               disabled={currentPage === 1}
-              style={{ fontSize: "30px", lineHeight: 0 }}
+              style={{ fontSize: "30px", lineHeight: 0, color: "#BDBDBD" }}
             >
               ‹
             </S.PaginationButton>
@@ -601,7 +601,7 @@ export default function CoursesPage() {
             <S.PaginationButton
               onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
               disabled={currentPage === totalPages}
-              style={{ fontSize: "30px", lineHeight: 0 }}
+              style={{ fontSize: "30px", lineHeight: 0, color: "#BDBDBD" }}
             >
               ›
             </S.PaginationButton>

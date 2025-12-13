@@ -325,7 +325,7 @@ export const PaginationButton = styled.button<{ $active?: boolean }>`
   background: transparent;
   border: none;
   font-size: 18px;
-  font-weight: ${(p) => (p.$active ? 700 : 400)};
+  font-weight: 400;
   color: ${(p) => (p.$active ? "#828282" : "#BDBDBD")};
   cursor: pointer;
   padding: 4px 8px;
