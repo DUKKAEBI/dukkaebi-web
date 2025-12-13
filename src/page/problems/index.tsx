@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
 import * as S from "./style";
@@ -45,6 +45,24 @@ export default function Problems() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [timeLabel, setTimeLabel] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (difficultyFilter !== null || successRateFilter || sortBy) {
@@ -175,7 +193,7 @@ export default function Problems() {
 
   const handleTimeSelect = (time: string | null, label: string | null) => {
     setSortBy(time);
-    setTimeLabel(label); // 추가
+    setTimeLabel(label);
     setOpenDropdown(null);
   };
 
@@ -245,11 +263,14 @@ export default function Problems() {
         </S.SearchBox>
 
         {/* Filter Section */}
-        <S.FilterSection>
+        <S.FilterSection ref={dropdownRef}>
           <S.FilterButtonsWrapper>
+            {/* 난이도 */}
             <S.FilterButtonGroup>
               <S.FilterButton
-                data-is-active={openDropdown === "difficulty"}
+                isActive={
+                  openDropdown === "difficulty" || difficultyFilter !== null
+                }
                 onClick={() =>
                   setOpenDropdown(
                     openDropdown === "difficulty" ? null : "difficulty"
@@ -260,41 +281,40 @@ export default function Problems() {
                 <S.ArrowIcon src={ArrowDownIcon} alt="드롭다운" />
               </S.FilterButton>
 
-              {/* Dropdown Menu - Difficulty */}
               {openDropdown === "difficulty" && (
                 <S.DropdownMenu>
                   <S.DropdownItem
-                    data-is-selected={difficultyFilter === null}
+                    isSelected={difficultyFilter === null}
                     onClick={() => handleDifficultySelect(null, null)}
                   >
                     선택 안함
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={difficultyFilter === 1}
+                    isSelected={difficultyFilter === 1}
                     onClick={() => handleDifficultySelect(1, "금")}
                   >
                     금
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={difficultyFilter === 2}
+                    isSelected={difficultyFilter === 2}
                     onClick={() => handleDifficultySelect(2, "은")}
                   >
                     은
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={difficultyFilter === 3}
+                    isSelected={difficultyFilter === 3}
                     onClick={() => handleDifficultySelect(3, "동")}
                   >
                     동
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={difficultyFilter === 4}
+                    isSelected={difficultyFilter === 4}
                     onClick={() => handleDifficultySelect(4, "철")}
                   >
                     철
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={difficultyFilter === 5}
+                    isSelected={difficultyFilter === 5}
                     onClick={() => handleDifficultySelect(5, "옥")}
                   >
                     옥
@@ -303,9 +323,10 @@ export default function Problems() {
               )}
             </S.FilterButtonGroup>
 
+            {/* 시간 */}
             <S.FilterButtonGroup>
               <S.FilterButton
-                data-is-active={openDropdown === "time"}
+                isActive={openDropdown === "time" || sortBy !== null}
                 onClick={() =>
                   setOpenDropdown(openDropdown === "time" ? null : "time")
                 }
@@ -314,23 +335,22 @@ export default function Problems() {
                 <S.ArrowIcon src={ArrowDownIcon} alt="드롭다운" />
               </S.FilterButton>
 
-              {/* Dropdown Menu - Time */}
               {openDropdown === "time" && (
                 <S.DropdownMenu>
                   <S.DropdownItem
-                    data-is-selected={sortBy === null}
+                    isSelected={sortBy === null}
                     onClick={() => handleTimeSelect(null, null)}
                   >
                     선택 안함
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={sortBy === "recent"}
+                    isSelected={sortBy === "recent"}
                     onClick={() => handleTimeSelect("recent", "최신순")}
                   >
                     최신순
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={sortBy === "old"}
+                    isSelected={sortBy === "old"}
                     onClick={() => handleTimeSelect("old", "오래된순")}
                   >
                     오래된순
@@ -339,9 +359,12 @@ export default function Problems() {
               )}
             </S.FilterButtonGroup>
 
+            {/* 정답률 */}
             <S.FilterButtonGroup>
               <S.FilterButton
-                data-is-active={openDropdown === "successRate"}
+                isActive={
+                  openDropdown === "successRate" || successRateFilter !== null
+                }
                 onClick={() =>
                   setOpenDropdown(
                     openDropdown === "successRate" ? null : "successRate"
@@ -352,17 +375,16 @@ export default function Problems() {
                 <S.ArrowIcon src={ArrowDownIcon} alt="드롭다운" />
               </S.FilterButton>
 
-              {/* Dropdown Menu - Success Rate */}
               {openDropdown === "successRate" && (
                 <S.DropdownMenu>
                   <S.DropdownItem
-                    data-is-selected={successRateFilter === null}
+                    isSelected={successRateFilter === null}
                     onClick={() => handleSuccessRateSelect(null, null)}
                   >
                     선택 안함
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={successRateFilter === "asc"}
+                    isSelected={successRateFilter === "asc"}
                     onClick={() =>
                       handleSuccessRateSelect("asc", "정답률 낮은 순")
                     }
@@ -370,7 +392,7 @@ export default function Problems() {
                     정답률 낮은 순
                   </S.DropdownItem>
                   <S.DropdownItem
-                    data-is-selected={successRateFilter === "desc"}
+                    isSelected={successRateFilter === "desc"}
                     onClick={() =>
                       handleSuccessRateSelect("desc", "정답률 높은 순")
                     }
@@ -399,7 +421,7 @@ export default function Problems() {
             {filteredProblems.map((problem, index) => (
               <S.TableRow
                 key={problem.id}
-                onClick={() => navigate(`/solve/${problem.id}`)}
+                onClick={() => navigate(`/solve/{problem.id}`)}
                 data-is-last={index === filteredProblems.length - 1}
               >
                 <S.TableCell>
