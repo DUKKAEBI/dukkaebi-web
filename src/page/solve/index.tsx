@@ -8,8 +8,6 @@ import {
 import type * as monacoEditor from "monaco-editor";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import dubiAvatar from "../../assets/image/solve/Dubi.png";
 import * as Style from "./style";
 
 type ProblemDetail = {
@@ -41,43 +39,6 @@ const API_BASE_URL = (() => {
   return raw.trim().replace(/\/?$/, "/");
 })();
 
-const GOOGLE_API_KEY = (() => {
-  const raw = import.meta.env.VITE_GOOGLE_API_KEY;
-  if (!raw || typeof raw !== "string") return "";
-  return raw.trim();
-})();
-const GOOGLE_MODEL = (() => {
-  const raw = import.meta.env.VITE_GOOGLE_MODEL;
-  // v1에서 동작 확인된 기본 모델(404 회피용)
-  const fallback = "gemini-2.0-flash";
-  if (!raw || typeof raw !== "string") return fallback;
-  return raw.trim() || fallback;
-})();
-
-// AI 규칙: 필요시 여기서 편집하거나 .env에 VITE_AI_ASSISTANT_RULES로 주입 가능
-const AI_ASSISTANT_RULES =
-  (import.meta.env.VITE_AI_ASSISTANT_RULES as string | undefined)?.trim() ||
-  [
-    "당신은 '두비'라는 이름의 코딩 학습 도우미 챗봇입니다.",
-    "",
-    "필수 규칙:",
-    "항상 부드럽고 공손한 존댓말을 사용해야 합니다. 반말은 절대 사용하지 마세요.",
-    "이모티콘은 사용하지 마세요.",
-    '이름을 묻는 질문에는 "저의 이름은 두비에요!"라고만 답변하세요.',
-    "주로 코딩 관련 질문에 답변하세요. (프로그래밍 언어, 알고리즘, 개발 도구, 웹/앱 개발 등)",
-    '코딩과 관련 없는 질문에는 "죄송하지만, 저는 코딩 관련 질문에만 답변할 수 있어요. 프로그래밍에 대해 궁금한 점이 있으시면 편하게 물어보세요!"라고 정중히 안내하세요.',
-    '욕설이나 부적절한 표현이 포함된 질문에는 "적절하지 않은 표현은 사용하지 말아주세요. 코딩에 대해 궁금하신 점을 정중하게 물어봐 주시면 감사하겠습니다."라고 답변하세요.',
-    "코드 예제를 제공할 때는 설명과 함께 친절하게 알려주세요.",
-    "학생의 학습을 돕는 것이 목표이므로, 단순히 답을 알려주기보다는 이해를 돕는 방식으로 설명해주세요.",
-    "질문이 불명확하면 구체적으로 어떤 부분이 궁금한지 정중하게 되물어보세요.",
-    "답변은 간결하면서도 충분한 정보를 담아 제공하세요.",
-    "절대 답변으로 코드를 작성해주지 마세요. 항상 힌트나 알고리즘 기법이나, 원리로 설명해주세요.",
-    "대답은 항상 한국어로 해주세요.",
-    "대답으로는 너무 길게 설명하지 말아주세요. 핵심 위주로 간결하게 답변해주세요.",
-    "만약 사용자가 코드를 원한다면, '코드를 직접 작성해드리기보다는, 코드를 작성하는 방법에 대해 설명해드릴 수 있어요.'라고 답변하세요.",
-    "절대 코드를 작성해주지 마세요."
-  ].join("\n");
-
 type LanguageOption = {
   value: string;
   label: string;
@@ -95,14 +56,17 @@ export default function SolvePage() {
   const navigate = useNavigate();
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
-  const [terminalOutput, setTerminalOutput] = useState("실행 결과가 이곳에 표시됩니다.");
+  const [terminalOutput, setTerminalOutput] =
+    useState("실행 결과가 이곳에 표시됩니다.");
   const [code, setCode] = useState(``);
   const [language, setLanguage] = useState(LANGUAGE_OPTIONS[0].value);
   const [rightPanelWidth, setRightPanelWidth] = useState(65);
   const [isResizing, setIsResizing] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    INITIAL_CHAT_MESSAGES
+  );
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
   const [problemStatus, setProblemStatus] = useState<
     "idle" | "loading" | "success" | "error"
@@ -173,7 +137,9 @@ export default function SolvePage() {
     if (!API_BASE_URL) {
       setProblem(null);
       setProblemStatus("error");
-      setProblemError("서버 주소가 설정되어 있지 않습니다. .env의 VITE_API_URL 값을 확인하세요.");
+      setProblemError(
+        "서버 주소가 설정되어 있지 않습니다. .env의 VITE_API_URL 값을 확인하세요."
+      );
       return;
     }
 
@@ -250,7 +216,9 @@ export default function SolvePage() {
       isAccepted ? "정답입니다." : "오답입니다.",
       "",
       `채점 결과: ${statusText || "알 수 없음"}`,
-      `통과한 테스트: ${result.passedTestCases ?? 0} / ${result.totalTestCases ?? 0}`,
+      `통과한 테스트: ${result.passedTestCases ?? 0} / ${
+        result.totalTestCases ?? 0
+      }`,
       `실행 시간: ${result.executionTime ?? "-"}ms`,
     ];
 
@@ -262,13 +230,19 @@ export default function SolvePage() {
       const detail = result.details[0];
       lines.push(
         "",
-        `테스트 케이스 ${detail.testCaseNumber ?? "?"} : ${detail.passed ? "통과" : "실패"}`
+        `테스트 케이스 ${detail.testCaseNumber ?? "?"} : ${
+          detail.passed ? "통과" : "실패"
+        }`
       );
       lines.push(`입력값: ${(detail.input ?? "X").replace(/\s+$/, "") || "X"}`);
       if (detail.expectedOutput !== undefined) {
-        lines.push(`기댓값: ${(detail.expectedOutput ?? "").replace(/\s+$/, "") || "X"}`);
+        lines.push(
+          `기댓값: ${(detail.expectedOutput ?? "").replace(/\s+$/, "") || "X"}`
+        );
       }
-      lines.push(`실제값: ${(detail.actualOutput ?? "").replace(/\s+$/, "") || "X"}`);
+      lines.push(
+        `실제값: ${(detail.actualOutput ?? "").replace(/\s+$/, "") || "X"}`
+      );
     }
 
     return lines.join("\n");
@@ -319,7 +293,9 @@ export default function SolvePage() {
       setTerminalOutput(formatGradingResult(data));
     } catch (error) {
       setTerminalOutput(
-        error instanceof Error ? error.message : "채점 중 알 수 없는 오류가 발생했습니다."
+        error instanceof Error
+          ? error.message
+          : "채점 중 알 수 없는 오류가 발생했습니다."
       );
     } finally {
       setIsSubmitting(false);
@@ -380,51 +356,15 @@ export default function SolvePage() {
     return id;
   };
 
-  const updateMessageText = (id: number, text: string) => {
-    setMessages((prev) =>
-      prev.map((message) => (message.id === id ? { ...message, text } : message))
-    );
-  };
-
-  const requestChatbotResponse = async (content: string) => {
-    if (!GOOGLE_API_KEY) {
-      appendBotMessage("AI 키가 설정되어 있지 않습니다. .env의 VITE_GOOGLE_API_KEY를 확인하세요.");
-      return;
-    }
-
-    const pendingId = appendBotMessage("답변을 불러오는 중입니다...");
-    setIsChatLoading(true);
-    try {
-      const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
-      const model = genAI.getGenerativeModel({ model: GOOGLE_MODEL });
-      const prompt = `${AI_ASSISTANT_RULES}\n\n사용자 요청: ${content}`;
-      const result = await model.generateContent(prompt);
-      const text = result.response.text().trim();
-
-      updateMessageText(
-        pendingId,
-        text && text.length > 0 ? text : "응답이 없습니다. 프롬프트를 다시 시도해보세요."
-      );
-    } catch (error) {
-      updateMessageText(
-        pendingId,
-        error instanceof Error
-          ? `챗봇 오류: ${error.message}`
-          : "챗봇 응답 중 알 수 없는 오류가 발생했습니다."
-      );
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
   const handleChatSubmit = () => {
     if (!chatInput.trim() || isChatLoading) return;
     const trimmed = chatInput.trim();
     appendUserMessage(trimmed);
     setChatInput("");
-    void requestChatbotResponse(trimmed);
-  };
 
+    // AI 기능이 제거되었음을 알리는 메시지
+    appendBotMessage("죄송합니다. AI 챗봇 기능은 현재 사용할 수 없습니다.");
+  };
 
   const problemSections = problem
     ? [
@@ -448,14 +388,24 @@ export default function SolvePage() {
   return (
     <Style.SolveContainer ref={containerRef}>
       <Style.Header>
-        <Style.BackButton type="button" aria-label="문제 풀고 나가기" onClick={handleExitSolvePage}>
+        <Style.BackButton
+          type="button"
+          aria-label="문제 풀고 나가기"
+          onClick={handleExitSolvePage}
+        >
           ‹
         </Style.BackButton>
         <Style.HeaderTitle>
-          {problem?.name ?? (problemStatus === "loading" ? "문제를 불러오는 중..." : "문제 정보 없음")}
+          {problem?.name ??
+            (problemStatus === "loading"
+              ? "문제를 불러오는 중..."
+              : "문제 정보 없음")}
         </Style.HeaderTitle>
         <Style.HeaderActions>
-          <Style.LanguageSelect value={language} onChange={handleLanguageChange}>
+          <Style.LanguageSelect
+            value={language}
+            onChange={handleLanguageChange}
+          >
             {LANGUAGE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -547,69 +497,6 @@ export default function SolvePage() {
           </Style.ResultContainer>
         </Style.RightPanel>
       </Style.PageContent>
-
-      {isChatOpen ? (
-        <Style.ChatModal>
-          <Style.ChatModalHeader>
-            <Style.ChatCloseButton
-              type="button"
-              aria-label="AI 챗봇 닫기"
-              onClick={closeChat}
-            >
-              ×
-            </Style.ChatCloseButton>
-          </Style.ChatModalHeader>
-          <Style.ChatModalBody>
-            <Style.ChatMessages>
-              {messages.map((message) => {
-                const isUser = message.sender === "user";
-                return (
-                  <Style.ChatMessageRow key={message.id} $isUser={isUser}>
-                    <Style.ChatMessageAvatar
-                      src={dubiAvatar}
-                      alt="두비"
-                      $hidden={isUser}
-                    />
-                    <Style.ChatMessageBubble $isUser={isUser}>
-                      {message.text}
-                    </Style.ChatMessageBubble>
-                  </Style.ChatMessageRow>
-                );
-              })}
-              <div ref={chatEndRef} />
-            </Style.ChatMessages>
-          </Style.ChatModalBody>
-          <Style.ChatInputWrapper>
-            <Style.ChatInputContainer>
-              <Style.ChatInput
-                value={chatInput}
-                placeholder="무엇이든 물어보세요"
-                onChange={handleChatInputChange}
-                onKeyDown={handleChatInputKeyDown}
-              />
-              <Style.ChatSendButton
-                type="button"
-                aria-label="메시지 보내기"
-                onClick={handleChatSubmit}
-                disabled={isChatLoading || !chatInput.trim()}
-                $active={Boolean(chatInput.trim()) && !isChatLoading}
-              >
-                ↑
-              </Style.ChatSendButton>
-            </Style.ChatInputContainer>
-          </Style.ChatInputWrapper>
-        </Style.ChatModal>
-      ) : (
-        <Style.AIAssistantWrapper type="button" onClick={openChat}>
-          <Style.AIAssistantAvatarWrapper>
-            <Style.AIAssistantAvatar src={dubiAvatar} alt="두비" />
-            <Style.AIAssistantLabel>AI 챗봇</Style.AIAssistantLabel>
-          </Style.AIAssistantAvatarWrapper>
-          <Style.AIAssistantBubble>
-            모르겠다면 저에게 물어보세요!
-          </Style.AIAssistantBubble>
-        </Style.AIAssistantWrapper>
-      )}
     </Style.SolveContainer>
   );
 }
