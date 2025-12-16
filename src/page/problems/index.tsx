@@ -421,7 +421,7 @@ export default function Problems() {
             {filteredProblems.map((problem, index) => (
               <S.TableRow
                 key={problem.id}
-                onClick={() => navigate(`/solve/{problem.id}`)}
+                onClick={() => navigate(`/solve/${problem.id}`)}
                 data-is-last={index === filteredProblems.length - 1}
               >
                 <S.TableCell>
