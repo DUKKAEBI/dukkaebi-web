@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Header } from "../../components/header";
-import axiosInstance from "../../api/axiosInstance";
+import { Header } from "../../../components/header";
+import axiosInstance from "../../../api/axiosInstance";
 import * as S from "./styles";
 
 type ProblemStatus = "submitted" | "pending";
@@ -104,14 +104,23 @@ const mapCourseDetail = (raw: ApiCourseDetail): CourseDetailData => {
     : [];
 
   const solvedCount = problems.filter((p) => p.status === "submitted").length;
-  const progress = problems.length ? Math.round((solvedCount / problems.length) * 100) : 0;
+  const progress = problems.length
+    ? Math.round((solvedCount / problems.length) * 100)
+    : 0;
 
   return {
     title: raw?.title ?? "제목 없음",
     description: raw?.description ?? "",
-    tags: Array.isArray(raw?.keywords) ? raw.keywords : Array.isArray(raw?.tags) ? raw.tags : [],
+    tags: Array.isArray(raw?.keywords)
+      ? raw.keywords
+      : Array.isArray(raw?.tags)
+      ? raw.tags
+      : [],
     progress,
-    isJoined: Boolean(isJoinedFlag(raw) || (Array.isArray(raw?.problems) && raw.problems.length > 0)),
+    isJoined: Boolean(
+      isJoinedFlag(raw) ||
+        (Array.isArray(raw?.problems) && raw.problems.length > 0)
+    ),
     summary: {
       startAt: formatDate(raw?.startDate ?? raw?.createdAt ?? raw?.addedAt),
       questionCount: problems.length,
@@ -124,7 +133,8 @@ const mapCourseDetail = (raw: ApiCourseDetail): CourseDetailData => {
 const CourseDetailPage = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
-  const [courseData, setCourseData] = useState<CourseDetailData>(emptyCourseData);
+  const [courseData, setCourseData] =
+    useState<CourseDetailData>(emptyCourseData);
   const [loading, setLoading] = useState(true);
   const [joinLoading, setJoinLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -134,7 +144,9 @@ const CourseDetailPage = () => {
     setError(null);
 
     try {
-      const response = await axiosInstance.get<ApiCourseDetail>(`/course/${id}`);
+      const response = await axiosInstance.get<ApiCourseDetail>(
+        `/course/${id}`
+      );
       setCourseData(mapCourseDetail(response.data));
     } catch (err) {
       console.error("Failed to fetch course detail:", err);
@@ -203,7 +215,11 @@ const CourseDetailPage = () => {
                 <S.ProgressText>{progress}% 진행</S.ProgressText>
               </S.ProgressContainer>
             ) : (
-              <S.EnrollButton type="button" onClick={handleJoinCourse} disabled={joinLoading}>
+              <S.EnrollButton
+                type="button"
+                onClick={handleJoinCourse}
+                disabled={joinLoading}
+              >
                 {joinLoading ? "신청 중..." : "수강 신청"}
               </S.EnrollButton>
             )}
@@ -229,7 +245,9 @@ const CourseDetailPage = () => {
                     $clickable
                     onClick={() => handleProblemClick(problem.id)}
                   >
-                    <S.IndexCell>{String(problem.id).padStart(2, "0")}</S.IndexCell>
+                    <S.IndexCell>
+                      {String(problem.id).padStart(2, "0")}
+                    </S.IndexCell>
                     <S.TitleCell>{problem.title}</S.TitleCell>
                     <S.StatusCell status={problem.status}>
                       {problem.status === "submitted" ? "제출 완료" : "미제출"}
@@ -239,7 +257,9 @@ const CourseDetailPage = () => {
               ) : (
                 <S.TableRow isLast>
                   <S.IndexCell>--</S.IndexCell>
-                  <S.TitleCell>{error ?? "등록된 문제가 없습니다."}</S.TitleCell>
+                  <S.TitleCell>
+                    {error ?? "등록된 문제가 없습니다."}
+                  </S.TitleCell>
                   <S.StatusCell status="pending">-</S.StatusCell>
                 </S.TableRow>
               )}
@@ -251,7 +271,9 @@ const CourseDetailPage = () => {
             <S.SideCardList>
               <S.SideCardItem>
                 <S.SideCardLabel>문제 :</S.SideCardLabel>
-                <S.SideCardValue>{courseData.summary.questionCount}</S.SideCardValue>
+                <S.SideCardValue>
+                  {courseData.summary.questionCount}
+                </S.SideCardValue>
               </S.SideCardItem>
               <S.SideCardItem>
                 <S.SideCardLabel>난이도 :</S.SideCardLabel>
@@ -259,7 +281,11 @@ const CourseDetailPage = () => {
               </S.SideCardItem>
             </S.SideCardList>
 
-            <S.SideCardButton type="button" fullWidth onClick={handleStartFirstProblem}>
+            <S.SideCardButton
+              type="button"
+              fullWidth
+              onClick={handleStartFirstProblem}
+            >
               문제 풀어보기
             </S.SideCardButton>
           </S.SideCard>
