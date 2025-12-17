@@ -1,9 +1,14 @@
 import * as S from "./styles";
 import duckkaebiLogo from "../../assets/image/main/duckkaebi_logo.svg";
 import tablerUserIcon from "../../assets/image/main/tabler_user.svg";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export const Header = () => {
+  const { pathname } = useLocation();
+  const isCourses = pathname.startsWith("/courses");
+  const isProblems = pathname.startsWith("/problems");
+  const isContests = pathname.startsWith("/contests");
+
   return (
     <S.Header>
       <S.HeaderContent>
@@ -16,11 +21,14 @@ export const Header = () => {
             />
           </S.Logo>
           <S.Nav>
-            <S.NavLink as={Link} to="/problems">
+            <S.NavLink as={Link} to="/problems" $active={isProblems}>
               문제풀기
             </S.NavLink>
-            <S.NavLink as={Link} to="/contests">
+            <S.NavLink as={Link} to="/contests" $active={isContests}>
               알고리즘 대회
+            </S.NavLink>
+            <S.NavLink as={Link} to="/courses" $active={isCourses}>
+              코스
             </S.NavLink>
           </S.Nav>
         </S.HeaderLeft>

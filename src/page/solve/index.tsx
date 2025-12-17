@@ -7,8 +7,7 @@ import {
 } from "react";
 import type * as monacoEditor from "monaco-editor";
 import Editor from "@monaco-editor/react";
-import { useParams } from "react-router-dom";
-import dubiAvatar from "../../assets/image/solve/Dubi.png";
+import { useNavigate, useParams } from "react-router-dom";
 import * as Style from "./style";
 
 type ProblemDetail = {
@@ -54,16 +53,20 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 
 export default function SolvePage() {
   const { problemId } = useParams<{ problemId?: string }>();
+  const navigate = useNavigate();
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
-  const [terminalOutput, setTerminalOutput] = useState("실행 결과가 이곳에 표시됩니다.");
+  const [terminalOutput, setTerminalOutput] =
+    useState("실행 결과가 이곳에 표시됩니다.");
   const [code, setCode] = useState(``);
   const [language, setLanguage] = useState(LANGUAGE_OPTIONS[0].value);
   const [rightPanelWidth, setRightPanelWidth] = useState(65);
   const [isResizing, setIsResizing] = useState(false);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    INITIAL_CHAT_MESSAGES
+  );
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
   const [problemStatus, setProblemStatus] = useState<
     "idle" | "loading" | "success" | "error"
@@ -134,7 +137,9 @@ export default function SolvePage() {
     if (!API_BASE_URL) {
       setProblem(null);
       setProblemStatus("error");
-      setProblemError("서버 주소가 설정되어 있지 않습니다. .env의 VITE_API_URL 값을 확인하세요.");
+      setProblemError(
+        "서버 주소가 설정되어 있지 않습니다. .env의 VITE_API_URL 값을 확인하세요."
+      );
       return;
     }
 
@@ -211,7 +216,9 @@ export default function SolvePage() {
       isAccepted ? "정답입니다." : "오답입니다.",
       "",
       `채점 결과: ${statusText || "알 수 없음"}`,
-      `통과한 테스트: ${result.passedTestCases ?? 0} / ${result.totalTestCases ?? 0}`,
+      `통과한 테스트: ${result.passedTestCases ?? 0} / ${
+        result.totalTestCases ?? 0
+      }`,
       `실행 시간: ${result.executionTime ?? "-"}ms`,
     ];
 
@@ -223,13 +230,19 @@ export default function SolvePage() {
       const detail = result.details[0];
       lines.push(
         "",
-        `테스트 케이스 ${detail.testCaseNumber ?? "?"} : ${detail.passed ? "통과" : "실패"}`
+        `테스트 케이스 ${detail.testCaseNumber ?? "?"} : ${
+          detail.passed ? "통과" : "실패"
+        }`
       );
       lines.push(`입력값: ${(detail.input ?? "X").replace(/\s+$/, "") || "X"}`);
       if (detail.expectedOutput !== undefined) {
-        lines.push(`기댓값: ${(detail.expectedOutput ?? "").replace(/\s+$/, "") || "X"}`);
+        lines.push(
+          `기댓값: ${(detail.expectedOutput ?? "").replace(/\s+$/, "") || "X"}`
+        );
       }
-      lines.push(`실제값: ${(detail.actualOutput ?? "").replace(/\s+$/, "") || "X"}`);
+      lines.push(
+        `실제값: ${(detail.actualOutput ?? "").replace(/\s+$/, "") || "X"}`
+      );
     }
 
     return lines.join("\n");
@@ -280,7 +293,9 @@ export default function SolvePage() {
       setTerminalOutput(formatGradingResult(data));
     } catch (error) {
       setTerminalOutput(
-        error instanceof Error ? error.message : "채점 중 알 수 없는 오류가 발생했습니다."
+        error instanceof Error
+          ? error.message
+          : "채점 중 알 수 없는 오류가 발생했습니다."
       );
     } finally {
       setIsSubmitting(false);
@@ -341,54 +356,14 @@ export default function SolvePage() {
     return id;
   };
 
-  const updateMessageText = (id: number, text: string) => {
-    setMessages((prev) =>
-      prev.map((message) => (message.id === id ? { ...message, text } : message))
-    );
-  };
-
-  const requestChatbotResponse = async (content: string) => {
-    if (!API_BASE_URL) {
-      appendBotMessage("챗봇 서버 주소가 설정되어 있지 않습니다.");
-      return;
-    }
-
-    const pendingId = appendBotMessage("답변을 불러오는 중입니다...");
-    setIsChatLoading(true);
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_BASE_URL}chatbot/chat`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({ message: content }),
-      });
-
-      if (!response.ok) {
-        throw new Error("챗봇 응답을 불러오지 못했습니다.");
-      }
-
-      const data: { response?: string } = await response.json();
-      const reply = data.response && data.response.trim().length > 0 ? data.response : "응답이 없습니다.";
-      updateMessageText(pendingId, reply);
-    } catch (error) {
-      updateMessageText(
-        pendingId,
-        error instanceof Error ? error.message : "챗봇 응답 중 오류가 발생했습니다."
-      );
-    } finally {
-      setIsChatLoading(false);
-    }
-  };
-
   const handleChatSubmit = () => {
     if (!chatInput.trim() || isChatLoading) return;
     const trimmed = chatInput.trim();
     appendUserMessage(trimmed);
     setChatInput("");
-    void requestChatbotResponse(trimmed);
+
+    // AI 기능이 제거되었음을 알리는 메시지
+    appendBotMessage("죄송합니다. AI 챗봇 기능은 현재 사용할 수 없습니다.");
   };
 
   const problemSections = problem
@@ -406,15 +381,31 @@ export default function SolvePage() {
       ? problemError || "문제를 불러오지 못했습니다."
       : "";
 
+  const handleExitSolvePage = () => {
+    navigate("/problems");
+  };
+
   return (
     <Style.SolveContainer ref={containerRef}>
       <Style.Header>
-        <Style.BackButton>‹</Style.BackButton>
+        <Style.BackButton
+          type="button"
+          aria-label="문제 풀고 나가기"
+          onClick={handleExitSolvePage}
+        >
+          ‹
+        </Style.BackButton>
         <Style.HeaderTitle>
-          {problem?.name ?? (problemStatus === "loading" ? "문제를 불러오는 중..." : "문제 정보 없음")}
+          {problem?.name ??
+            (problemStatus === "loading"
+              ? "문제를 불러오는 중..."
+              : "문제 정보 없음")}
         </Style.HeaderTitle>
         <Style.HeaderActions>
-          <Style.LanguageSelect value={language} onChange={handleLanguageChange}>
+          <Style.LanguageSelect
+            value={language}
+            onChange={handleLanguageChange}
+          >
             {LANGUAGE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -506,69 +497,6 @@ export default function SolvePage() {
           </Style.ResultContainer>
         </Style.RightPanel>
       </Style.PageContent>
-
-      {isChatOpen ? (
-        <Style.ChatModal>
-          <Style.ChatModalHeader>
-            <Style.ChatCloseButton
-              type="button"
-              aria-label="AI 챗봇 닫기"
-              onClick={closeChat}
-            >
-              ×
-            </Style.ChatCloseButton>
-          </Style.ChatModalHeader>
-          <Style.ChatModalBody>
-            <Style.ChatMessages>
-              {messages.map((message) => {
-                const isUser = message.sender === "user";
-                return (
-                  <Style.ChatMessageRow key={message.id} $isUser={isUser}>
-                    <Style.ChatMessageAvatar
-                      src={dubiAvatar}
-                      alt="두비"
-                      $hidden={isUser}
-                    />
-                    <Style.ChatMessageBubble $isUser={isUser}>
-                      {message.text}
-                    </Style.ChatMessageBubble>
-                  </Style.ChatMessageRow>
-                );
-              })}
-              <div ref={chatEndRef} />
-            </Style.ChatMessages>
-          </Style.ChatModalBody>
-          <Style.ChatInputWrapper>
-            <Style.ChatInputContainer>
-              <Style.ChatInput
-                value={chatInput}
-                placeholder="무엇이든 물어보세요"
-                onChange={handleChatInputChange}
-                onKeyDown={handleChatInputKeyDown}
-              />
-              <Style.ChatSendButton
-                type="button"
-                aria-label="메시지 보내기"
-                onClick={handleChatSubmit}
-                disabled={isChatLoading || !chatInput.trim()}
-                $active={Boolean(chatInput.trim()) && !isChatLoading}
-              >
-                ↑
-              </Style.ChatSendButton>
-            </Style.ChatInputContainer>
-          </Style.ChatInputWrapper>
-        </Style.ChatModal>
-      ) : (
-        <Style.AIAssistantWrapper type="button" onClick={openChat}>
-          <Style.AIAssistantAvatarWrapper>
-            <Style.AIAssistantAvatar src={dubiAvatar} alt="두비" />
-            <Style.AIAssistantLabel>AI 챗봇</Style.AIAssistantLabel>
-          </Style.AIAssistantAvatarWrapper>
-          <Style.AIAssistantBubble>
-            모르겠다면 저에게 물어보세요!
-          </Style.AIAssistantBubble>
-        </Style.AIAssistantWrapper>
-      )}
     </Style.SolveContainer>
   );
 }
