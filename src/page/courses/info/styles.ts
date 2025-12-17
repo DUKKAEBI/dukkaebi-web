@@ -131,6 +131,7 @@ export const EnrollButton = styled(PrimaryButton)`
 export const GraySection = styled.section`
   width: 100%;
   background: #f6f6f6;
+  min-height: 72vh;
   padding: 20px 0 80px;
 `;
 
@@ -215,10 +216,17 @@ export const TitleCell = styled.span`
   color: #1d1d1d;
 `;
 
-export const StatusCell = styled.span<{ status: "submitted" | "pending" }>`
+export const StatusCell = styled.span<{
+  status: "submitted" | "pending" | "failed";
+}>`
   font-size: 16px;
   font-weight: 600;
-  color: ${(p) => (p.status === "submitted" ? "#00B4B7" : "#BDBDBD")};
+  color: ${(p) =>
+    p.status === "submitted"
+      ? "#00B4B7"
+      : p.status === "failed"
+      ? "#E74C3C"
+      : "#BDBDBD"};
   text-align: right;
 `;
 

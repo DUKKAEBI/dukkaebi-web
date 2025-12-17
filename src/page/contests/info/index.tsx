@@ -1,15 +1,15 @@
 import * as S from "./styles";
-import axiosInstance from "../../api/axiosInstance";
+import axiosInstance from "../../../api/axiosInstance";
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect , useState } from "react";
+import { useEffect, useState } from "react";
 
 // 문제 타입 정의
 interface Problem {
   problemId: number;
   name: string;
-  difficulty: "COPPER" | "IRON"|"SLIVER"|"GOLD"| "JADE";
-  solvedCount:number;
-  correctRate:number;
+  difficulty: "COPPER" | "IRON" | "SLIVER" | "GOLD" | "JADE";
+  solvedCount: number;
+  correctRate: number;
   solvedResult: "NOT_SOLVED" | "SOLVED" | "FAILED";
   addedAt: string;
 }
@@ -20,14 +20,15 @@ interface ContestDetail {
   description: string;
   startDate: string;
   endDate: string;
-  participantCount : number;
+  participantCount: number;
   problems: Problem[];
 }
 
-
 export const ContestDetailPage = () => {
   const { contestId } = useParams<{ contestId: string }>();
-  const [contestDetails, setContestDetails] = useState<ContestDetail | null>(null);
+  const [contestDetails, setContestDetails] = useState<ContestDetail | null>(
+    null
+  );
   const navigate = useNavigate();
 
   // 문제 진행도 계산 함수
@@ -35,11 +36,12 @@ export const ContestDetailPage = () => {
     if (!contestDetails || contestDetails.problems.length === 0) {
       return 0;
     }
-    
+
     const solvedCount = contestDetails.problems.filter(
-      problem => problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED"
+      (problem) =>
+        problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED"
     ).length;
-    
+
     return Math.round((solvedCount / contestDetails.problems.length) * 100);
   };
 
@@ -47,15 +49,15 @@ export const ContestDetailPage = () => {
     if (!contestDetails) {
       return;
     }
-    
+
     const now = new Date();
-    
+
     const startDateTime = new Date(contestDetails.startDate);
     startDateTime.setHours(0, 0, 0, 0);
-    
+
     const endDateTime = new Date(contestDetails.endDate);
     endDateTime.setHours(23, 59, 59, 999);
-    
+
     if (now < startDateTime) {
       alert("아직 대회가 시작되지 않았습니다.");
       return;
@@ -63,24 +65,25 @@ export const ContestDetailPage = () => {
       alert("이미 대회가 종료되었습니다.");
       return;
     } else {
-      navigate('/solve');
+      navigate("/solve");
     }
   };
 
   useEffect(() => {
     const fetchContestDetails = async () => {
       try {
-        const response = await axiosInstance.get<ContestDetail>(`/contest/${contestId}`);
+        const response = await axiosInstance.get<ContestDetail>(
+          `/contest/${contestId}`
+        );
         setContestDetails(response.data);
       } catch (error) {
-        console.error("Error fetching contest details:", error);        
+        console.error("Error fetching contest details:", error);
       }
     };
-    
+
     fetchContestDetails();
   }, [contestId]);
 
-  
   return (
     <>
       <S.Container>
@@ -139,7 +142,8 @@ export const ContestDetailPage = () => {
                     알고리즘 대회 입니다.
                   </S.DescriptionText>
                   <S.ContestMeta>
-                    {contestDetails?.startDate} ~ {contestDetails?.endDate} ・{contestDetails?.participantCount}명 참여중
+                    {contestDetails?.startDate} ~ {contestDetails?.endDate} ・
+                    {contestDetails?.participantCount}명 참여중
                   </S.ContestMeta>
                 </S.ContestDescription>
               </div>
@@ -181,7 +185,10 @@ export const ContestDetailPage = () => {
                     <S.ProblemNumber>{problem.problemId}</S.ProblemNumber>
                     <S.ProblemTitle>{problem.name}</S.ProblemTitle>
                     <S.ProblemStatus $status={problem.solvedResult}>
-                      {problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED" ? "제출 완료" : "미제출"}
+                      {problem.solvedResult === "SOLVED" ||
+                      problem.solvedResult === "FAILED"
+                        ? "제출 완료"
+                        : "미제출"}
                     </S.ProblemStatus>
                   </S.TableRow>
                 ))}
@@ -195,13 +202,19 @@ export const ContestDetailPage = () => {
               <S.CardInfo>
                 <S.CardTitle>{contestDetails?.title}</S.CardTitle>
                 <S.CardDetails>
-                  <S.CardDetail>시작 일시 : {contestDetails?.startDate} 12:00</S.CardDetail>
+                  <S.CardDetail>
+                    시작 일시 : {contestDetails?.startDate} 12:00
+                  </S.CardDetail>
                   {/* <S.CardDetail>코딩 테스트 시간 : 30분</S.CardDetail> */}
-                  <S.CardDetail>총 {contestDetails?.problems.length}문제</S.CardDetail>
+                  <S.CardDetail>
+                    총 {contestDetails?.problems.length}문제
+                  </S.CardDetail>
                 </S.CardDetails>
               </S.CardInfo>
 
-              <S.StartButton onClick={startTest}>코딩테스트 시작하기</S.StartButton>
+              <S.StartButton onClick={startTest}>
+                코딩테스트 시작하기
+              </S.StartButton>
             </S.CardContent>
           </S.ContestInfoCard>
         </S.MainContentArea>

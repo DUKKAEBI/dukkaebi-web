@@ -2,14 +2,14 @@ import { Routes, Route } from "react-router-dom";
 import Login from "../page/login";
 import Signup from "../page/signup";
 import Main from "../page/main";
-import { ContestDetailPage } from "../page/contestDetail";
+import { ContestDetailPage } from "../page/contests/info";
 import { ContestPage } from "../page/contests/index";
 import Profile from "../page/profile";
 import SolvePage from "../page/solve";
 import Problems from "../page/problems";
 import CoursesPage from "../page/courses";
-import CoursesExplorePage from "../page/courses/explore";
-import CourseDetailPage from "../page/courseDetail";
+import CoursesExplorePage from "../page/courses/explore/explore";
+import CourseDetailPage from "../page/courses/info";
 
 export default function AppRoutes() {
   return (
