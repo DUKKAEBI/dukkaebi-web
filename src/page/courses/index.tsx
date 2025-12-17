@@ -45,6 +45,13 @@ export default function CoursesPage() {
     inprogress: 1,
     completed: 1,
   });
+  const [courseCounts, setCourseCounts] = useState<{
+    total: number;
+    completed: number;
+  }>({
+    total: 0,
+    completed: 0,
+  });
   const ITEMS_PER_PAGE = 8;
   const navigate = useNavigate();
 
@@ -97,6 +104,8 @@ export default function CoursesPage() {
         ]);
 
         const nextCourses: CourseItem[] = [];
+        let inProgressCount = 0;
+        let completedCount = 0;
 
         if (
           inProgressRes.status === "fulfilled" &&
@@ -104,6 +113,7 @@ export default function CoursesPage() {
         ) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const data = inProgressRes.value.data as any[];
+          inProgressCount = data.length;
           nextCourses.push(
             ...data.map<CourseItem>((it) => ({
               id: it.courseId ?? it.id ?? it.code ?? String(it._id ?? it.title),
@@ -119,12 +129,23 @@ export default function CoursesPage() {
           );
         }
 
-        if (
-          completedRes.status === "fulfilled" &&
-          Array.isArray(completedRes.value.data)
-        ) {
+        if (completedRes.status === "fulfilled") {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = completedRes.value.data as any[];
+          let data: any[] = [];
+
+          // 응답이 배열인 경우
+          if (Array.isArray(completedRes.value.data)) {
+            data = completedRes.value.data;
+          }
+          // 응답이 객체이고 courses 필드가 있는 경우
+          else if (
+            completedRes.value.data &&
+            Array.isArray(completedRes.value.data.courses)
+          ) {
+            data = completedRes.value.data.courses;
+          }
+
+          completedCount = data.length;
           nextCourses.push(
             ...data.map<CourseItem>((it) => ({
               id: it.courseId ?? it.id ?? it.code ?? String(it._id ?? it.title),
@@ -141,6 +162,10 @@ export default function CoursesPage() {
         }
 
         setCourses(nextCourses);
+        setCourseCounts({
+          total: inProgressCount + completedCount,
+          completed: completedCount,
+        });
       } catch (err) {
         console.warn("Fetch failed, using fallback", err);
         setCourses([]);
@@ -218,17 +243,33 @@ export default function CoursesPage() {
                   나의 학습 진행도
                 </div>
                 <div style={{ color: "#bdbdbd", fontSize: 13 }}>
-                  현재 40개의 코스 중 20개 코스 완료
+                  현재 {courseCounts.total}개의 코스 중 {courseCounts.completed}
+                  개 코스 완료
                 </div>
               </S.ProgressLabel>
 
               <S.ProgressBar>
-                <S.ProgressFill $percent={30} />
+                <S.ProgressFill
+                  $percent={
+                    courseCounts.total > 0
+                      ? Math.round(
+                          (courseCounts.completed / courseCounts.total) * 100
+                        )
+                      : 0
+                  }
+                />
               </S.ProgressBar>
             </S.ProgressWrapper>
 
             <S.RightProfileMeta>
-              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>30% 진행</div>
+              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>
+                {courseCounts.total > 0
+                  ? Math.round(
+                      (courseCounts.completed / courseCounts.total) * 100
+                    )
+                  : 0}
+                % 진행
+              </div>
             </S.RightProfileMeta>
           </S.ProfileRow>
 
@@ -294,7 +335,10 @@ export default function CoursesPage() {
                 );
 
                 return paginatedCourses.map((c: CourseItem) => (
-                  <S.CourseCard key={c.id}>
+                  <S.CourseCard
+                    key={c.id}
+                    onClick={() => navigate(`/courses/${c.id}`)}
+                  >
                     <S.CourseDifficultyLabel>
                       난이도 : {c.level ?? "-"}
                     </S.CourseDifficultyLabel>

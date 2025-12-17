@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import Login from "../page/login";
 import Signup from "../page/signup";
 import Main from "../page/main";
-import { ContestDetailPage } from "../page/contestDetail";
+import { ContestDetailPage } from "../page/contests/info";
 import { ContestPage } from "../page/contests/index";
 import Profile from "../page/profile";
 import SolvePage from "../page/solve";

@@ -4,7 +4,7 @@ import { Header } from "../../../components/header";
 import axiosInstance from "../../../api/axiosInstance";
 import * as S from "./styles";
 
-type ProblemStatus = "submitted" | "pending";
+type ProblemStatus = "submitted" | "pending" | "failed";
 
 interface ApiProblem {
   problemId?: number;
@@ -67,8 +67,11 @@ const emptyCourseData: CourseDetailData = {
   problems: [],
 };
 
-const toProblemStatus = (result?: string): ProblemStatus =>
-  result === "SOLVED" || result === "FAILED" ? "submitted" : "pending";
+const toProblemStatus = (result?: string): ProblemStatus => {
+  if (result === "SOLVED") return "submitted";
+  if (result === "FAILED") return "failed";
+  return "pending";
+};
 
 const formatDate = (value?: string) => {
   if (!value) return "-";
@@ -250,7 +253,11 @@ const CourseDetailPage = () => {
                     </S.IndexCell>
                     <S.TitleCell>{problem.title}</S.TitleCell>
                     <S.StatusCell status={problem.status}>
-                      {problem.status === "submitted" ? "제출 완료" : "미제출"}
+                      {problem.status === "submitted"
+                        ? "제출 완료"
+                        : problem.status === "failed"
+                        ? "실패"
+                        : "미제출"}
                     </S.StatusCell>
                   </S.TableRow>
                 ))
