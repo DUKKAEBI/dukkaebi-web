@@ -114,7 +114,7 @@ export default function CoursesPage() {
             <S.ProfileInfo>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <S.ProfileName>이윤하</S.ProfileName>
-                <S.ProfileTitle>・ 뚝깨비</S.ProfileTitle>
+                <S.ProfileTitle>・ 동깨비</S.ProfileTitle>
               </div>
               <div style={{ color: "#bdbdbd", fontSize: 13 }}>yoonha2017</div>
             </S.ProfileInfo>
