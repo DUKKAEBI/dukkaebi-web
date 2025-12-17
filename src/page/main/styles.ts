@@ -23,6 +23,7 @@ export const UserIconInner = styled.div`
 export const MainContent = styled.main`
   margin: 0 auto;
   padding: 26px 40px 60px;
+  min-height: 70vh;
 `;
 
 // Hero Section Styles
