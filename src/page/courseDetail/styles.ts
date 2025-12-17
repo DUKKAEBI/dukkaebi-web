@@ -185,12 +185,17 @@ export const TableBody = styled.div`
   flex-direction: column;
 `;
 
-export const TableRow = styled.div<{ isLast?: boolean }>`
+export const TableRow = styled.div<{ isLast?: boolean; $clickable?: boolean }>`
   display: grid;
   grid-template-columns: 80px 1fr 140px;
   padding: 18px 20px;
   align-items: center;
   border-bottom: ${(p) => (p.isLast ? "none" : "1px solid #ededed")};
+  cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
+
+  &:hover {
+    background: ${(p) => (p.$clickable ? "#fafafa" : "transparent")};
+  }
 
   @media (max-width: 600px) {
     grid-template-columns: 60px 1fr 120px;
