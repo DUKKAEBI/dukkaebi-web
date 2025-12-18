@@ -81,8 +81,7 @@ export default function CoursesPage() {
       GOD: { text: "신깨비", color: "#4169E1" },
       WISP: {
         text: "도깨비불",
-        color:
-          "linear-gradient(135deg, #FFFFFF 0%, #FFB6C1 25%, #FFD700 50%, #87CEEB 100%)",
+        color: "#5c85ff",
       },
     };
     return colorMap[growthUpper] || { text: "", color: "#1d1d1d" };
@@ -129,22 +128,12 @@ export default function CoursesPage() {
           );
         }
 
-        if (completedRes.status === "fulfilled") {
+        if (
+          completedRes.status === "fulfilled" &&
+          Array.isArray(completedRes.value.data)
+        ) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let data: any[] = [];
-
-          // 응답이 배열인 경우
-          if (Array.isArray(completedRes.value.data)) {
-            data = completedRes.value.data;
-          }
-          // 응답이 객체이고 courses 필드가 있는 경우
-          else if (
-            completedRes.value.data &&
-            Array.isArray(completedRes.value.data.courses)
-          ) {
-            data = completedRes.value.data.courses;
-          }
-
+          const data = completedRes.value.data as any[];
           completedCount = data.length;
           nextCourses.push(
             ...data.map<CourseItem>((it) => ({
@@ -212,23 +201,15 @@ export default function CoursesPage() {
             <S.ProfileInfo>
               <div style={{ display: "flex", alignItems: "center" }}>
                 <S.ProfileName>{userInfo?.nickname}</S.ProfileName>
-                <S.ProfileTitle
-                  style={{
-                    color: getGrowthStyle(userInfo?.growth || "").color,
-                    WebkitBackgroundClip: getGrowthStyle(
-                      userInfo?.growth || ""
-                    ).color.startsWith("linear-gradient")
-                      ? "text"
-                      : undefined,
-                    WebkitTextFillColor: getGrowthStyle(
-                      userInfo?.growth || ""
-                    ).color.startsWith("linear-gradient")
-                      ? "transparent"
-                      : undefined,
-                  }}
-                >
-                  ・ {getGrowthStyle(userInfo?.growth || "").text}
-                </S.ProfileTitle>
+                {userInfo?.growth && (
+                  <S.ProfileTitle
+                    style={{
+                      color: getGrowthStyle(userInfo.growth).color,
+                    }}
+                  >
+                    ・ {getGrowthStyle(userInfo.growth).text}
+                  </S.ProfileTitle>
+                )}
               </div>
               <div style={{ color: "#bdbdbd", fontSize: 13 }}>
                 {userInfo?.nickname || "yoonha2017"}
@@ -243,33 +224,17 @@ export default function CoursesPage() {
                   나의 학습 진행도
                 </div>
                 <div style={{ color: "#bdbdbd", fontSize: 13 }}>
-                  현재 {courseCounts.total}개의 코스 중 {courseCounts.completed}
-                  개 코스 완료
+                  현재 40개의 코스 중 20개 코스 완료
                 </div>
               </S.ProgressLabel>
 
               <S.ProgressBar>
-                <S.ProgressFill
-                  $percent={
-                    courseCounts.total > 0
-                      ? Math.round(
-                          (courseCounts.completed / courseCounts.total) * 100
-                        )
-                      : 0
-                  }
-                />
+                <S.ProgressFill $percent={30} />
               </S.ProgressBar>
             </S.ProgressWrapper>
 
             <S.RightProfileMeta>
-              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>
-                {courseCounts.total > 0
-                  ? Math.round(
-                      (courseCounts.completed / courseCounts.total) * 100
-                    )
-                  : 0}
-                % 진행
-              </div>
+              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>30% 진행</div>
             </S.RightProfileMeta>
           </S.ProfileRow>
 

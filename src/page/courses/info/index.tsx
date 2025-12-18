@@ -188,12 +188,13 @@ const CourseDetailPage = () => {
   const showTableRows = !loading && courseData.problems.length > 0;
 
   const handleProblemClick = (problemId: number) => {
-    navigate(`/solve/${problemId}`);
+    if (!courseId) return;
+    navigate(`/courses/${courseId}/solve/${problemId}`);
   };
 
   const handleStartFirstProblem = () => {
-    if (!courseData.problems.length) return;
-    navigate(`/solve/${courseData.problems[0].id}`);
+    if (!courseId || !courseData.problems.length) return;
+    navigate(`/courses/${courseId}/solve/${courseData.problems[0].id}`);
   };
 
   return (
