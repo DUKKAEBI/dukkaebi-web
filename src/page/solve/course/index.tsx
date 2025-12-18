@@ -6,6 +6,8 @@ import {
   type KeyboardEvent,
 } from "react";
 import type * as monacoEditor from "monaco-editor";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as Style from "./style";
@@ -348,11 +350,25 @@ export default function SolvePage() {
 
       const data = await response.json();
       setTerminalOutput(formatGradingResult(data));
+
+      // Determine pass/fail via details[].passed
+      const passed = Array.isArray(data?.details)
+        ? data.details.some((d: { passed?: boolean }) => d?.passed === true)
+        : false;
+      if (passed) {
+        toast.success("정답입니다", { autoClose: 2500 });
+      } else {
+        toast.error("오답입니다.", { autoClose: 2500 });
+      }
     } catch (error) {
       setTerminalOutput(
         error instanceof Error
           ? error.message
           : "채점 중 알 수 없는 오류가 발생했습니다."
+      );
+      toast.error(
+        error instanceof Error ? error.message : "채점 오류가 발생했습니다.",
+        { autoClose: 3000 }
       );
     } finally {
       setIsSubmitting(false);
@@ -450,6 +466,12 @@ export default function SolvePage() {
 
   return (
     <Style.SolveContainer ref={containerRef}>
+      <ToastContainer
+        position="top-right"
+        theme="dark"
+        newestOnTop
+        closeOnClick
+      />
       <Style.Header>
         <Style.BackButton
           type="button"
