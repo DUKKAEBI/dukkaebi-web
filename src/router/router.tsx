@@ -11,6 +11,7 @@ import Problems from "../page/problems";
 import CoursesPage from "../page/courses";
 import CoursesExplorePage from "../page/courses/explore/explore";
 import CourseDetailPage from "../page/courses/info";
+import ContestSolvePage from "../page/solve/contests";
 
 export default function AppRoutes() {
   return (
@@ -30,7 +31,11 @@ export default function AppRoutes() {
       <Route path="/courses/explore" element={<CoursesExplorePage />} />
       <Route path="/courses/:courseId" element={<CourseDetailPage />} />
       <Route path="/contests" element={<ContestPage />} />
-      <Route path="/contests/:contestId" element={<ContestDetailPage />} />
+      <Route path="/contests/:contestCode" element={<ContestDetailPage />} />
+      <Route
+        path="/contests/:contestCode/solve/:problemId"
+        element={<ContestSolvePage />}
+      />
     </Routes>
   );
 }
