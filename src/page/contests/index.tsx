@@ -84,7 +84,7 @@ export const ContestPage = () => {
   const getStatusText = (status: Contest["status"]) => {
     switch (status) {
       case "JOINABLE":
-        return "참가하기";
+        return "참여 가능";
       case "JOINED":
         return "참여중";
       case "ENDED":
@@ -128,8 +128,7 @@ export const ContestPage = () => {
   };
 
   const moveToContestDetail = (code: string) => {
-    const target = contests.find((c) => c.code === code);
-    if (target?.status === "JOINED") navigate(`/contests/${code}`);
+    navigate(`/contests/${code}`);
   };
 
   // ============================
@@ -223,7 +222,7 @@ export const ContestPage = () => {
           <S.SearchBar>
             <S.SearchInput
               type="text"
-              placeholder="대회 이름을 검색하세요..."
+              placeholder="대회 이름을 검색하세요"
               value={searchTerm}
               onChange={handleSearchChange}
             />
@@ -245,10 +244,6 @@ export const ContestPage = () => {
                         $status={contest.status}
                         $bgColor={getStatusColor(contest.status)}
                         $textColor={getStatusTextColor(contest.status)}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          joinContest(contest.code);
-                        }}
                       >
                         {getStatusText(contest.status)}
                       </S.CardBadge>
@@ -257,8 +252,9 @@ export const ContestPage = () => {
                     <S.CardContent>
                       <S.CardTitle>{contest.title}</S.CardTitle>
                       <S.CardInfo>
-                        {contest.dDay}일 남음 ・ {contest.participantCount}명
-                        참여중
+                        {contest.dDay !== "종료됨" &&
+                          `${contest.dDay}일 남음 ・ `}
+                        {contest.participantCount}명 참여중
                       </S.CardInfo>
                     </S.CardContent>
                   </S.ContestCard>

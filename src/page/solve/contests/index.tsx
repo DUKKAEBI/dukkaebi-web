@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as Style from "./style";
+import axiosInstance from "../../../api/axiosInstance";
 
 type ProblemDetail = {
   name: string;
@@ -32,6 +33,12 @@ type CourseDetail = {
   courseId: number;
   title: string;
   problems: CourseProblemItem[];
+};
+
+type ContestInfo = {
+  startDate?: string;
+  endDate?: string;
+  status?: string;
 };
 
 type ChatMessage = {
@@ -67,8 +74,8 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 export default function SolvePage() {
-  const { courseId, problemId } = useParams<{
-    courseId?: string;
+  const { contestCode, problemId } = useParams<{
+    contestCode?: string;
     problemId?: string;
   }>();
   const navigate = useNavigate();
@@ -119,6 +126,8 @@ export default function SolvePage() {
       }>
     >
   >({});
+  const [contestInfo, setContestInfo] = useState<ContestInfo | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const messageIdRef = useRef(INITIAL_CHAT_MESSAGES.length);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -194,18 +203,18 @@ export default function SolvePage() {
       setProblemError("");
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await fetch(`${API_BASE_URL}problems/${problemId}`, {
-          signal: controller.signal,
-          headers: accessToken
-            ? {
-                Authorization: `Bearer ${accessToken}`,
-              }
-            : undefined,
-        });
-        if (!response.ok) {
-          throw new Error("문제 정보를 불러오지 못했습니다.");
-        }
-        const data: ProblemDetail = await response.json();
+        const response = await axiosInstance(
+          `${API_BASE_URL}problems/${problemId}`,
+          {
+            signal: controller.signal,
+            headers: accessToken
+              ? {
+                  Authorization: `Bearer ${accessToken}`,
+                }
+              : undefined,
+          }
+        );
+        const data: ProblemDetail = response.data;
         setProblem(data);
         setProblemStatus("success");
       } catch (error) {
@@ -238,22 +247,37 @@ export default function SolvePage() {
 
   // Fetch course problems for sidebar
   useEffect(() => {
-    if (!courseId || !API_BASE_URL) return;
+    if (!contestCode || !API_BASE_URL) return;
     const controller = new AbortController();
     const fetchCourse = async () => {
       try {
         setCourseLoading(true);
         const accessToken = localStorage.getItem("accessToken");
-        const res = await fetch(`${API_BASE_URL}course/${courseId}`, {
-          signal: controller.signal,
-          headers: accessToken
-            ? { Authorization: `Bearer ${accessToken}` }
-            : undefined,
+        const res = await axiosInstance(
+          `${API_BASE_URL}contest/${contestCode}`,
+          {
+            signal: controller.signal,
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
+          }
+        );
+
+        const data: any = await res.data;
+        // store contest timing/status info if provided
+        setContestInfo({
+          startDate: data?.startDate,
+          endDate: data?.endDate,
+          status: data?.status,
         });
-        if (!res.ok) throw new Error("코스 정보를 불러오지 못했습니다.");
-        const data: CourseDetail = await res.json();
-        const items = Array.isArray((data as any)?.problems)
-          ? ((data as any).problems as any[]).map((p, idx) => ({
+
+        const courseData: CourseDetail = {
+          courseId: data?.courseId ?? 0,
+          title: data?.title ?? "",
+          problems: Array.isArray(data?.problems) ? data.problems : [],
+        };
+        const items = Array.isArray(courseData.problems)
+          ? (courseData.problems as any[]).map((p, idx) => ({
               problemId: p?.problemId ?? idx + 1,
               name: p?.name ?? `문제 ${idx + 1}`,
               difficulty: p?.difficulty,
@@ -272,7 +296,48 @@ export default function SolvePage() {
     };
     fetchCourse();
     return () => controller.abort();
-  }, [courseId]);
+  }, [contestCode]);
+
+  // Live update remaining time (start/end)
+  useEffect(() => {
+    if (!contestInfo) {
+      setTimeLeft("");
+      return;
+    }
+    const compute = () => {
+      const now = new Date();
+      const start = contestInfo.startDate
+        ? new Date(contestInfo.startDate)
+        : null;
+      const end = contestInfo.endDate ? new Date(contestInfo.endDate) : null;
+      const status = contestInfo.status;
+
+      if (status === "ENDED" || (end && now > end)) {
+        return "종료됨";
+      }
+      const fmt = (ms: number) => {
+        const totalSec = Math.max(0, Math.floor(ms / 1000));
+        const d = Math.floor(totalSec / 86400);
+        const h = Math.floor((totalSec % 86400) / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        const hh = String(h).padStart(2, "0");
+        const mm = String(m).padStart(2, "0");
+        const ss = String(s).padStart(2, "0");
+        return d > 0 ? `D-${d} ${hh}:${mm}:${ss}` : `${hh}:${mm}:${ss}`;
+      };
+      if (start && now < start) {
+        return `시작까지 ${fmt(start.getTime() - now.getTime())}`;
+      }
+      if (end && now < end) {
+        return `종료까지 ${fmt(end.getTime() - now.getTime())}`;
+      }
+      return "";
+    };
+    setTimeLeft(compute());
+    const id = window.setInterval(() => setTimeLeft(compute()), 1000);
+    return () => window.clearInterval(id);
+  }, [contestInfo]);
 
   useEffect(() => {
     if (!problem) return;
@@ -497,12 +562,12 @@ export default function SolvePage() {
       : "";
 
   const handleExitSolvePage = () => {
-    navigate(`/courses/${courseId}`);
+    navigate(`/contests/${contestCode}`);
   };
 
   const handleSidebarItemClick = (pid: number) => {
-    if (!courseId) return;
-    navigate(`/courses/${courseId}/solve/${pid}`);
+    if (!contestCode) return;
+    navigate(`/contests/${contestCode}/solve/${pid}`);
   };
 
   return (
@@ -528,6 +593,11 @@ export default function SolvePage() {
               : "문제 정보 없음")}
         </Style.HeaderTitle>
         <Style.HeaderActions>
+          {timeLeft && (
+            <span style={{ color: "#9fb1bc", marginRight: 12 }}>
+              {timeLeft}
+            </span>
+          )}
           <Style.LanguageSelect
             value={language}
             onChange={handleLanguageChange}

@@ -131,7 +131,7 @@ export const MainContent = styled.main`
 `;
 
 export const SearchBar = styled.div`
-  width: 100%;
+  width: 120%;
   max-width: 388px;
   background: #f6f6f6;
   border: 1px solid #ededed;
@@ -140,7 +140,6 @@ export const SearchBar = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 8px 20px;
-  margin-bottom: 40px;
 `;
 
 export const SearchInput = styled.input`
@@ -173,7 +172,7 @@ export const ContestsSection = styled.section`
 
 export const ContestsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, 183px);
+  grid-template-columns: repeat(auto-fill, 220px);
 
   gap: 20px;
   width: 100%;
