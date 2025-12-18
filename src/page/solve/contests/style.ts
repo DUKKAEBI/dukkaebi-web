@@ -82,6 +82,7 @@ export const PageContent = styled.div`
   width: 100%;
   position: relative;
   min-height: 0;
+  padding-right: 0; // 👈 사이드바 공간 확보는 조건부로 처리
 `;
 
 export const LeftPanel = styled.div`
@@ -90,7 +91,7 @@ export const LeftPanel = styled.div`
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
   flex: 1;
-  min-width: 20%;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -98,6 +99,7 @@ export const LeftPanel = styled.div`
   height: 100%;
   min-height: 0;
   overflow-y: auto;
+  width: 200px;
 `;
 
 export const LeftPanelContent = styled.div`
@@ -192,6 +194,7 @@ export const RightPanel = styled.div<{ $width: number }>`
   box-sizing: border-box;
   width: ${({ $width }) => `${$width}%`};
   min-width: 20%;
+  max-width: 80%;
   flex-shrink: 0;
   position: relative;
   min-height: 0;
@@ -219,14 +222,16 @@ export const MenuButton = styled.button`
 
 // New: static right sidebar for problem list
 export const RightSidebar = styled.aside`
-  width: 300px;
-  max-width: 340px;
-  min-width: 240px;
+  position: fixed; // 👈 fixed로 변경
+  right: 0;
+  top: 40px; // Header 높이만큼 아래에 배치
+  width: 250px;
+  height: calc(100% - 40px); // Header 제외한 전체 높이
   background: #35454e;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
-  height: 100%;
   display: flex;
   flex-direction: column;
+  z-index: 100; // 👈 다른 요소들 위에 표시
   flex-shrink: 0;
 `;
 

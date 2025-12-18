@@ -24,6 +24,7 @@ export const Header = styled.div`
   background-color: #35454e;
   height: 40px;
   flex-shrink: 0;
+  z-index: 101; /* 사이드바보다 위에 위치 */
 `;
 
 export const BackButton = styled.button`
@@ -70,10 +71,6 @@ export const LanguageSelect = styled.select`
   &:focus {
     outline: none;
   }
-
-  &::-ms-expand {
-    display: none;
-  }
 `;
 
 export const PageContent = styled.div`
@@ -82,6 +79,8 @@ export const PageContent = styled.div`
   width: 100%;
   position: relative;
   min-height: 0;
+  /* 리액트에서 인라인 스타일로 padding-right: 250px를 동적 할당합니다 */
+  transition: padding-right 0.1s ease-out;
 `;
 
 export const LeftPanel = styled.div`
@@ -90,7 +89,7 @@ export const LeftPanel = styled.div`
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
   flex: 1;
-  min-width: 20%;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -102,7 +101,6 @@ export const LeftPanel = styled.div`
 
 export const LeftPanelContent = styled.div`
   flex: 1 1 auto;
-  padding-right: 4px;
   padding-bottom: 120px;
   width: 100%;
 `;
@@ -110,10 +108,6 @@ export const LeftPanelContent = styled.div`
 export const Section = styled.div`
   margin-bottom: 32px;
   width: 100%;
-
-  &:last-of-type {
-    margin-bottom: 0;
-  }
 `;
 
 export const SectionTitle = styled.div`
@@ -141,33 +135,27 @@ export const ProblemStatus = styled.div<{ $variant?: "error" | "info" }>`
 export const ExampleTextarea = styled.textarea`
   width: 100%;
   max-width: 100%;
-  align-self: stretch;
-  min-width: 0;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 12px;
   color: #e8eaed;
-  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-family: monospace;
   font-size: 14px;
   resize: none;
   min-height: 70px;
   box-sizing: border-box;
-  cursor: default;
   pointer-events: none;
 `;
 
 export const ExampleOutput = styled.pre`
   width: 100%;
-  max-width: 100%;
-  align-self: stretch;
-  min-width: 0;
   background: rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 10px;
   padding: 12px;
   color: #e8eaed;
-  font-family: Menlo, Monaco, "Courier New", monospace;
+  font-family: monospace;
   font-size: 14px;
   min-height: 70px;
   box-sizing: border-box;
@@ -182,11 +170,11 @@ export const Divider = styled.div<{ $isResizing: boolean }>`
   cursor: col-resize;
   flex-shrink: 0;
   transition: background 0.2s;
+  z-index: 10;
 `;
 
 export const RightPanel = styled.div<{ $width: number }>`
   background: #2d3d48;
-  padding: 0;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -195,10 +183,8 @@ export const RightPanel = styled.div<{ $width: number }>`
   flex-shrink: 0;
   position: relative;
   min-height: 0;
-  overflow-y: auto;
 `;
 
-// New: header menu button (hamburger)
 export const MenuButton = styled.button`
   background: transparent;
   border: none;
@@ -217,17 +203,21 @@ export const MenuButton = styled.button`
   }
 `;
 
-// New: static right sidebar for problem list
+/** * 핵심 수정: RightSidebar
+ * position: fixed를 사용하여 레이아웃 계산에서 완전히 제외시킵니다.
+ */
 export const RightSidebar = styled.aside`
-  width: 300px;
-  max-width: 340px;
-  min-width: 240px;
+  position: fixed;
+  right: 0;
+  top: 40px; /* Header 높이만큼 아래로 */
+  width: 250px;
+  height: calc(100% - 40px);
   background: #35454e;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
-  height: 100%;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
+  z-index: 100;
+  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.2);
 `;
 
 export const SidebarHeader = styled.div`
@@ -235,8 +225,10 @@ export const SidebarHeader = styled.div`
   display: flex;
   align-items: center;
   padding: 0 16px;
-  color: #e8eaed;
-  font-size: 14px;
+  color: #7a8697;
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 `;
 
@@ -254,21 +246,19 @@ export const SidebarItem = styled.button<{ $active?: boolean }>`
   padding: 12px 16px;
   background: ${({ $active }) => ($active ? "#2d3d48" : "transparent")};
   border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   color: #e8eaed;
   cursor: pointer;
   text-align: left;
 
   &:hover {
-    background: ${({ $active }) =>
-      $active ? "#2a3943" : "rgba(255, 255, 255, 0.06)"};
+    background: rgba(255, 255, 255, 0.06);
   }
 `;
 
 export const SidebarItemIndex = styled.span`
   color: #9fb1bc;
   font-size: 12px;
-  min-width: 32px;
+  min-width: 24px;
 `;
 
 export const SidebarItemTitle = styled.span`
@@ -280,11 +270,8 @@ export const SidebarItemTitle = styled.span`
   text-overflow: ellipsis;
 `;
 
-// Thin divider to visually separate middle panel and sidebar when needed
 export const ThinDivider = styled.div`
-  width: 1px;
-  background: rgba(255, 255, 255, 0.08);
-  flex-shrink: 0;
+  display: none; /* fixed 구조에서는 필요 없음 */
 `;
 
 export const EditorContainer = styled.div`
@@ -299,7 +286,6 @@ export const ResultContainer = styled.div`
   position: relative;
 `;
 
-// Tabs bar for result area
 export const ResultTabs = styled.div`
   height: 36px;
   display: flex;
@@ -307,7 +293,6 @@ export const ResultTabs = styled.div`
   gap: 12px;
   padding: 0 16px 0 20px;
   background: #263238;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 `;
 
 export const ResultTab = styled.button<{ $active?: boolean }>`
@@ -318,68 +303,39 @@ export const ResultTab = styled.button<{ $active?: boolean }>`
   font-size: 14px;
   padding: 8px 4px;
   cursor: pointer;
-  position: relative;
-
-  &:after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 2px;
-    background: ${({ $active }) => ($active ? "#00B4B7" : "transparent")};
-    border-radius: 2px;
-  }
+  border-bottom: 2px solid
+    ${({ $active }) => ($active ? "#00B4B7" : "transparent")};
 `;
 
 export const Terminal = styled.div<{ $height: number }>`
   width: 100%;
   height: ${({ $height }) => `${$height}px`};
   background: #263238;
-  color: #9eeac3;
-  font-family: Menlo, Monaco, monospace;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
 `;
 
 export const TerminalHandle = styled.div`
   height: 4px;
-  cursor: default;
   background: transparent;
-`;
-
-export const TerminalHeader = styled.div`
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 4px 16px 0 20px;
-  background: #263238;
-  font-size: 14px;
-  color: #a0aec0;
-  font-weight: 600;
 `;
 
 export const TerminalOutput = styled.div`
   flex: 1;
-  padding: 10px 16px 16px 22px;
+  padding: 16px 20px;
   overflow-y: auto;
   white-space: pre-wrap;
-  font-size: 16px;
-  text-align: left;
+  font-size: 15px;
   color: #ffffff;
+  font-family: monospace;
 `;
 
 export const SubmitWrapper = styled.div`
   position: absolute;
   right: 20px;
   bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
+  z-index: 5;
 `;
 
 export const SubmitButton = styled.button`
@@ -387,11 +343,11 @@ export const SubmitButton = styled.button`
   color: #ffffff;
   border: none;
   border-radius: 10px;
-  padding: 11px 24px;
+  padding: 12px 24px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 180, 183, 0.3);
 
   &:hover {
     background: #00969a;
@@ -400,7 +356,6 @@ export const SubmitButton = styled.button`
   &:disabled {
     background: #4a6b70;
     cursor: not-allowed;
-    opacity: 0.7;
   }
 `;
 

@@ -142,7 +142,6 @@ export default function SolvePage() {
   // Terminal (floating) size & resize state
   const [terminalHeight, setTerminalHeight] = useState(200); // px
   const terminalRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (!isResizing) return;
 
@@ -150,9 +149,17 @@ export default function SolvePage() {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const relativeX = event.clientX - rect.left;
-      const rightWidthPercent = ((rect.width - relativeX) / rect.width) * 100;
-      const clampedWidth = Math.min(80, Math.max(20, rightWidthPercent));
-      setRightPanelWidth(clampedWidth);
+
+      const MIN_LEFT_WIDTH = 400;
+
+      const MAX_LEFT_WIDTH = rect.width * 0.8;
+      const clampedX = Math.max(
+        MIN_LEFT_WIDTH,
+        Math.min(MAX_LEFT_WIDTH, relativeX)
+      );
+
+      const rightWidthPercent = ((rect.width - clampedX) / rect.width) * 100;
+      setRightPanelWidth(rightWidthPercent);
     };
 
     const stopResizing = () => setIsResizing(false);
@@ -871,6 +878,9 @@ export default function SolvePage() {
               <Style.SubmitButton
                 onClick={handleSubmitCode}
                 disabled={isSubmitting || !problemId}
+                style={
+                  isSidebarOpen ? { marginRight: 268 } : { marginRight: 0 }
+                }
               >
                 {isSubmitting ? "채점 중..." : "제출 후 채점하기"}
               </Style.SubmitButton>
