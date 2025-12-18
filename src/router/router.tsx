@@ -20,12 +20,7 @@ export default function AppRoutes() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/" element={<Main />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/solve" element={<SolvePage />} />
-      <Route path="/solve/:problemId" element={<SolvePage />} />
-      <Route
-        path="/courses/:courseId/solve/:problemId"
-        element={<CourseSolvePage />}
-      />
+
       <Route path="/problems" element={<Problems />} />
       <Route path="/courses" element={<CoursesPage />} />
       <Route path="/courses/explore" element={<CoursesExplorePage />} />
@@ -35,6 +30,11 @@ export default function AppRoutes() {
       <Route
         path="/contests/:contestCode/solve/:problemId"
         element={<ContestSolvePage />}
+      />
+      <Route path="/solve/:problemId" element={<SolvePage />} />
+      <Route
+        path="/courses/:courseId/solve/:problemId"
+        element={<CourseSolvePage />}
       />
     </Routes>
   );

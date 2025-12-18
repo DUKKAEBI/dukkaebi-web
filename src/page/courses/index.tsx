@@ -284,9 +284,6 @@ export default function CoursesPage() {
                   </S.ProfileTitle>
                 )}
               </div>
-              <div style={{ color: "#bdbdbd", fontSize: 13 }}>
-                {userInfo?.nickname || "yoonha2017"}
-              </div>
             </S.ProfileInfo>
 
             <S.VerticalDivider />
