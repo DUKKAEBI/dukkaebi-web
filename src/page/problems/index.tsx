@@ -76,7 +76,7 @@ export default function Problems() {
 
   const difficultyMap: Record<string, number> = {
     GOLD: 1,
-    SLIVER: 2,
+    SILVER: 2,
     COPPER: 3,
     IRON: 4,
     JADE: 5,
@@ -84,7 +84,7 @@ export default function Problems() {
 
   const difficultyReverseMap: Record<number, string> = {
     1: "GOLD",
-    2: "SLIVER",
+    2: "SILVER",
     3: "COPPER",
     4: "IRON",
     5: "JADE",
