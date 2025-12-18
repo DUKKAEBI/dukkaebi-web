@@ -128,15 +128,17 @@ export default function CoursesPage() {
           );
         }
 
-        if (
-          completedRes.status === "fulfilled" &&
-          Array.isArray(completedRes.value.data)
-        ) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = completedRes.value.data as any[];
-          completedCount = data.length;
+        if (completedRes.status === "fulfilled") {
+          // 응답 스키마: { inProgressCount: number, courses: [...] }
+          const raw = completedRes.value.data as any;
+          const list = Array.isArray(raw)
+            ? (raw as any[])
+            : Array.isArray(raw?.courses)
+            ? (raw.courses as any[])
+            : [];
+          completedCount = list.length;
           nextCourses.push(
-            ...data.map<CourseItem>((it) => ({
+            ...list.map<CourseItem>((it) => ({
               id: it.courseId ?? it.id ?? it.code ?? String(it._id ?? it.title),
               title: it.title ?? it.name ?? "제목 없음",
               desc: it.description ?? it.desc ?? "",
@@ -145,7 +147,7 @@ export default function CoursesPage() {
               lessonCount: it.lessonCount ?? it.lessons ?? 0,
               status: "completed" as const,
               progress: it.progressPercent ?? it.progress ?? 100,
-              tags: it.tags ?? it.keywords ?? [],
+              tags: (it.tags ?? it.keywords ?? []) as string[],
             }))
           );
         }
@@ -164,6 +166,77 @@ export default function CoursesPage() {
 
     fetchData();
   }, []);
+
+  // 완료한 코스 탭으로 전환 시 최신 데이터 재조회 (요청 확인용)
+  useEffect(() => {
+    if (activeTab !== "completed") return;
+    const fetchCompletedTab = async () => {
+      try {
+        const [inProgressRes, completedRes] = await Promise.allSettled([
+          axiosInstance.get("/student/course/in-progress"),
+          axiosInstance.get("/student/course/completed"),
+        ]);
+
+        const nextCourses: CourseItem[] = [];
+        let inProgressCount = 0;
+        let completedCount = 0;
+
+        if (
+          inProgressRes.status === "fulfilled" &&
+          Array.isArray(inProgressRes.value.data)
+        ) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const data = inProgressRes.value.data as any[];
+          inProgressCount = data.length;
+          nextCourses.push(
+            ...data.map<CourseItem>((it) => ({
+              id: it.courseId ?? it.id ?? it.code ?? String(it._id ?? it.title),
+              title: it.title ?? it.name ?? "제목 없음",
+              desc: it.description ?? it.desc ?? "",
+              image: it.image ?? it.thumbnail ?? undefined,
+              level: it.level ?? it.difficulty ?? "",
+              lessonCount: it.lessonCount ?? it.lessons ?? 0,
+              status: "inprogress",
+              progress: it.progressPercent ?? it.progress ?? 0,
+              tags: (it.tags ?? it.keywords ?? []) as string[],
+            }))
+          );
+        }
+
+        if (completedRes.status === "fulfilled") {
+          const raw = completedRes.value.data as any;
+          const list = Array.isArray(raw)
+            ? (raw as any[])
+            : Array.isArray(raw?.courses)
+            ? (raw.courses as any[])
+            : [];
+          completedCount = list.length;
+          nextCourses.push(
+            ...list.map<CourseItem>((it) => ({
+              id: it.courseId ?? it.id ?? it.code ?? String(it._id ?? it.title),
+              title: it.title ?? it.name ?? "제목 없음",
+              desc: it.description ?? it.desc ?? "",
+              image: it.image ?? it.thumbnail ?? undefined,
+              level: it.level ?? it.difficulty ?? "",
+              lessonCount: it.lessonCount ?? it.lessons ?? 0,
+              status: "completed" as const,
+              progress: it.progressPercent ?? it.progress ?? 100,
+              tags: (it.tags ?? it.keywords ?? []) as string[],
+            }))
+          );
+        }
+
+        setCourses(nextCourses);
+        setCourseCounts({
+          total: inProgressCount + completedCount,
+          completed: completedCount,
+        });
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchCompletedTab();
+  }, [activeTab]);
 
   const handlePageChange = (page: number) => {
     setPageByTab((prev: Record<"inprogress" | "completed", number>) => ({
@@ -224,17 +297,33 @@ export default function CoursesPage() {
                   나의 학습 진행도
                 </div>
                 <div style={{ color: "#bdbdbd", fontSize: 13 }}>
-                  현재 40개의 코스 중 20개 코스 완료
+                  현재 {courseCounts.total}개의 코스 중 {courseCounts.completed}
+                  개 코스 완료
                 </div>
               </S.ProgressLabel>
 
               <S.ProgressBar>
-                <S.ProgressFill $percent={30} />
+                <S.ProgressFill
+                  $percent={
+                    courseCounts.total > 0
+                      ? Math.round(
+                          (courseCounts.completed / courseCounts.total) * 100
+                        )
+                      : 0
+                  }
+                />
               </S.ProgressBar>
             </S.ProgressWrapper>
 
             <S.RightProfileMeta>
-              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>30% 진행</div>
+              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>
+                {courseCounts.total > 0
+                  ? Math.round(
+                      (courseCounts.completed / courseCounts.total) * 100
+                    )
+                  : 0}
+                % 진행
+              </div>
             </S.RightProfileMeta>
           </S.ProfileRow>
 

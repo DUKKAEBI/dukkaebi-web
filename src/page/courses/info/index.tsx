@@ -249,9 +249,7 @@ const CourseDetailPage = () => {
                     $clickable
                     onClick={() => handleProblemClick(problem.id)}
                   >
-                    <S.IndexCell>
-                      {String(problem.id).padStart(2, "0")}
-                    </S.IndexCell>
+                    <S.IndexCell>{index + 1}</S.IndexCell>
                     <S.TitleCell>{problem.title}</S.TitleCell>
                     <S.StatusCell status={problem.status}>
                       {problem.status === "submitted"

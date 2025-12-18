@@ -173,7 +173,7 @@ export const ContestDetailPage = () => {
                     key={problem.problemId}
                     $isLast={index === contestDetails.problems.length - 1}
                   >
-                    <S.ProblemNumber>{problem.problemId}</S.ProblemNumber>
+                    <S.ProblemNumber>{index + 1}</S.ProblemNumber>
                     <S.ProblemTitle>{problem.name}</S.ProblemTitle>
                     <S.ProblemStatus $status={problem.solvedResult}>
                       {problem.solvedResult === "SOLVED" ||
