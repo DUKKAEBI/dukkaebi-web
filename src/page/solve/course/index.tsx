@@ -5,9 +5,9 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
 } from "react";
+import type * as monacoEditor from "monaco-editor";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import type * as monacoEditor from "monaco-editor";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as Style from "./style";
@@ -19,6 +19,19 @@ type ProblemDetail = {
   output: string;
   exampleInput: string;
   exampleOutput: string;
+};
+
+type CourseProblemItem = {
+  problemId: number;
+  name: string;
+  difficulty?: string;
+  solvedResult?: string;
+};
+
+type CourseDetail = {
+  courseId: number;
+  title: string;
+  problems: CourseProblemItem[];
 };
 
 type ChatMessage = {
@@ -54,7 +67,10 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 export default function SolvePage() {
-  const { problemId } = useParams<{ problemId?: string }>();
+  const { courseId, problemId } = useParams<{
+    courseId?: string;
+    problemId?: string;
+  }>();
   const navigate = useNavigate();
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
@@ -76,6 +92,9 @@ export default function SolvePage() {
   const [problemError, setProblemError] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [courseProblems, setCourseProblems] = useState<CourseProblemItem[]>([]);
+  const [courseLoading, setCourseLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const messageIdRef = useRef(INITIAL_CHAT_MESSAGES.length);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -182,6 +201,44 @@ export default function SolvePage() {
     fetchProblem();
     return () => controller.abort();
   }, [problemId]);
+
+  // Fetch course problems for sidebar
+  useEffect(() => {
+    if (!courseId || !API_BASE_URL) return;
+    const controller = new AbortController();
+    const fetchCourse = async () => {
+      try {
+        setCourseLoading(true);
+        const accessToken = localStorage.getItem("accessToken");
+        const res = await fetch(`${API_BASE_URL}course/${courseId}`, {
+          signal: controller.signal,
+          headers: accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : undefined,
+        });
+        if (!res.ok) throw new Error("코스 정보를 불러오지 못했습니다.");
+        const data: CourseDetail = await res.json();
+        const items = Array.isArray((data as any)?.problems)
+          ? ((data as any).problems as any[]).map((p, idx) => ({
+              problemId: p?.problemId ?? idx + 1,
+              name: p?.name ?? `문제 ${idx + 1}`,
+              difficulty: p?.difficulty,
+              solvedResult: p?.solvedResult,
+            }))
+          : [];
+        setCourseProblems(items);
+      } catch (e) {
+        if (!controller.signal.aborted) {
+          // keep silent on sidebar errors
+          setCourseProblems([]);
+        }
+      } finally {
+        setCourseLoading(false);
+      }
+    };
+    fetchCourse();
+    return () => controller.abort();
+  }, [courseId]);
 
   useEffect(() => {
     if (!problem) return;
@@ -294,7 +351,7 @@ export default function SolvePage() {
       const data = await response.json();
       setTerminalOutput(formatGradingResult(data));
 
-      // Determine pass/fail based on details[].passed
+      // Determine pass/fail via details[].passed
       const passed = Array.isArray(data?.details)
         ? data.details.some((d: { passed?: boolean }) => d?.passed === true)
         : false;
@@ -337,6 +394,7 @@ export default function SolvePage() {
 
   const openChat = () => setIsChatOpen(true);
   const closeChat = () => setIsChatOpen(false);
+  const toggleSidebar = () => setIsSidebarOpen((v) => !v);
 
   const handleChatInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setChatInput(event.target.value);
@@ -401,6 +459,11 @@ export default function SolvePage() {
     navigate("/problems");
   };
 
+  const handleSidebarItemClick = (pid: number) => {
+    if (!courseId) return;
+    navigate(`/courses/${courseId}/solve/${pid}`);
+  };
+
   return (
     <Style.SolveContainer ref={containerRef}>
       <ToastContainer
@@ -434,6 +497,13 @@ export default function SolvePage() {
               </option>
             ))}
           </Style.LanguageSelect>
+          <Style.MenuButton
+            type="button"
+            aria-label="문제 목록 열기/닫기"
+            onClick={toggleSidebar}
+          >
+            ☰
+          </Style.MenuButton>
         </Style.HeaderActions>
       </Style.Header>
 
@@ -518,6 +588,35 @@ export default function SolvePage() {
             </Style.SubmitWrapper>
           </Style.ResultContainer>
         </Style.RightPanel>
+        {isSidebarOpen && (
+          <>
+            <Style.ThinDivider />
+            <Style.RightSidebar>
+              <Style.SidebarList>
+                {courseLoading
+                  ? null
+                  : courseProblems.map((p, idx) => {
+                      const active =
+                        String(p.problemId) === String(problemId ?? "");
+                      return (
+                        <Style.SidebarItem
+                          key={p.problemId}
+                          $active={active}
+                          onClick={() => handleSidebarItemClick(p.problemId)}
+                        >
+                          <Style.SidebarItemIndex>
+                            {String(idx + 1).padStart(2, "0")}
+                          </Style.SidebarItemIndex>
+                          <Style.SidebarItemTitle>
+                            {p.name}
+                          </Style.SidebarItemTitle>
+                        </Style.SidebarItem>
+                      );
+                    })}
+              </Style.SidebarList>
+            </Style.RightSidebar>
+          </>
+        )}
       </Style.PageContent>
     </Style.SolveContainer>
   );

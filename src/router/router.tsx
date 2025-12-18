@@ -6,6 +6,7 @@ import { ContestDetailPage } from "../page/contests/info";
 import { ContestPage } from "../page/contests/index";
 import Profile from "../page/profile";
 import SolvePage from "../page/solve";
+import CourseSolvePage from "../page/solve/course";
 import Problems from "../page/problems";
 import CoursesPage from "../page/courses";
 import CoursesExplorePage from "../page/courses/explore/explore";
@@ -20,6 +21,10 @@ export default function AppRoutes() {
       <Route path="/profile" element={<Profile />} />
       <Route path="/solve" element={<SolvePage />} />
       <Route path="/solve/:problemId" element={<SolvePage />} />
+      <Route
+        path="/courses/:courseId/solve/:problemId"
+        element={<CourseSolvePage />}
+      />
       <Route path="/problems" element={<Problems />} />
       <Route path="/courses" element={<CoursesPage />} />
       <Route path="/courses/explore" element={<CoursesExplorePage />} />
