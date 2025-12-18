@@ -41,21 +41,37 @@ const formatDate = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+// Get day of week (0 = Monday, 6 = Sunday)
+const getDayOfWeek = (date: Date): number => {
+  const day = date.getDay();
+  return day === 0 ? 6 : day - 1; // Convert Sunday(0) to 6, Monday(1) to 0
+};
+
 // Transform contributions data to heatmap format (23 weeks × 7 days)
 const generateHeatmapData = (
   contributions: ContributionsResponse = {}
 ): HeatmapCellData[][] => {
-  const data: HeatmapCellData[][] = [];
+  const data: HeatmapCellData[][] = Array.from({ length: 23 }, () => []);
   const today = new Date();
-  const startDate = new Date(today);
-  startDate.setDate(today.getDate() - (23 * 7 - 1)); // 23 weeks ago
 
-  // Generate heatmap cells (23 weeks × 7 days)
+  // Calculate the date that should be at position [22][6] (last cell minus 3)
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() + 2); // Today will be at -3 position, so end is +2
+
+  // Calculate start date (161 days before end date)
+  const startDate = new Date(endDate);
+  startDate.setDate(endDate.getDate() - 160); // 161 days total including end date
+
+  // Find the Monday of the week containing startDate
+  const startDayOfWeek = getDayOfWeek(startDate);
+  const firstMonday = new Date(startDate);
+  firstMonday.setDate(startDate.getDate() - startDayOfWeek);
+
+  // Generate all cells
   for (let week = 0; week < 23; week++) {
-    const weekData: HeatmapCellData[] = [];
     for (let day = 0; day < 7; day++) {
-      const cellDate = new Date(startDate);
-      cellDate.setDate(startDate.getDate() + week * 7 + day);
+      const cellDate = new Date(firstMonday);
+      cellDate.setDate(firstMonday.getDate() + week * 7 + day);
 
       const dateStr = formatDate(cellDate);
       const solved = contributions[dateStr] || 0;
@@ -68,9 +84,8 @@ const generateHeatmapData = (
         else intensity = "20";
       }
 
-      weekData.push({ date: dateStr, intensity, solved });
+      data[week].push({ date: dateStr, intensity, solved });
     }
-    data.push(weekData);
   }
 
   return data;
@@ -161,16 +176,15 @@ const Profile = () => {
     const fetchUserData = async () => {
       try {
         const today = new Date();
-        const contributionsStart = new Date(
-          today.getFullYear(),
-          today.getMonth() - 1,
-          1
-        );
-        const contributionsEnd = new Date(
-          today.getFullYear(),
-          today.getMonth() + 1,
-          1
-        );
+
+        // Calculate date range for heatmap
+        // End date: today + 2 (so today appears at position -3 from end)
+        const endDate = new Date(today);
+        endDate.setDate(today.getDate() + 2);
+
+        // Start date: 161 days before end date
+        const startDate = new Date(endDate);
+        startDate.setDate(endDate.getDate() - 160);
 
         const [userResponse, contributionsResponse, streakResponse] =
           await Promise.all([
@@ -179,8 +193,8 @@ const Profile = () => {
               "/user/activity/contributions",
               {
                 params: {
-                  start: formatDate(contributionsStart),
-                  end: formatDate(contributionsEnd),
+                  start: formatDate(startDate),
+                  end: formatDate(endDate),
                 },
               }
             ),
@@ -200,14 +214,8 @@ const Profile = () => {
           setScore(userData.score);
         }
 
-        const contributionsData =
-          (
-            contributionsResponse.data as ContributionsResponse & {
-              data?: ContributionsResponse;
-            }
-          )?.data ||
-          contributionsResponse.data ||
-          {};
+        // Contributions response is direct object format
+        const contributionsData = contributionsResponse.data || {};
         setHeatmapData(generateHeatmapData(contributionsData));
 
         const streakData =
