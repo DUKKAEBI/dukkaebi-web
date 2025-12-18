@@ -76,6 +76,18 @@ export default function SolvePage() {
   const [problemError, setProblemError] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
+    "result"
+  );
+  const [gradingDetails, setGradingDetails] = useState<
+    Array<{
+      testCaseNumber?: number;
+      passed?: boolean;
+      input?: string;
+      expectedOutput?: string;
+      actualOutput?: string;
+    }>
+  >([]);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const messageIdRef = useRef(INITIAL_CHAT_MESSAGES.length);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -293,6 +305,7 @@ export default function SolvePage() {
 
       const data = await response.json();
       setTerminalOutput(formatGradingResult(data));
+      setGradingDetails(Array.isArray(data?.details) ? data.details : []);
 
       // Determine pass/fail based on details[].passed
       const passed = Array.isArray(data?.details)
@@ -502,11 +515,189 @@ export default function SolvePage() {
           </Style.EditorContainer>
 
           <Style.ResultContainer>
-            <Style.Terminal ref={terminalRef} $height={terminalHeight}>
-              <Style.TerminalHandle />
-              <Style.TerminalHeader>실행 결과</Style.TerminalHeader>
-              <Style.TerminalOutput>{terminalOutput}</Style.TerminalOutput>
-            </Style.Terminal>
+            <Style.ResultTabs>
+              <Style.ResultTab
+                type="button"
+                $active={activeResultTab === "result"}
+                onClick={() => setActiveResultTab("result")}
+              >
+                실행 결과
+              </Style.ResultTab>
+              <Style.ResultTab
+                type="button"
+                $active={activeResultTab === "tests"}
+                onClick={() => setActiveResultTab("tests")}
+              >
+                테스트 케이스
+              </Style.ResultTab>
+            </Style.ResultTabs>
+
+            {activeResultTab === "result" ? (
+              <Style.Terminal ref={terminalRef} $height={terminalHeight}>
+                <Style.TerminalHandle />
+                <Style.TerminalOutput>{terminalOutput}</Style.TerminalOutput>
+              </Style.Terminal>
+            ) : (
+              <Style.Terminal ref={terminalRef} $height={terminalHeight}>
+                <Style.TerminalHandle />
+                <Style.TerminalOutput>
+                  {gradingDetails.length === 0 ? (
+                    <div style={{ color: "#a0aec0" }}>
+                      테스트 케이스가 없습니다. 제출 후 다시 확인하세요.
+                    </div>
+                  ) : (
+                    <table
+                      style={{
+                        width: "100%",
+                        borderCollapse: "collapse",
+                        fontSize: 14,
+                        tableLayout: "fixed",
+                      }}
+                    >
+                      <thead>
+                        <tr style={{ color: "#a0aec0", textAlign: "left" }}>
+                          <th
+                            style={{
+                              padding: "8px 10px",
+                              borderBottom: "1px solid rgba(255,255,255,0.08)",
+                              width: "20%",
+                            }}
+                          >
+                            번호
+                          </th>
+                          <th
+                            style={{
+                              padding: "8px 10px",
+                              borderBottom: "1px solid rgba(255,255,255,0.08)",
+                              width: "20%",
+                            }}
+                          >
+                            입력값
+                          </th>
+                          <th
+                            style={{
+                              padding: "8px 10px",
+                              borderBottom: "1px solid rgba(255,255,255,0.08)",
+                              width: "20%",
+                            }}
+                          >
+                            출력값
+                          </th>
+                          <th
+                            style={{
+                              padding: "8px 10px",
+                              borderBottom: "1px solid rgba(255,255,255,0.08)",
+                              width: "20%",
+                            }}
+                          >
+                            예상 출력값
+                          </th>
+                          <th
+                            style={{
+                              padding: "8px 10px",
+                              borderBottom: "1px solid rgba(255,255,255,0.08)",
+                              width: "20%",
+                            }}
+                          >
+                            실행결과
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {gradingDetails.map((d, idx) => (
+                          <tr key={`${d.testCaseNumber ?? idx}-row`}>
+                            <td
+                              style={{
+                                padding: "10px",
+                                borderBottom:
+                                  "1px solid rgba(255,255,255,0.06)",
+                                color: "#9fb1bc",
+                                width: "20%",
+                              }}
+                            >
+                              {String(d.testCaseNumber ?? idx + 1).padStart(
+                                2,
+                                "0"
+                              )}
+                            </td>
+                            <td
+                              style={{
+                                padding: "10px",
+                                borderBottom:
+                                  "1px solid rgba(255,255,255,0.06)",
+                                width: "20%",
+                              }}
+                            >
+                              {d.input !== undefined ? (
+                                <pre
+                                  style={{
+                                    margin: 0,
+                                    whiteSpace: "pre-wrap",
+                                    wordBreak: "break-word",
+                                  }}
+                                >
+                                  {(d.input ?? "").replace(/\s+$/, "")}
+                                </pre>
+                              ) : (
+                                <span style={{ color: "#6b7280" }}>-</span>
+                              )}
+                            </td>
+                            <td
+                              style={{
+                                padding: "10px",
+                                borderBottom:
+                                  "1px solid rgba(255,255,255,0.06)",
+                                width: "20%",
+                              }}
+                            >
+                              <pre
+                                style={{
+                                  margin: 0,
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {(d.actualOutput ?? "").replace(/\s+$/, "")}
+                              </pre>
+                            </td>
+                            <td
+                              style={{
+                                padding: "10px",
+                                borderBottom:
+                                  "1px solid rgba(255,255,255,0.06)",
+                                width: "20%",
+                              }}
+                            >
+                              <pre
+                                style={{
+                                  margin: 0,
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                }}
+                              >
+                                {(d.expectedOutput ?? "").replace(/\s+$/, "")}
+                              </pre>
+                            </td>
+                            <td
+                              style={{
+                                padding: "10px",
+                                borderBottom:
+                                  "1px solid rgba(255,255,255,0.06)",
+                                fontWeight: 700,
+                                color: d.passed ? "#4ade80" : "#fca5a5",
+                                width: "20%",
+                              }}
+                            >
+                              {d.passed ? "통과" : "실패"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </Style.TerminalOutput>
+              </Style.Terminal>
+            )}
 
             <Style.SubmitWrapper>
               <Style.SubmitButton
