@@ -131,8 +131,8 @@ export const SectionText = styled.div`
   white-space: pre-wrap;
 `;
 
-export const ProblemStatus = styled.div<{ $variant?: 'error' | 'info' }>`
-  color: ${({ $variant }) => ($variant === 'error' ? '#f08080' : '#7a8697')};
+export const ProblemStatus = styled.div<{ $variant?: "error" | "info" }>`
+  color: ${({ $variant }) => ($variant === "error" ? "#f08080" : "#7a8697")};
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 8px;
@@ -208,6 +208,39 @@ export const ResultContainer = styled.div`
   width: 100%;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
+`;
+
+// Tabs bar for result area
+export const ResultTabs = styled.div`
+  height: 36px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 0 16px 0 20px;
+  background: #263238;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+`;
+
+export const ResultTab = styled.button<{ $active?: boolean }>`
+  background: transparent;
+  border: none;
+  color: ${({ $active }) => ($active ? "#00B4B7" : "#a0aec0")};
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 4px;
+  cursor: pointer;
+  position: relative;
+
+  &:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: ${({ $active }) => ($active ? "#00B4B7" : "transparent")};
+    border-radius: 2px;
+  }
 `;
 
 export const Terminal = styled.div<{ $height: number }>`
