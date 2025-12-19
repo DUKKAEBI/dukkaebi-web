@@ -177,7 +177,7 @@ export const CourseGrid = styled.div`
   width: 100%;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+
   margin-top: 20px;
   max-width: 1280px;
   padding: 0 10px;
@@ -192,19 +192,18 @@ export const CourseGrid = styled.div`
 `;
 
 export const CourseCard = styled.div`
-  background: ${COLORS.white};
-  border: 1px solid ${COLORS.grayBorder};
-  border-radius: 12px;
   display: flex;
+  width: 230.5px;
+  height: 291px;
+  padding: 30px 20px 20px 20px;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  border-radius: 8px;
+  border: 1px solid #EDEDED;
+  background: #FFF;
   cursor: default;
   position: relative;
-  padding: 24px 20px 20px 20px;
-  height: 251px;
-  flex: 1 0 0;
 `;
 
 export const CourseImage = styled.img`
@@ -212,14 +211,14 @@ export const CourseImage = styled.img`
 `;
 
 export const CourseTitle = styled.div`
+  color: #000;
   font-family: Pretendard, sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: normal;
-  color: #000;
   padding: 0;
-  margin-top: 0;
+  margin: 0;
   width: 100%;
   text-align: left;
 `;
@@ -233,7 +232,7 @@ export const CourseMeta = styled.div`
 `;
 
 export const CourseProgressBar = styled.div`
-  width: 154px;
+  width: 190px;
   height: 0;
   flex-shrink: 0;
   position: relative;
@@ -276,7 +275,7 @@ export const CourseDifficultyLabel = styled.p`
   font-weight: 500;
   line-height: normal;
   color: #00b4b7;
-  margin: 0;
+  margin: 0 0 -110px 0;
   width: 100%;
   text-align: left;
 `;
@@ -287,6 +286,7 @@ export const CourseTagsWrapper = styled.div`
   gap: 8px;
   align-items: flex-start;
   width: 100%;
+  margin-top: -95px;
 `;
 
 export const CourseTagChip = styled.div`
@@ -299,11 +299,11 @@ export const CourseTagChip = styled.div`
   justify-content: center;
   align-items: center;
   gap: 10px;
-
-  font-family: "Pretendard", sans-serif;
+  color: #828282;
+  font-family: Pretendard, sans-serif;
   font-size: 14px;
+  font-style: normal;
   font-weight: 500;
-  color: ${COLORS.grayText};
   line-height: normal;
   white-space: nowrap;
 `;
@@ -313,6 +313,7 @@ export const CourseProgressSection = styled.div`
   flex-direction: column;
   gap: 8px;
   width: 100%;
+  margin-top: 2px;
 `;
 
 export const CourseProgressPercent = styled.p`
@@ -353,7 +354,7 @@ export const SectionTitle = styled.div`
   font-family: "Pretendard", sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 700;
   line-height: normal;
   text-align: left;
   width: 100%;
