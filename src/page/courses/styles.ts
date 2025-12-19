@@ -236,12 +236,23 @@ export const CourseProgressBar = styled.div`
   width: 154px;
   height: 0;
   flex-shrink: 0;
-  border-top: 2px solid ${COLORS.primary};
-  overflow: hidden;
+  position: relative;
+  border-top: 3px solid #E0E0E0;
+  border-radius: 999px;
 `;
 
 export const CourseProgressFill = styled.div<{ $percent: number }>`
-  display: none;
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: ${(p) => {
+    const percent = Math.min(100, Math.max(0, p.$percent));
+    return `${(154 * percent) / 100}px`;
+  }};
+  height: 0;
+  border-top: 3px solid #00B4B7;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 `;
 
 export const CourseBadge = styled.div`

@@ -56,7 +56,8 @@ export default function CoursesPage() {
   const navigate = useNavigate();
 
   // Growth별 이미지 매핑
-  const getAvatarImage = (growth: string) => {
+  const getAvatarImage = (growth?: string) => {
+    if (!growth) return copper;
     const growthMap: Record<string, string> = {
       COPPER: copper,
       SILVER: silver,
@@ -70,8 +71,8 @@ export default function CoursesPage() {
   };
 
   // Growth별 ProfileTitle 텍스트와 색상 결정
-  const getGrowthStyle = (growth: string) => {
-    const growthUpper = growth.toUpperCase();
+  const getGrowthStyle = (growth?: string) => {
+    const growthUpper = (growth ?? "").toUpperCase();
     const colorMap: Record<string, { text: string; color: string }> = {
       COPPER: { text: "동깨비", color: "#B87333" },
       SILVER: { text: "은깨비", color: "#C0C0C0" },
