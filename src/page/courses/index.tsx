@@ -300,29 +300,28 @@ export default function CoursesPage() {
                 </div>
               </S.ProgressLabel>
 
-              <S.ProgressBar>
-                <S.ProgressFill
-                  $percent={
-                    courseCounts.total > 0
-                      ? Math.round(
-                          (courseCounts.completed / courseCounts.total) * 100
-                        )
-                      : 0
-                  }
-                />
-              </S.ProgressBar>
+              <S.ProgressBarRow>
+                <S.ProgressBar>
+                  <S.ProgressFill
+                    $percent={
+                      courseCounts.total > 0
+                        ? Math.round(
+                            (courseCounts.completed / courseCounts.total) * 100
+                          )
+                        : 0
+                    }
+                  />
+                </S.ProgressBar>
+                <S.ProgressPercentText>
+                  {courseCounts.total > 0
+                    ? Math.round(
+                        (courseCounts.completed / courseCounts.total) * 100
+                      )
+                    : 0}
+                  % 진행
+                </S.ProgressPercentText>
+              </S.ProgressBarRow>
             </S.ProgressWrapper>
-
-            <S.RightProfileMeta>
-              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>
-                {courseCounts.total > 0
-                  ? Math.round(
-                      (courseCounts.completed / courseCounts.total) * 100
-                    )
-                  : 0}
-                % 진행
-              </div>
-            </S.RightProfileMeta>
           </S.ProfileRow>
 
           {/* 탭 영역 */}
@@ -397,9 +396,9 @@ export default function CoursesPage() {
                     <S.CourseTitle>{c.title}</S.CourseTitle>
 
                     <S.CourseTagsWrapper>
-                      {(c.tags ?? []).slice(0, 4).map((t: string) => (
-                        <S.CourseTagChip key={t}>#{t}</S.CourseTagChip>
-                      ))}
+                  {(c.tags ?? []).slice(0, 4).map((t: string) => (
+                    <S.CourseTagChip key={t}>#{t}</S.CourseTagChip>
+                  ))}
                     </S.CourseTagsWrapper>
 
                     <S.CourseProgressSection>
