@@ -189,7 +189,7 @@ export default function CoursesPage() {
 
                     <S.CourseTagsWrapper>
                       {(c.tags ?? []).slice(0, 4).map((t: string) => (
-                        <S.CourseTagChip key={t}>{t}</S.CourseTagChip>
+                        <S.CourseTagChip key={t}>#{t}</S.CourseTagChip>
                       ))}
                     </S.CourseTagsWrapper>
 
