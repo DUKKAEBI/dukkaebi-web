@@ -246,7 +246,7 @@ export const CourseProgressFill = styled.div<{ $percent: number }>`
   left: 0;
   width: ${(p) => {
     const percent = Math.min(100, Math.max(0, p.$percent));
-    return `${(190 * percent) / 100}px`;
+    return `${(154 * percent) / 100}px`;
   }};
   height: 0;
   border-top: 3px solid #00B4B7;

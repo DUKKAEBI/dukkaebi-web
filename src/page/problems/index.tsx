@@ -65,14 +65,18 @@ export default function Problems() {
   }, []);
 
   useEffect(() => {
-    if (difficultyFilter !== null || successRateFilter || sortBy) {
+    // 모든 필터가 null이면 전체 조회
+    if (difficultyFilter === null && !successRateFilter && !sortBy) {
+      fetchProblems();
+    } else {
+      // 필터가 하나라도 있으면 필터된 조회
       fetchFilteredProblems();
     }
   }, [difficultyFilter, successRateFilter, sortBy]);
 
   const difficultyMap: Record<string, number> = {
     GOLD: 1,
-    SLIVER: 2,
+    SILVER: 2,
     COPPER: 3,
     IRON: 4,
     JADE: 5,
@@ -80,7 +84,7 @@ export default function Problems() {
 
   const difficultyReverseMap: Record<number, string> = {
     1: "GOLD",
-    2: "SLIVER",
+    2: "SILVER",
     3: "COPPER",
     4: "IRON",
     5: "JADE",
@@ -121,14 +125,26 @@ export default function Problems() {
     setIsLoading(true);
     try {
       const params: Record<string, string> = {};
+
+      // 난이도 필터: null이면 빈 문자열, 아니면 해당 값
       if (difficultyFilter !== null) {
         params.difficulty = difficultyReverseMap[difficultyFilter];
+      } else {
+        params.difficulty = "";
       }
+
+      // 정답률 필터: null이면 빈 문자열, 아니면 해당 값
       if (successRateFilter) {
         params.correctRate = successRateFilter === "asc" ? "low" : "high";
+      } else {
+        params.correctRate = "";
       }
+
+      // 시간 필터: null이면 빈 문자열, 아니면 해당 값
       if (sortBy) {
         params.time = sortBy;
+      } else {
+        params.time = "";
       }
 
       const response = await axiosInstance.get(`/problems/filter`, { params });
@@ -421,7 +437,7 @@ export default function Problems() {
             {filteredProblems.map((problem, index) => (
               <S.TableRow
                 key={problem.id}
-                onClick={() => navigate(`/solve/{problem.id}`)}
+                onClick={() => navigate(`/solve/${problem.id}`)}
                 data-is-last={index === filteredProblems.length - 1}
               >
                 <S.TableCell>

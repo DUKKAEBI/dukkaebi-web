@@ -5,12 +5,13 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
 } from "react";
+import type * as monacoEditor from "monaco-editor";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import type * as monacoEditor from "monaco-editor";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as Style from "./style";
+import axiosInstance from "../../../api/axiosInstance";
 
 type ProblemDetail = {
   name: string;
@@ -19,6 +20,25 @@ type ProblemDetail = {
   output: string;
   exampleInput: string;
   exampleOutput: string;
+};
+
+type CourseProblemItem = {
+  problemId: number;
+  name: string;
+  difficulty?: string;
+  solvedResult?: string;
+};
+
+type CourseDetail = {
+  courseId: number;
+  title: string;
+  problems: CourseProblemItem[];
+};
+
+type ContestInfo = {
+  startDate?: string;
+  endDate?: string;
+  status?: string;
 };
 
 type ChatMessage = {
@@ -54,7 +74,10 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 export default function SolvePage() {
-  const { problemId } = useParams<{ problemId?: string }>();
+  const { contestCode, problemId } = useParams<{
+    contestCode?: string;
+    problemId?: string;
+  }>();
   const navigate = useNavigate();
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
@@ -76,6 +99,9 @@ export default function SolvePage() {
   const [problemError, setProblemError] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [courseProblems, setCourseProblems] = useState<CourseProblemItem[]>([]);
+  const [courseLoading, setCourseLoading] = useState(false);
   const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
     "result"
   );
@@ -88,6 +114,20 @@ export default function SolvePage() {
       actualOutput?: string;
     }>
   >([]);
+  const [gradingCacheByProblem, setGradingCacheByProblem] = useState<
+    Record<
+      string,
+      Array<{
+        testCaseNumber?: number;
+        passed?: boolean;
+        input?: string;
+        expectedOutput?: string;
+        actualOutput?: string;
+      }>
+    >
+  >({});
+  const [contestInfo, setContestInfo] = useState<ContestInfo | null>(null);
+  const [timeLeft, setTimeLeft] = useState<string>("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const messageIdRef = useRef(INITIAL_CHAT_MESSAGES.length);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
@@ -102,7 +142,6 @@ export default function SolvePage() {
   // Terminal (floating) size & resize state
   const [terminalHeight, setTerminalHeight] = useState(200); // px
   const terminalRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (!isResizing) return;
 
@@ -110,9 +149,17 @@ export default function SolvePage() {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const relativeX = event.clientX - rect.left;
-      const rightWidthPercent = ((rect.width - relativeX) / rect.width) * 100;
-      const clampedWidth = Math.min(80, Math.max(20, rightWidthPercent));
-      setRightPanelWidth(clampedWidth);
+
+      const MIN_LEFT_WIDTH = 400;
+
+      const MAX_LEFT_WIDTH = rect.width * 0.8;
+      const clampedX = Math.max(
+        MIN_LEFT_WIDTH,
+        Math.min(MAX_LEFT_WIDTH, relativeX)
+      );
+
+      const rightWidthPercent = ((rect.width - clampedX) / rect.width) * 100;
+      setRightPanelWidth(rightWidthPercent);
     };
 
     const stopResizing = () => setIsResizing(false);
@@ -163,18 +210,18 @@ export default function SolvePage() {
       setProblemError("");
       try {
         const accessToken = localStorage.getItem("accessToken");
-        const response = await fetch(`${API_BASE_URL}problems/${problemId}`, {
-          signal: controller.signal,
-          headers: accessToken
-            ? {
-                Authorization: `Bearer ${accessToken}`,
-              }
-            : undefined,
-        });
-        if (!response.ok) {
-          throw new Error("문제 정보를 불러오지 못했습니다.");
-        }
-        const data: ProblemDetail = await response.json();
+        const response = await axiosInstance(
+          `${API_BASE_URL}problems/${problemId}`,
+          {
+            signal: controller.signal,
+            headers: accessToken
+              ? {
+                  Authorization: `Bearer ${accessToken}`,
+                }
+              : undefined,
+          }
+        );
+        const data: ProblemDetail = response.data;
         setProblem(data);
         setProblemStatus("success");
       } catch (error) {
@@ -194,6 +241,110 @@ export default function SolvePage() {
     fetchProblem();
     return () => controller.abort();
   }, [problemId]);
+
+  // Restore cached grading details when switching problems (or clear if none)
+  useEffect(() => {
+    const key = String(problemId ?? "");
+    if (!key) {
+      setGradingDetails([]);
+      return;
+    }
+    setGradingDetails(gradingCacheByProblem[key] ?? []);
+  }, [problemId, gradingCacheByProblem]);
+
+  // Fetch course problems for sidebar
+  useEffect(() => {
+    if (!contestCode || !API_BASE_URL) return;
+    const controller = new AbortController();
+    const fetchCourse = async () => {
+      try {
+        setCourseLoading(true);
+        const accessToken = localStorage.getItem("accessToken");
+        const res = await axiosInstance(
+          `${API_BASE_URL}contest/${contestCode}`,
+          {
+            signal: controller.signal,
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
+          }
+        );
+
+        const data: any = await res.data;
+        // store contest timing/status info if provided
+        setContestInfo({
+          startDate: data?.startDate,
+          endDate: data?.endDate,
+          status: data?.status,
+        });
+
+        const courseData: CourseDetail = {
+          courseId: data?.courseId ?? 0,
+          title: data?.title ?? "",
+          problems: Array.isArray(data?.problems) ? data.problems : [],
+        };
+        const items = Array.isArray(courseData.problems)
+          ? (courseData.problems as any[]).map((p, idx) => ({
+              problemId: p?.problemId ?? idx + 1,
+              name: p?.name ?? `문제 ${idx + 1}`,
+              difficulty: p?.difficulty,
+              solvedResult: p?.solvedResult,
+            }))
+          : [];
+        setCourseProblems(items);
+      } catch (e) {
+        if (!controller.signal.aborted) {
+          // keep silent on sidebar errors
+          setCourseProblems([]);
+        }
+      } finally {
+        setCourseLoading(false);
+      }
+    };
+    fetchCourse();
+    return () => controller.abort();
+  }, [contestCode]);
+
+  // Live update remaining time (start/end)
+  useEffect(() => {
+    if (!contestInfo) {
+      setTimeLeft("");
+      return;
+    }
+    const compute = () => {
+      const now = new Date();
+      const start = contestInfo.startDate
+        ? new Date(contestInfo.startDate)
+        : null;
+      const end = contestInfo.endDate ? new Date(contestInfo.endDate) : null;
+      const status = contestInfo.status;
+
+      if (status === "ENDED" || (end && now > end)) {
+        return "종료됨";
+      }
+      const fmt = (ms: number) => {
+        const totalSec = Math.max(0, Math.floor(ms / 1000));
+        const d = Math.floor(totalSec / 86400);
+        const h = Math.floor((totalSec % 86400) / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        const hh = String(h).padStart(2, "0");
+        const mm = String(m).padStart(2, "0");
+        const ss = String(s).padStart(2, "0");
+        return d > 0 ? `D-${d} ${hh}:${mm}:${ss}` : `${hh}:${mm}:${ss}`;
+      };
+      if (start && now < start) {
+        return `시작까지 ${fmt(start.getTime() - now.getTime())}`;
+      }
+      if (end && now < end) {
+        return `종료까지 ${fmt(end.getTime() - now.getTime())}`;
+      }
+      return "";
+    };
+    setTimeLeft(compute());
+    const id = window.setInterval(() => setTimeLeft(compute()), 1000);
+    return () => window.clearInterval(id);
+  }, [contestInfo]);
 
   useEffect(() => {
     if (!problem) return;
@@ -306,8 +457,14 @@ export default function SolvePage() {
       const data = await response.json();
       setTerminalOutput(formatGradingResult(data));
       setGradingDetails(Array.isArray(data?.details) ? data.details : []);
+      setGradingCacheByProblem((prev) => ({
+        ...prev,
+        [String(problemId ?? "")]: Array.isArray(data?.details)
+          ? data.details
+          : [],
+      }));
 
-      // Determine pass/fail based on details[].passed
+      // Determine pass/fail via details[].passed
       const passed = Array.isArray(data?.details)
         ? data.details.some((d: { passed?: boolean }) => d?.passed === true)
         : false;
@@ -350,6 +507,7 @@ export default function SolvePage() {
 
   const openChat = () => setIsChatOpen(true);
   const closeChat = () => setIsChatOpen(false);
+  const toggleSidebar = () => setIsSidebarOpen((v) => !v);
 
   const handleChatInputChange = (event: ChangeEvent<HTMLInputElement>) => {
     setChatInput(event.target.value);
@@ -411,7 +569,12 @@ export default function SolvePage() {
       : "";
 
   const handleExitSolvePage = () => {
-    navigate("/problems");
+    navigate(`/contests/${contestCode}`);
+  };
+
+  const handleSidebarItemClick = (pid: number) => {
+    if (!contestCode) return;
+    navigate(`/contests/${contestCode}/solve/${pid}`);
   };
 
   return (
@@ -437,6 +600,11 @@ export default function SolvePage() {
               : "문제 정보 없음")}
         </Style.HeaderTitle>
         <Style.HeaderActions>
+          {timeLeft && (
+            <span style={{ color: "#9fb1bc", marginRight: 12 }}>
+              {timeLeft}
+            </span>
+          )}
           <Style.LanguageSelect
             value={language}
             onChange={handleLanguageChange}
@@ -447,6 +615,13 @@ export default function SolvePage() {
               </option>
             ))}
           </Style.LanguageSelect>
+          <Style.MenuButton
+            type="button"
+            aria-label="문제 목록 열기/닫기"
+            onClick={toggleSidebar}
+          >
+            ☰
+          </Style.MenuButton>
         </Style.HeaderActions>
       </Style.Header>
 
@@ -703,12 +878,44 @@ export default function SolvePage() {
               <Style.SubmitButton
                 onClick={handleSubmitCode}
                 disabled={isSubmitting || !problemId}
+                style={
+                  isSidebarOpen ? { marginRight: 268 } : { marginRight: 0 }
+                }
               >
                 {isSubmitting ? "채점 중..." : "제출 후 채점하기"}
               </Style.SubmitButton>
             </Style.SubmitWrapper>
           </Style.ResultContainer>
         </Style.RightPanel>
+        {isSidebarOpen && (
+          <>
+            <Style.ThinDivider />
+            <Style.RightSidebar>
+              <Style.SidebarList>
+                {courseLoading
+                  ? null
+                  : courseProblems.map((p, idx) => {
+                      const active =
+                        String(p.problemId) === String(problemId ?? "");
+                      return (
+                        <Style.SidebarItem
+                          key={p.problemId}
+                          $active={active}
+                          onClick={() => handleSidebarItemClick(p.problemId)}
+                        >
+                          <Style.SidebarItemIndex>
+                            {String(idx + 1).padStart(2, "0")}
+                          </Style.SidebarItemIndex>
+                          <Style.SidebarItemTitle>
+                            {p.name}
+                          </Style.SidebarItemTitle>
+                        </Style.SidebarItem>
+                      );
+                    })}
+              </Style.SidebarList>
+            </Style.RightSidebar>
+          </>
+        )}
       </Style.PageContent>
     </Style.SolveContainer>
   );

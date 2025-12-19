@@ -131,6 +131,7 @@ export const EnrollButton = styled(PrimaryButton)`
 export const GraySection = styled.section`
   width: 100%;
   background: #f6f6f6;
+  min-height: 72vh;
   padding: 20px 0 80px;
 `;
 
@@ -185,12 +186,12 @@ export const TableBody = styled.div`
   flex-direction: column;
 `;
 
-export const TableRow = styled.div<{ isLast?: boolean; $clickable?: boolean }>`
+export const TableRow = styled.div<{ $isLast?: boolean; $clickable?: boolean }>`
   display: grid;
   grid-template-columns: 80px 1fr 140px;
   padding: 18px 20px;
   align-items: center;
-  border-bottom: ${(p) => (p.isLast ? "none" : "1px solid #ededed")};
+  border-bottom: ${(p) => (p.$isLast ? "none" : "1px solid #ededed")};
   cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
 
   &:hover {
@@ -215,10 +216,17 @@ export const TitleCell = styled.span`
   color: #1d1d1d;
 `;
 
-export const StatusCell = styled.span<{ status: "submitted" | "pending" }>`
+export const StatusCell = styled.span<{
+  status: "submitted" | "pending" | "failed";
+}>`
   font-size: 16px;
   font-weight: 600;
-  color: ${(p) => (p.status === "submitted" ? "#00B4B7" : "#BDBDBD")};
+  color: ${(p) =>
+    p.status === "submitted"
+      ? "#00B4B7"
+      : p.status === "failed"
+      ? "#E74C3C"
+      : "#BDBDBD"};
   text-align: right;
 `;
 

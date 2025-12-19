@@ -1,15 +1,16 @@
 import * as S from "./styles";
-import axiosInstance from "../../api/axiosInstance";
+import axiosInstance from "../../../api/axiosInstance";
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect , useState } from "react";
+import { useEffect, useState } from "react";
+import { Header } from "../../../components/header";
 
 // 문제 타입 정의
 interface Problem {
   problemId: number;
   name: string;
-  difficulty: "COPPER" | "IRON"|"SLIVER"|"GOLD"| "JADE";
-  solvedCount:number;
-  correctRate:number;
+  difficulty: "COPPER" | "IRON" | "SLIVER" | "GOLD" | "JADE";
+  solvedCount: number;
+  correctRate: number;
   solvedResult: "NOT_SOLVED" | "SOLVED" | "FAILED";
   addedAt: string;
 }
@@ -20,14 +21,16 @@ interface ContestDetail {
   description: string;
   startDate: string;
   endDate: string;
-  participantCount : number;
+  status: "JOINABLE" | "JOINED" | "ENDED";
+  participantCount: number;
   problems: Problem[];
 }
 
-
 export const ContestDetailPage = () => {
-  const { contestId } = useParams<{ contestId: string }>();
-  const [contestDetails, setContestDetails] = useState<ContestDetail | null>(null);
+  const { contestCode } = useParams<{ contestCode: string }>();
+  const [contestDetails, setContestDetails] = useState<ContestDetail | null>(
+    null
+  );
   const navigate = useNavigate();
 
   // 문제 진행도 계산 함수
@@ -35,87 +38,80 @@ export const ContestDetailPage = () => {
     if (!contestDetails || contestDetails.problems.length === 0) {
       return 0;
     }
-    
+
     const solvedCount = contestDetails.problems.filter(
-      problem => problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED"
+      (problem) =>
+        problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED"
     ).length;
-    
+
     return Math.round((solvedCount / contestDetails.problems.length) * 100);
   };
 
   const startTest = () => {
-    if (!contestDetails) {
-      return;
-    }
-    
+    if (!contestDetails || !contestCode) return;
+
     const now = new Date();
-    
+
     const startDateTime = new Date(contestDetails.startDate);
     startDateTime.setHours(0, 0, 0, 0);
-    
+
     const endDateTime = new Date(contestDetails.endDate);
     endDateTime.setHours(23, 59, 59, 999);
-    
+
     if (now < startDateTime) {
       alert("아직 대회가 시작되지 않았습니다.");
       return;
     } else if (now > endDateTime) {
       alert("이미 대회가 종료되었습니다.");
       return;
-    } else {
-      navigate('/solve');
     }
+
+    const proceedToFirstProblem = () => {
+      const firstProblemId = contestDetails.problems[0]?.problemId;
+      if (!firstProblemId) return;
+      navigate(`/contests/${contestCode}/solve/${firstProblemId}`);
+    };
+
+    if (contestDetails.status === "JOINABLE") {
+      const input = prompt("대회 코드를 입력해주세요.");
+      if (!input) return;
+      // 참여 API 호출: /student/contest/{code}/join
+      axiosInstance
+        .post(`/student/contest/${contestDetails.code}/join`, null, {
+          params: { code: input },
+        })
+        .then(() => {
+          proceedToFirstProblem();
+        })
+        .catch(() => {
+          alert("대회 코드가 일치하지 않거나 참여할 수 없습니다.");
+        });
+      return;
+    }
+
+    proceedToFirstProblem();
   };
 
   useEffect(() => {
     const fetchContestDetails = async () => {
       try {
-        const response = await axiosInstance.get<ContestDetail>(`/contest/${contestId}`);
+        const response = await axiosInstance.get<ContestDetail>(
+          `/contest/${contestCode}`
+        );
         setContestDetails(response.data);
       } catch (error) {
-        console.error("Error fetching contest details:", error);        
+        console.error("Error fetching contest details:", error);
       }
     };
-    
-    fetchContestDetails();
-  }, [contestId]);
 
-  
+    fetchContestDetails();
+  }, [contestCode]);
+
   return (
     <>
       <S.Container>
         {/* Header */}
-        <S.Header>
-          <S.HeaderContent>
-            <S.HeaderLeft>
-              <S.LogoImage
-                src="https://i.ibb.co/ycw6HTQF/image.png"
-                alt="DUKKAEBI Logo"
-              />
-              <S.Nav>
-                <S.NavItem $active={false}>문제풀기</S.NavItem>
-                <S.NavItem $active={true}>알고리즘 대회</S.NavItem>
-              </S.Nav>
-            </S.HeaderLeft>
-            <S.UserIcon>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="none"
-                  stroke="#828282"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"
-                />
-              </svg>
-            </S.UserIcon>
-          </S.HeaderContent>
-        </S.Header>
+        <Header />
 
         {/* Contest Info Section */}
         <S.ContestInfoSection>
@@ -135,11 +131,10 @@ export const ContestDetailPage = () => {
                 <S.ContestDescription>
                   <S.DescriptionText>
                     {contestDetails?.description}
-                    <br />
-                    알고리즘 대회 입니다.
                   </S.DescriptionText>
                   <S.ContestMeta>
-                    {contestDetails?.startDate} ~ {contestDetails?.endDate} ・{contestDetails?.participantCount}명 참여중
+                    {contestDetails?.startDate} ~ {contestDetails?.endDate} ・
+                    {contestDetails?.participantCount}명 참여중
                   </S.ContestMeta>
                 </S.ContestDescription>
               </div>
@@ -178,10 +173,13 @@ export const ContestDetailPage = () => {
                     key={problem.problemId}
                     $isLast={index === contestDetails.problems.length - 1}
                   >
-                    <S.ProblemNumber>{problem.problemId}</S.ProblemNumber>
+                    <S.ProblemNumber>{index + 1}</S.ProblemNumber>
                     <S.ProblemTitle>{problem.name}</S.ProblemTitle>
                     <S.ProblemStatus $status={problem.solvedResult}>
-                      {problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED" ? "제출 완료" : "미제출"}
+                      {problem.solvedResult === "SOLVED" ||
+                      problem.solvedResult === "FAILED"
+                        ? "제출 완료"
+                        : "미제출"}
                     </S.ProblemStatus>
                   </S.TableRow>
                 ))}
@@ -195,13 +193,19 @@ export const ContestDetailPage = () => {
               <S.CardInfo>
                 <S.CardTitle>{contestDetails?.title}</S.CardTitle>
                 <S.CardDetails>
-                  <S.CardDetail>시작 일시 : {contestDetails?.startDate} 12:00</S.CardDetail>
+                  <S.CardDetail>
+                    시작 일시 : {contestDetails?.startDate} 12:00
+                  </S.CardDetail>
                   {/* <S.CardDetail>코딩 테스트 시간 : 30분</S.CardDetail> */}
-                  <S.CardDetail>총 {contestDetails?.problems.length}문제</S.CardDetail>
+                  <S.CardDetail>
+                    총 {contestDetails?.problems.length}문제
+                  </S.CardDetail>
                 </S.CardDetails>
               </S.CardInfo>
 
-              <S.StartButton onClick={startTest}>코딩테스트 시작하기</S.StartButton>
+              <S.StartButton onClick={startTest}>
+                코딩테스트 시작하기
+              </S.StartButton>
             </S.CardContent>
           </S.ContestInfoCard>
         </S.MainContentArea>

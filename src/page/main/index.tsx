@@ -224,42 +224,6 @@ const Main = () => {
             </S.HeatmapSection>
           </S.StatsCard>
         </S.HeroSection>
-
-        {/* Recommended Learning Section */}
-        <S.LearningSection>
-          <S.SectionHeader>
-            <S.SectionLabel>오늘의 추천 학습</S.SectionLabel>
-            <S.SectionTitle>
-              알고리즘 완전 정복 코스
-              <S.ArrowIcon>
-                <img
-                  src={arrowIcon}
-                  alt="Arrow"
-                  style={{ width: "100%", height: "100%" }}
-                />
-              </S.ArrowIcon>
-            </S.SectionTitle>
-          </S.SectionHeader>
-
-          <S.CourseGrid>
-            {recommendedCourses.map((course) => (
-              <S.CourseCard key={course.id}>
-                <S.CardContent>
-                  <S.CardHeader>
-                    <S.Difficulty>{course.difficulty}</S.Difficulty>
-                    <S.CardTitle>{course.title}</S.CardTitle>
-                  </S.CardHeader>
-                  <S.TagList>
-                    {course.tags.map((tag) => (
-                      <S.Tag key={`${course.id}-${tag}`}>{tag}</S.Tag>
-                    ))}
-                  </S.TagList>
-                </S.CardContent>
-                <S.SolveButton>문제 풀기 →</S.SolveButton>
-              </S.CourseCard>
-            ))}
-          </S.CourseGrid>
-        </S.LearningSection>
       </S.MainContent>
 
       <Footer />

@@ -82,6 +82,7 @@ export const PageContent = styled.div`
   width: 100%;
   position: relative;
   min-height: 0;
+  padding-right: 0; // 👈 사이드바 공간 확보는 조건부로 처리
 `;
 
 export const LeftPanel = styled.div`
@@ -90,7 +91,7 @@ export const LeftPanel = styled.div`
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-sizing: border-box;
   flex: 1;
-  min-width: 20%;
+  min-width: 200px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -98,6 +99,7 @@ export const LeftPanel = styled.div`
   height: 100%;
   min-height: 0;
   overflow-y: auto;
+  width: 200px;
 `;
 
 export const LeftPanelContent = styled.div`
@@ -131,8 +133,8 @@ export const SectionText = styled.div`
   white-space: pre-wrap;
 `;
 
-export const ProblemStatus = styled.div<{ $variant?: 'error' | 'info' }>`
-  color: ${({ $variant }) => ($variant === 'error' ? '#f08080' : '#7a8697')};
+export const ProblemStatus = styled.div<{ $variant?: "error" | "info" }>`
+  color: ${({ $variant }) => ($variant === "error" ? "#f08080" : "#7a8697")};
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 8px;
@@ -192,10 +194,102 @@ export const RightPanel = styled.div<{ $width: number }>`
   box-sizing: border-box;
   width: ${({ $width }) => `${$width}%`};
   min-width: 20%;
+  max-width: 80%;
   flex-shrink: 0;
   position: relative;
   min-height: 0;
   overflow-y: auto;
+`;
+
+// New: header menu button (hamburger)
+export const MenuButton = styled.button`
+  background: transparent;
+  border: none;
+  color: #e8eaed;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+`;
+
+// New: static right sidebar for problem list
+export const RightSidebar = styled.aside`
+  position: fixed; // 👈 fixed로 변경
+  right: 0;
+  top: 40px; // Header 높이만큼 아래에 배치
+  width: 250px;
+  height: calc(100% - 40px); // Header 제외한 전체 높이
+  background: #35454e;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  z-index: 100; // 👈 다른 요소들 위에 표시
+  flex-shrink: 0;
+`;
+
+export const SidebarHeader = styled.div`
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  color: #e8eaed;
+  font-size: 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+`;
+
+export const SidebarList = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+`;
+
+export const SidebarItem = styled.button<{ $active?: boolean }>`
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: ${({ $active }) => ($active ? "#2d3d48" : "transparent")};
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  color: #e8eaed;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: ${({ $active }) =>
+      $active ? "#2a3943" : "rgba(255, 255, 255, 0.06)"};
+  }
+`;
+
+export const SidebarItemIndex = styled.span`
+  color: #9fb1bc;
+  font-size: 12px;
+  min-width: 32px;
+`;
+
+export const SidebarItemTitle = styled.span`
+  color: #e8eaed;
+  font-size: 14px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+// Thin divider to visually separate middle panel and sidebar when needed
+export const ThinDivider = styled.div`
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
 `;
 
 export const EditorContainer = styled.div`
@@ -208,6 +302,39 @@ export const ResultContainer = styled.div`
   width: 100%;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   position: relative;
+`;
+
+// Tabs bar for result area
+export const ResultTabs = styled.div`
+  height: 36px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 0 16px 0 20px;
+  background: #263238;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+`;
+
+export const ResultTab = styled.button<{ $active?: boolean }>`
+  background: transparent;
+  border: none;
+  color: ${({ $active }) => ($active ? "#00B4B7" : "#a0aec0")};
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 4px;
+  cursor: pointer;
+  position: relative;
+
+  &:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: ${({ $active }) => ($active ? "#00B4B7" : "transparent")};
+    border-radius: 2px;
+  }
 `;
 
 export const Terminal = styled.div<{ $height: number }>`
