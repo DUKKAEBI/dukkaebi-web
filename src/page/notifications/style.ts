@@ -55,31 +55,21 @@ export const NoticeTable = styled.div`
 `;
 
 export const TableHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 140px 80px;
   padding: 16px 20px;
   border: 1px solid #e5e7eb;
-  border-bottom: none;
-  border-radius: 8px 8px 0 0;
   font-size: 14px;
-  border-bottom: 1px solid #e5e7eb;
   color: #6b7280;
 `;
 
 export const TableRow = styled.div<{ isLast?: boolean }>`
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 80px 1fr 120px 140px 80px;
   padding: 16px 20px;
-  height: 60px;
-  align-items: center;
   border: 1px solid #e5e7eb;
   border-top: none;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-
-  &:hover {
-    background-color: #f9fafb;
-  }
 
   ${({ isLast }) =>
     isLast &&

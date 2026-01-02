@@ -15,8 +15,6 @@ import {
   NoticeTable,
   TableHeader,
   TableRow,
-  Left,
-  Right,
   PaginationWrapper,
   Pagination,
   ArrowButton,
@@ -57,32 +55,24 @@ export default function NoticesPage() {
           {/* Table */}
           <NoticeTable>
             <TableHeader>
-              <Left>
-                <span>번호</span>
-                <span>제목</span>
-              </Left>
-              <Right>
-                <span>작성자</span>
-                <span>등록일</span>
-                <span>조회</span>
-              </Right>
+              <span>번호</span>
+              <span>제목</span>
+              <span>작성자</span>
+              <span>등록일</span>
+              <span>조회</span>
             </TableHeader>
 
             {notices.map((notice, index) => (
               <TableRow
                 key={notice.id}
                 isLast={index === notices.length - 1}
-                onClick={() => navigate(`/notifications/${notice.id}`)}
+                onClick={() => navigate("/notifications/:id")}
               >
-                <Left>
-                  <span>{notice.id}</span>
-                  <span>{notice.title}</span>
-                </Left>
-                <Right>
-                  <span>{notice.author}</span>
-                  <span>{notice.date}</span>
-                  <span>{notice.views}</span>
-                </Right>
+                <span>{notice.id}</span>
+                <span>{notice.title}</span>
+                <span>{notice.author}</span>
+                <span>{notice.date}</span>
+                <span>{notice.views}</span>
               </TableRow>
             ))}
           </NoticeTable>
