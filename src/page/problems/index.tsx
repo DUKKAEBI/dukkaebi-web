@@ -264,7 +264,7 @@ export default function Problems() {
     const halfVisible = Math.floor(maxVisiblePages / 2);
 
     let startPage = Math.max(1, currentPage - halfVisible);
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
     // 끝에 도달했을 때 시작 페이지 조정
     if (endPage - startPage < maxVisiblePages - 1) {

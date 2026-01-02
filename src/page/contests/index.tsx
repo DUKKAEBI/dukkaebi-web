@@ -4,6 +4,7 @@ import { Footer } from "../../components/footer";
 import axiosInstance from "../../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import * as S from "./styles";
+import search from "../../assets/image/notifications/search.png";
 
 // ============================
 // 타입 정의
@@ -160,165 +161,164 @@ export const ContestPage = () => {
   }, []);
 
   return (
-    <>
-      <S.Container>
-        <Header />
+    <S.Container>
+      <Header />
 
-        {/* Hero Banner */}
-        <S.HeroBanner>
-          <S.HeroContent>
-            <S.HeroTitle>
-              DGSW
-              <br />
-              <S.HeroTitleHighlight>프로그래밍 대회</S.HeroTitleHighlight>
-            </S.HeroTitle>
-            <S.HeroSubtitle>
-              DGSW Programming
-              <br />
-              Contest 2025
-            </S.HeroSubtitle>
-          </S.HeroContent>
+      {/* Hero Banner */}
+      <S.HeroBanner>
+        <S.HeroContent>
+          <S.HeroTitle>
+            DGSW
+            <br />
+            <S.HeroTitleHighlight>프로그래밍 대회</S.HeroTitleHighlight>
+          </S.HeroTitle>
+          <S.HeroSubtitle>
+            DGSW Programming
+            <br />
+            Contest 2025
+          </S.HeroSubtitle>
+        </S.HeroContent>
 
-          <S.CarouselControls>
-            <S.CarouselButton
-              onClick={() => setCurrentSlide(Math.max(1, currentSlide - 1))}
+        <S.CarouselControls>
+          <S.CarouselButton
+            onClick={() => setCurrentSlide(Math.max(1, currentSlide - 1))}
+          >
+            <svg width="24" height="24">
+              <path
+                fill="none"
+                stroke="rgba(255,255,255,0.4)"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m14 7l-5 5l5 5"
+              />
+            </svg>
+          </S.CarouselButton>
+
+          <S.CarouselIndicator>
+            <S.CarouselText $active>{currentSlide}</S.CarouselText>
+            <S.CarouselDivider>|</S.CarouselDivider>
+            <S.CarouselText $active={false}>5</S.CarouselText>
+          </S.CarouselIndicator>
+
+          <S.CarouselButton
+            onClick={() => setCurrentSlide(Math.min(5, currentSlide + 1))}
+          >
+            <svg width="24" height="24">
+              <path
+                fill="none"
+                stroke="rgba(255,255,255,0.4)"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m10 17l5-5l-5-5"
+              />
+            </svg>
+          </S.CarouselButton>
+        </S.CarouselControls>
+      </S.HeroBanner>
+
+      {/* Main Content */}
+      <S.MainContent>
+        {/* Search */}
+        <S.SearchBar>
+          <S.SearchInput
+            type="text"
+            placeholder="대회 이름을 검색하세요"
+            value={searchTerm}
+            onChange={handleSearchChange}
+          />
+          <img src={search} alt="search" />
+        </S.SearchBar>
+
+        {/* Contest List */}
+        <S.ContestsSection>
+          <S.ContestsGrid>
+            {currentContests.length > 0 ? (
+              currentContests.map((contest) => (
+                <S.ContestCard
+                  key={contest.code}
+                  onClick={() => moveToContestDetail(contest.code)}
+                >
+                  <S.CardImageWrapper>
+                    <S.CardImage src={contest.image} alt={contest.title} />
+
+                    <S.CardBadge
+                      $status={contest.status}
+                      $bgColor={getStatusColor(contest.status)}
+                      $textColor={getStatusTextColor(contest.status)}
+                    >
+                      {getStatusText(contest.status)}
+                    </S.CardBadge>
+                  </S.CardImageWrapper>
+
+                  <S.CardContent>
+                    <S.CardTitle>{contest.title}</S.CardTitle>
+                    <S.CardInfo>
+                      {contest.dDay !== "종료됨" &&
+                        `${contest.dDay}일 남음 ・ `}
+                      {contest.participantCount}명 참여중
+                    </S.CardInfo>
+                  </S.CardContent>
+                </S.ContestCard>
+              ))
+            ) : (
+              <S.NoResultsMessage>
+                {searchTerm
+                  ? `"${searchTerm}"에 대한 검색 결과가 없습니다.`
+                  : "아직 대회가 없습니다."}
+              </S.NoResultsMessage>
+            )}
+          </S.ContestsGrid>
+
+          {/* Pagination */}
+          <S.Pagination>
+            <S.PaginationButton
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
             >
               <svg width="24" height="24">
                 <path
                   fill="none"
-                  stroke="rgba(255,255,255,0.4)"
+                  stroke="#BDBDBD"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="m14 7l-5 5l5 5"
                 />
               </svg>
-            </S.CarouselButton>
+            </S.PaginationButton>
 
-            <S.CarouselIndicator>
-              <S.CarouselText $active>{currentSlide}</S.CarouselText>
-              <S.CarouselDivider>|</S.CarouselDivider>
-              <S.CarouselText $active={false}>5</S.CarouselText>
-            </S.CarouselIndicator>
+            <S.PaginationNumbers>
+              {pageNumbers.map((num) => (
+                <S.PageNumber
+                  key={num}
+                  $active={num === currentPage}
+                  onClick={() => setCurrentPage(num)}
+                >
+                  {num}
+                </S.PageNumber>
+              ))}
+            </S.PaginationNumbers>
 
-            <S.CarouselButton
-              onClick={() => setCurrentSlide(Math.min(5, currentSlide + 1))}
+            <S.PaginationButton
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage(Math.min(totalPages, currentPage + 1))
+              }
             >
               <svg width="24" height="24">
                 <path
                   fill="none"
-                  stroke="rgba(255,255,255,0.4)"
+                  stroke="#BDBDBD"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   d="m10 17l5-5l-5-5"
                 />
               </svg>
-            </S.CarouselButton>
-          </S.CarouselControls>
-        </S.HeroBanner>
+            </S.PaginationButton>
+          </S.Pagination>
+        </S.ContestsSection>
+      </S.MainContent>
 
-        {/* Main Content */}
-        <S.MainContent>
-          {/* Search */}
-          <S.SearchBar>
-            <S.SearchInput
-              type="text"
-              placeholder="대회 이름을 검색하세요"
-              value={searchTerm}
-              onChange={handleSearchChange}
-            />
-          </S.SearchBar>
-
-          {/* Contest List */}
-          <S.ContestsSection>
-            <S.ContestsGrid>
-              {currentContests.length > 0 ? (
-                currentContests.map((contest) => (
-                  <S.ContestCard
-                    key={contest.code}
-                    onClick={() => moveToContestDetail(contest.code)}
-                  >
-                    <S.CardImageWrapper>
-                      <S.CardImage src={contest.image} alt={contest.title} />
-
-                      <S.CardBadge
-                        $status={contest.status}
-                        $bgColor={getStatusColor(contest.status)}
-                        $textColor={getStatusTextColor(contest.status)}
-                      >
-                        {getStatusText(contest.status)}
-                      </S.CardBadge>
-                    </S.CardImageWrapper>
-
-                    <S.CardContent>
-                      <S.CardTitle>{contest.title}</S.CardTitle>
-                      <S.CardInfo>
-                        {contest.dDay !== "종료됨" &&
-                          `${contest.dDay}일 남음 ・ `}
-                        {contest.participantCount}명 참여중
-                      </S.CardInfo>
-                    </S.CardContent>
-                  </S.ContestCard>
-                ))
-              ) : (
-                <S.NoResultsMessage>
-                  {searchTerm
-                    ? `"${searchTerm}"에 대한 검색 결과가 없습니다.`
-                    : "아직 대회가 없습니다."}
-                </S.NoResultsMessage>
-              )}
-            </S.ContestsGrid>
-
-            {/* Pagination */}
-            <S.Pagination>
-              <S.PaginationButton
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              >
-                <svg width="24" height="24">
-                  <path
-                    fill="none"
-                    stroke="#BDBDBD"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m14 7l-5 5l5 5"
-                  />
-                </svg>
-              </S.PaginationButton>
-
-              <S.PaginationNumbers>
-                {pageNumbers.map((num) => (
-                  <S.PageNumber
-                    key={num}
-                    $active={num === currentPage}
-                    onClick={() => setCurrentPage(num)}
-                  >
-                    {num}
-                  </S.PageNumber>
-                ))}
-              </S.PaginationNumbers>
-
-              <S.PaginationButton
-                disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage(Math.min(totalPages, currentPage + 1))
-                }
-              >
-                <svg width="24" height="24">
-                  <path
-                    fill="none"
-                    stroke="#BDBDBD"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m10 17l5-5l-5-5"
-                  />
-                </svg>
-              </S.PaginationButton>
-            </S.Pagination>
-          </S.ContestsSection>
-        </S.MainContent>
-
-        <Footer />
-      </S.Container>
-    </>
+      <Footer />
+    </S.Container>
   );
 };
