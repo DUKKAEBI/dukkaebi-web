@@ -47,6 +47,11 @@ export default function Problems() {
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // 페이지네이션 상태 추가
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const itemsPerPage = 15;
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -191,6 +196,7 @@ export default function Problems() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
+    setCurrentPage(1); // 첫 페이지로 리셋
     if (value.trim()) {
       fetchSearchProblems(value);
     } else {
@@ -205,12 +211,14 @@ export default function Problems() {
     setDifficultyFilter(level);
     setDifficultyLabel(label);
     setOpenDropdown(null);
+    setCurrentPage(1); // 첫 페이지로 리셋
   };
 
   const handleTimeSelect = (time: string | null, label: string | null) => {
     setSortBy(time);
     setTimeLabel(label);
     setOpenDropdown(null);
+    setCurrentPage(1); // 첫 페이지로 리셋
   };
 
   const handleSuccessRateSelect = (
@@ -220,6 +228,7 @@ export default function Problems() {
     setSuccessRateFilter(order);
     setSuccessRateLabel(label);
     setOpenDropdown(null);
+    setCurrentPage(1); // 첫 페이지로 리셋
   };
 
   let filteredProblems = problems.filter((problem) =>
@@ -241,6 +250,67 @@ export default function Problems() {
       (a, b) => b.successRate - a.successRate
     );
   }
+
+  // 페이지네이션 계산 함수
+  const getPaginatedProblems = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredProblems.slice(startIndex, endIndex);
+  };
+
+  // 페이지 범위 계산 (화면에 보이는 페이지 번호)
+  const getPageRange = () => {
+    const maxVisiblePages = 5;
+    const halfVisible = Math.floor(maxVisiblePages / 2);
+
+    let startPage = Math.max(1, currentPage - halfVisible);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    // 끝에 도달했을 때 시작 페이지 조정
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    const pages = [];
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+    return pages;
+  };
+
+  // filteredProblems가 변경될 때마다 총 페이지 수 계산 및 현재 페이지 조정
+  useEffect(() => {
+    const total = Math.ceil(filteredProblems.length / itemsPerPage);
+    setTotalPages(total);
+
+    // 현재 페이지가 총 페이지 수를 초과하면 마지막 페이지로 이동
+    if (currentPage > total && total > 0) {
+      setCurrentPage(total);
+    }
+  }, [filteredProblems.length]);
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  // 이전/다음 페이지 핸들러
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const difficultyLabels: Record<number, string> = {
     1: "금",
@@ -434,11 +504,11 @@ export default function Problems() {
 
           {/* Table Body */}
           <S.TableBody>
-            {filteredProblems.map((problem, index) => (
+            {getPaginatedProblems().map((problem, index) => (
               <S.TableRow
                 key={problem.id}
                 onClick={() => navigate(`/solve/${problem.id}`)}
-                data-is-last={index === filteredProblems.length - 1}
+                data-is-last={index === getPaginatedProblems().length - 1}
               >
                 <S.TableCell>
                   {(problem.solved && (
@@ -464,17 +534,34 @@ export default function Problems() {
 
         {/* Pagination */}
         <S.PaginationContainer>
-          <S.PaginationButton>
+          <S.PaginationButton
+            onClick={handlePrevPage}
+            style={{
+              opacity: currentPage === 1 ? 0.5 : 1,
+              cursor: currentPage === 1 ? "not-allowed" : "pointer",
+            }}
+          >
             <S.ArrowIcon src={ArrowLeftIcon} alt="이전" />
           </S.PaginationButton>
           <S.PaginationNumbers>
-            <S.PaginationNumber data-is-active={true}>1</S.PaginationNumber>
-            <S.PaginationNumber>2</S.PaginationNumber>
-            <S.PaginationNumber>3</S.PaginationNumber>
-            <S.PaginationNumber>4</S.PaginationNumber>
-            <S.PaginationNumber>5</S.PaginationNumber>
+            {getPageRange().map((page) => (
+              <S.PaginationNumber
+                key={page}
+                data-is-active={page === currentPage}
+                onClick={() => handlePageChange(page)}
+                style={{ cursor: "pointer" }}
+              >
+                {page}
+              </S.PaginationNumber>
+            ))}
           </S.PaginationNumbers>
-          <S.PaginationButton>
+          <S.PaginationButton
+            onClick={handleNextPage}
+            style={{
+              opacity: currentPage === totalPages ? 0.5 : 1,
+              cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+            }}
+          >
             <S.ArrowIcon src={ArrowRightIcon} alt="다음" />
           </S.PaginationButton>
         </S.PaginationContainer>
