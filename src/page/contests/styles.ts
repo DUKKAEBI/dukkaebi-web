@@ -131,8 +131,8 @@ export const MainContent = styled.main`
 `;
 
 export const SearchBar = styled.div`
-  width: 120%;
-  max-width: 388px;
+  width: 80%;
+  height: 44px;
   background: #f6f6f6;
   border: 1px solid #ededed;
   border-radius: 8px;

@@ -12,6 +12,8 @@ import CoursesPage from "../page/courses";
 import CoursesExplorePage from "../page/courses/explore/explore";
 import CourseDetailPage from "../page/courses/info";
 import ContestSolvePage from "../page/solve/contests";
+import NoticesPage from "../page/notifications";
+import NoticeInfoPage from "../page/notifications/info";
 
 export default function AppRoutes() {
   return (
@@ -36,6 +38,8 @@ export default function AppRoutes() {
         path="/courses/:courseId/solve/:problemId"
         element={<CourseSolvePage />}
       />
+      <Route path="/notifications" element={<NoticesPage />} />
+      <Route path="/notifications/:id" element={<NoticeInfoPage />} />
     </Routes>
   );
 }

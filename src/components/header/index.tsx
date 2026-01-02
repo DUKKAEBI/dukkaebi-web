@@ -8,6 +8,7 @@ export const Header = () => {
   const isCourses = pathname.startsWith("/courses");
   const isProblems = pathname.startsWith("/problems");
   const isContests = pathname.startsWith("/contests");
+  const isNotifications = pathname.startsWith("/notifications");
 
   return (
     <S.Header>
@@ -29,6 +30,9 @@ export const Header = () => {
             </S.NavLink>
             <S.NavLink as={Link} to="/courses" $active={isCourses}>
               코스
+            </S.NavLink>
+            <S.NavLink as={Link} to="/notifications" $active={isNotifications}>
+              공지사항
             </S.NavLink>
           </S.Nav>
         </S.HeaderLeft>
