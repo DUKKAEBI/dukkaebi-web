@@ -44,6 +44,7 @@ export default function NoticesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [pageArray, setPageArray] = useState<number[]>([]);
 
   // 모든 공지 조회
   const fetchNotices = async (
@@ -57,7 +58,8 @@ export default function NoticesPage() {
           size: size,
         },
       });
-      console.log(res.data);
+      const pageNumbers = Array.from({ length: res.data.totalPages }, (_, i) => i + 1);
+      setPageArray(pageNumbers);
       return res.data;
     } catch (error) {
       console.error("Error fetching notices:", error);
@@ -66,15 +68,15 @@ export default function NoticesPage() {
   };
 
   useEffect(() => {
-    fetchNotices(currentPage - 1, 15).then((data) => {
-      const sortedNotices = [...data.content].sort((a, b) => {
-        return (
-          new Date(b.date).getTime() - new Date(a.date).getTime() ||
-          b.noticeId - a.noticeId
-        );
-      });
+    const loadNotices = async () => {
+      const data = await fetchNotices(currentPage - 1, 15);
+      const sortedNotices = [...data.content].sort(
+        (a, b) => b.noticeId - a.noticeId
+      );
       setNotices(sortedNotices);
-    });
+    };
+    
+    loadNotices();
   }, [currentPage]);
 
   return (
@@ -127,7 +129,7 @@ export default function NoticesPage() {
               </ArrowButton>
 
               <Pages>
-                {[1, 2, 3, 4, 5].map((page) => (
+                {pageArray.map((page) => (
                   <PageButton
                     key={page}
                     active={currentPage === page}
