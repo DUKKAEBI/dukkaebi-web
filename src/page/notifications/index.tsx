@@ -1,11 +1,12 @@
 // todo : api연결, pagination 부분에 페이지 버튼 동적으로 변경
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
 import arrowLeft from "../../assets/image/notifications/arrow-left.png";
 import arrowRight from "../../assets/image/notifications/arrow-right.png";
 import search from "../../assets/image/notifications/search.png";
+import axiosInstance from "../../api/axiosInstance";
 
 import {
   Page,
@@ -22,18 +23,89 @@ import {
   PageButton,
 } from "./style";
 
+interface Notice {
+  noticeId: number;
+  title: string;
+  writer: string;
+  date: string;
+  hits: number;
+}
+
+export interface NoticePageResponse {
+  content: Notice[];
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
 export default function NoticesPage() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [pageArray, setPageArray] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const notices = Array.from({ length: 15 }, (_, i) => ({
-    id: 15 - i,
-    title: "DGSW 프로그래밍 대회 관련 안내",
-    author: "이**",
-    date: "2026.01.01",
-    views: 10,
-  }));
+  // 모든 공지 조회
+  const fetchNotices = async (
+    page: number = 0,
+    size: number = 15
+  ): Promise<NoticePageResponse> => {
+    try {
+      const res = await axiosInstance.get<NoticePageResponse>("/notice", {
+        params: {
+          page: page,
+          size: size,
+        },
+      });
+      const pageNumbers = Array.from({ length: res.data.totalPages }, (_, i) => i + 1);
+      setPageArray(pageNumbers);
+      return res.data;
+    } catch (error) {
+      console.error("Error fetching notices:", error);
+      throw error;
+    }
+  };
+
+  // 공지 검색 
+  const searchNotices = async () => {
+    try {
+      const res = await axiosInstance.get<Notice[]>("/notice/search", {
+        params: {
+          keyword: searchQuery,
+        },
+      });
+      const sortedNotices = [...res.data].sort(
+        (a, b) => b.noticeId - a.noticeId
+      );
+      setNotices(sortedNotices);
+    } catch (error) {
+      console.error("Error searching notices:", error);
+    }
+  }
+
+  useEffect(() => {
+    const loadNotices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchNotices(currentPage - 1, 15);
+        const sortedNotices = [...data.content].sort(
+          (a, b) => b.noticeId - a.noticeId
+        );
+        setNotices(sortedNotices);
+      } catch (err) {
+        setError("공지사항을 불러올 수 없습니다.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadNotices();
+  }, [currentPage]);
 
   return (
     <Page>
@@ -48,8 +120,13 @@ export default function NoticesPage() {
               placeholder="공지사항을 검색하세요.."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  searchNotices();
+                }
+              }}
             />
-            <img src={search} alt="search" />
+            <img src={search} alt="search" onClick={searchNotices}/>
           </SearchBar>
 
           {/* Table */}
@@ -62,19 +139,39 @@ export default function NoticesPage() {
               <span>조회</span>
             </TableHeader>
 
-            {notices.map((notice, index) => (
-              <TableRow
-                key={notice.id}
-                isLast={index === notices.length - 1}
-                onClick={() => navigate(`/notifications/${notice.id}`)}
-              >
-                <span>{notice.id}</span>
-                <span>{notice.title}</span>
-                <span>{notice.author}</span>
-                <span>{notice.date}</span>
-                <span>{notice.views}</span>
+            {loading ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#9ca3af' }}>
+                  로딩 중...
+                </span>
               </TableRow>
-            ))}
+            ) : error ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#ef4444' }}>
+                  {error}
+                </span>
+              </TableRow>
+            ) : notices.length === 0 ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#9ca3af' }}>
+                  {searchQuery ? '검색 결과가 없습니다.' : '아직 공지사항이 없습니다.'}
+                </span>
+              </TableRow>
+            ) : (
+              notices.map((notice, index) => (
+              <TableRow
+                key={notice.noticeId}
+                isLast={index === notices.length - 1}
+                onClick={() => navigate(`/notifications/${notice.noticeId}`)}
+              >
+                <span>{notice.noticeId}</span>
+                <span>{notice.title}</span>
+                <span>{notice.writer}</span>
+                <span>{notice.date}</span>
+                <span>{notice.hits}</span>
+              </TableRow>
+            ))
+            )}
           </NoticeTable>
 
           {/* Pagination */}
@@ -85,7 +182,7 @@ export default function NoticesPage() {
               </ArrowButton>
 
               <Pages>
-                {[1, 2, 3, 4, 5].map((page) => (
+                {pageArray.map((page) => (
                   <PageButton
                     key={page}
                     active={currentPage === page}
