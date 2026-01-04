@@ -32,11 +32,11 @@ interface Notice {
 }
 
 export interface NoticePageResponse {
-  content: Notice[];     
+  content: Notice[];
   totalElements: number;
-  totalPages: number;    
-  first: boolean;       
-  last: boolean; 
+  totalPages: number;
+  first: boolean;
+  last: boolean;
 }
 
 export default function NoticesPage() {
@@ -44,39 +44,36 @@ export default function NoticesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
-  
 
   // 모든 공지 조회
-  const fetchNotices = async(page: number = 0, size: number = 15) : Promise<NoticePageResponse> => {
-    try{
+  const fetchNotices = async (
+    page: number = 0,
+    size: number = 15
+  ): Promise<NoticePageResponse> => {
+    try {
       const res = await axiosInstance.get<NoticePageResponse>("/notice", {
         params: {
           page: page,
           size: size,
-        }
+        },
       });
       console.log(res.data);
       return res.data;
-
-    }catch (error) {
+    } catch (error) {
       console.error("Error fetching notices:", error);
       throw error;
     }
-  }
-
-  // const notices = Array.from({ length: 15 }, (_, i) => ({
-  //   id: 15 - i,
-  //   title: "DGSW 프로그래밍 대회 관련 안내",
-  //   author: "이**",
-  //   date: "2026.01.01",
-  //   views: 10,
-  // }));
-
-
+  };
 
   useEffect(() => {
     fetchNotices(currentPage - 1, 15).then((data) => {
-      setNotices(data.content);
+      const sortedNotices = [...data.content].sort((a, b) => {
+        return (
+          new Date(b.date).getTime() - new Date(a.date).getTime() ||
+          b.noticeId - a.noticeId
+        );
+      });
+      setNotices(sortedNotices);
     });
   }, [currentPage]);
 
