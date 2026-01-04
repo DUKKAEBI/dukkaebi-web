@@ -61,6 +61,8 @@ export const TableHeader = styled.div`
   border: 1px solid #e5e7eb;
   font-size: 14px;
   color: #6b7280;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
 `;
 
 export const TableRow = styled.div<{ isLast?: boolean }>`

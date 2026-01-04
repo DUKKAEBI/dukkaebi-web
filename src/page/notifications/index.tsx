@@ -1,5 +1,5 @@
 // todo : api연결, pagination 부분에 페이지 버튼 동적으로 변경
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
