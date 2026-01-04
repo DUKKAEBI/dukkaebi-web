@@ -90,7 +90,7 @@ export const MetaValue = styled.span`
 
 /* Notice Content */
 export const NoticeContent = styled.div`
-  min-height: 400px;
+  min-height: 330px;
 `;
 
 export const ContentText = styled.div`
