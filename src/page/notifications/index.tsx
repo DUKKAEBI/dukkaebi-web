@@ -45,6 +45,8 @@ export default function NoticesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
   const [pageArray, setPageArray] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // 모든 공지 조회
   const fetchNotices = async (
@@ -86,11 +88,20 @@ export default function NoticesPage() {
 
   useEffect(() => {
     const loadNotices = async () => {
-      const data = await fetchNotices(currentPage - 1, 15);
-      const sortedNotices = [...data.content].sort(
-        (a, b) => b.noticeId - a.noticeId
-      );
-      setNotices(sortedNotices);
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchNotices(currentPage - 1, 15);
+        const sortedNotices = [...data.content].sort(
+          (a, b) => b.noticeId - a.noticeId
+        );
+        setNotices(sortedNotices);
+      } catch (err) {
+        setError("공지사항을 불러올 수 없습니다.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
     };
     
     loadNotices();
@@ -128,7 +139,26 @@ export default function NoticesPage() {
               <span>조회</span>
             </TableHeader>
 
-            {notices.map((notice, index) => (
+            {loading ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#9ca3af' }}>
+                  로딩 중...
+                </span>
+              </TableRow>
+            ) : error ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#ef4444' }}>
+                  {error}
+                </span>
+              </TableRow>
+            ) : notices.length === 0 ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#9ca3af' }}>
+                  {searchQuery ? '검색 결과가 없습니다.' : '아직 공지사항이 없습니다.'}
+                </span>
+              </TableRow>
+            ) : (
+              notices.map((notice, index) => (
               <TableRow
                 key={notice.noticeId}
                 isLast={index === notices.length - 1}
@@ -140,7 +170,8 @@ export default function NoticesPage() {
                 <span>{notice.date}</span>
                 <span>{notice.hits}</span>
               </TableRow>
-            ))}
+            ))
+            )}
           </NoticeTable>
 
           {/* Pagination */}
