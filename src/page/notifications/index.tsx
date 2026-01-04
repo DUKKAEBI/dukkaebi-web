@@ -1,11 +1,12 @@
 // todo : api연결, pagination 부분에 페이지 버튼 동적으로 변경
-import React, { useState } from "react";
+import React, { useState, useEffect, use } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
 import arrowLeft from "../../assets/image/notifications/arrow-left.png";
 import arrowRight from "../../assets/image/notifications/arrow-right.png";
 import search from "../../assets/image/notifications/search.png";
+import axiosInstance from "../../api/axiosInstance";
 
 import {
   Page,
@@ -22,18 +23,62 @@ import {
   PageButton,
 } from "./style";
 
+interface Notice {
+  noticeId: number;
+  title: string;
+  writer: string;
+  date: string;
+  hits: number;
+}
+
+export interface NoticePageResponse {
+  content: Notice[];     
+  totalElements: number;
+  totalPages: number;    
+  first: boolean;       
+  last: boolean; 
+}
+
 export default function NoticesPage() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [notices, setNotices] = useState<Notice[]>([]);
+  
 
-  const notices = Array.from({ length: 15 }, (_, i) => ({
-    id: 15 - i,
-    title: "DGSW 프로그래밍 대회 관련 안내",
-    author: "이**",
-    date: "2026.01.01",
-    views: 10,
-  }));
+  // 모든 공지 조회
+  const fetchNotices = async(page: number = 0, size: number = 15) : Promise<NoticePageResponse> => {
+    try{
+      const res = await axiosInstance.get<NoticePageResponse>("/notice", {
+        params: {
+          page: page,
+          size: size,
+        }
+      });
+      console.log(res.data);
+      return res.data;
+
+    }catch (error) {
+      console.error("Error fetching notices:", error);
+      throw error;
+    }
+  }
+
+  // const notices = Array.from({ length: 15 }, (_, i) => ({
+  //   id: 15 - i,
+  //   title: "DGSW 프로그래밍 대회 관련 안내",
+  //   author: "이**",
+  //   date: "2026.01.01",
+  //   views: 10,
+  // }));
+
+
+
+  useEffect(() => {
+    fetchNotices(currentPage - 1, 15).then((data) => {
+      setNotices(data.content);
+    });
+  }, [currentPage]);
 
   return (
     <Page>
@@ -64,15 +109,15 @@ export default function NoticesPage() {
 
             {notices.map((notice, index) => (
               <TableRow
-                key={notice.id}
+                key={notice.noticeId}
                 isLast={index === notices.length - 1}
-                onClick={() => navigate(`/notifications/${notice.id}`)}
+                onClick={() => navigate(`/notifications/${notice.noticeId}`)}
               >
-                <span>{notice.id}</span>
+                <span>{notice.noticeId}</span>
                 <span>{notice.title}</span>
-                <span>{notice.author}</span>
+                <span>{notice.writer}</span>
                 <span>{notice.date}</span>
-                <span>{notice.views}</span>
+                <span>{notice.hits}</span>
               </TableRow>
             ))}
           </NoticeTable>
