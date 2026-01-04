@@ -67,6 +67,23 @@ export default function NoticesPage() {
     }
   };
 
+  // 공지 검색 
+  const searchNotices = async () => {
+    try {
+      const res = await axiosInstance.get<Notice[]>("/notice/search", {
+        params: {
+          keyword: searchQuery,
+        },
+      });
+      const sortedNotices = [...res.data].sort(
+        (a, b) => b.noticeId - a.noticeId
+      );
+      setNotices(sortedNotices);
+    } catch (error) {
+      console.error("Error searching notices:", error);
+    }
+  }
+
   useEffect(() => {
     const loadNotices = async () => {
       const data = await fetchNotices(currentPage - 1, 15);
@@ -92,8 +109,13 @@ export default function NoticesPage() {
               placeholder="공지사항을 검색하세요.."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  searchNotices();
+                }
+              }}
             />
-            <img src={search} alt="search" />
+            <img src={search} alt="search" onClick={searchNotices}/>
           </SearchBar>
 
           {/* Table */}
