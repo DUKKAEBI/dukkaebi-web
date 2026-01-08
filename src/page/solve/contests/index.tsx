@@ -10,12 +10,13 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
+import { EventSourcePolyfill } from "event-source-polyfill";
 import * as Style from "./style";
 import axiosInstance from "../../../api/axiosInstance";
 
 type ProblemDetail = {
   name: string;
-  description: string;
+  description: string;  
   input: string;
   output: string;
   exampleInput: string;
@@ -132,6 +133,7 @@ export default function SolvePage() {
   const messageIdRef = useRef(INITIAL_CHAT_MESSAGES.length);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const exampleInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const sseConnectionRef = useRef<EventSourcePolyfill | null>(null);
   const currentLanguageOption =
     LANGUAGE_OPTIONS.find((option) => option.value === language) ||
     LANGUAGE_OPTIONS[0];
@@ -303,6 +305,90 @@ export default function SolvePage() {
     };
     fetchCourse();
     return () => controller.abort();
+  }, [contestCode]);
+
+  // SSE 연결을 통한 실시간 대회 정보 업데이트
+  useEffect(() => {
+    if (!contestCode || !API_BASE_URL) return;
+
+    // 이미 연결되어 있으면 중복 연결 방지
+    if (sseConnectionRef.current) {
+      console.log('SSE 이미 연결되어 있음, 중복 연결 방지');
+      return;
+    }
+
+    const sseUrl = `${API_BASE_URL}contest/${contestCode}/subscribe`;
+    const accessToken = localStorage.getItem("accessToken");
+
+    console.log('SSE 연결 시도:', sseUrl);
+
+    const eventSource = new EventSourcePolyfill(sseUrl, {
+      headers: accessToken
+        ? {
+            Authorization: `Bearer ${accessToken}`,
+          }
+        : {},
+      withCredentials: false,
+      heartbeatTimeout: 300000, // 5분 (300초)
+    });
+
+    sseConnectionRef.current = eventSource;
+
+    // 연결 상태 확인
+    eventSource.onopen = () => {
+      console.log('SSE 연결 열림 (onopen)');
+    };
+
+    // 모든 메시지 수신 (이벤트 타입 무관)
+    eventSource.onmessage = (event) => {
+      console.log('SSE 기본 메시지 수신:', event);
+      console.log('메시지 데이터:', (event as MessageEvent).data);
+    };
+
+    // 연결 완료 이벤트
+    eventSource.addEventListener('connected', (event) => {
+      console.log('SSE connected 이벤트:', (event as MessageEvent).data);
+    });
+
+    // 대회 업데이트 이벤트
+    eventSource.addEventListener('contest-update', (event) => {
+      console.log('SSE contest-update 이벤트 수신');
+      try {
+        const data = JSON.parse((event as MessageEvent).data);
+        console.log('대회 정보 변경:', data);
+
+        // changes 객체에서 데이터 추출
+        const changes = data.changes || {};
+
+        // 대회 정보 실시간 업데이트
+        setContestInfo((prev) => ({
+          ...prev,
+          startDate: changes.startDate ?? prev?.startDate,
+          endDate: changes.endDate ?? prev?.endDate,
+          status: changes.status ?? prev?.status,
+        }));
+
+        // 사용자에게 알림 표시
+        toast.info('대회 정보가 업데이트되었습니다.', { autoClose: 3000 });
+      } catch (error) {
+        console.error('SSE 이벤트 파싱 오류:', error);
+      }
+    });
+
+    // 에러 처리
+    eventSource.onerror = (error) => {
+      console.error('SSE 연결 오류 (onerror):', error);
+      console.log('EventSource readyState:', eventSource?.readyState);
+      eventSource?.close();
+      sseConnectionRef.current = null;
+    };
+
+    // 컴포넌트 언마운트 시 연결 종료
+    return () => {
+      console.log('SSE 연결 종료 (cleanup)');
+      eventSource?.close();
+      sseConnectionRef.current = null;
+    };
   }, [contestCode]);
 
   // Live update remaining time (start/end)
