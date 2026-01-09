@@ -3,7 +3,6 @@ import {
   useRef,
   useEffect,
   type ChangeEvent,
-  type KeyboardEvent,
 } from "react";
 import type * as monacoEditor from "monaco-editor";
 import { ToastContainer, toast } from "react-toastify";
@@ -42,20 +41,6 @@ type ContestInfo = {
   status?: string;
 };
 
-type ChatMessage = {
-  id: number;
-  sender: "bot" | "user";
-  text: string;
-};
-
-const INITIAL_CHAT_MESSAGES: ChatMessage[] = [
-  {
-    id: 1,
-    sender: "bot",
-    text: "모르는 개념이 있다면 저 두비에게 물어보세요!",
-  },
-];
-
 const API_BASE_URL = (() => {
   const raw = import.meta.env.VITE_API_URL;
   if (!raw || typeof raw !== "string") return "";
@@ -80,60 +65,49 @@ export default function SolvePage() {
     problemId?: string;
   }>();
   const navigate = useNavigate();
+  // UI State
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
-  const [terminalOutput, setTerminalOutput] =
-    useState("실행 결과가 이곳에 표시됩니다.");
-  const [code, setCode] = useState(``);
+  const [code, setCode] = useState("");
   const [language, setLanguage] = useState(LANGUAGE_OPTIONS[0].value);
   const [rightPanelWidth, setRightPanelWidth] = useState(65);
   const [isResizing, setIsResizing] = useState(false);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatInput, setChatInput] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    INITIAL_CHAT_MESSAGES
-  );
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">("result");
+
+  // Problem State
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
-  const [problemStatus, setProblemStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
+  const [problemStatus, setProblemStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [problemError, setProblemError] = useState("");
-  const [isChatLoading, setIsChatLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Course/Contest State
   const [courseProblems, setCourseProblems] = useState<CourseProblemItem[]>([]);
   const [courseLoading, setCourseLoading] = useState(false);
-  const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
-    "result"
-  );
-  const [gradingDetails, setGradingDetails] = useState<
-    Array<{
-      testCaseNumber?: number;
-      passed?: boolean;
-      input?: string;
-      expectedOutput?: string;
-      actualOutput?: string;
-    }>
-  >([]);
-  const [gradingCacheByProblem, setGradingCacheByProblem] = useState<
-    Record<
-      string,
-      Array<{
-        testCaseNumber?: number;
-        passed?: boolean;
-        input?: string;
-        expectedOutput?: string;
-        actualOutput?: string;
-      }>
-    >
-  >({});
   const [contestInfo, setContestInfo] = useState<ContestInfo | null>(null);
-  const [timeLeft, setTimeLeft] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState("");
+
+  // Grading State
+  const [gradingDetails, setGradingDetails] = useState<Array<{
+    testCaseNumber?: number;
+    passed?: boolean;
+    input?: string;
+    expectedOutput?: string;
+    actualOutput?: string;
+  }>>([]);
+  const [gradingCacheByProblem, setGradingCacheByProblem] = useState<Record<string, Array<{
+    testCaseNumber?: number;
+    passed?: boolean;
+    input?: string;
+    expectedOutput?: string;
+    actualOutput?: string;
+  }>>>({});
+
+  // Refs
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const messageIdRef = useRef(INITIAL_CHAT_MESSAGES.length);
-  const chatEndRef = useRef<HTMLDivElement | null>(null);
   const exampleInputRef = useRef<HTMLTextAreaElement | null>(null);
   const sseConnectionRef = useRef<EventSourcePolyfill | null>(null);
+  const sidebarRef = useRef<HTMLDivElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const currentLanguageOption =
     LANGUAGE_OPTIONS.find((option) => option.value === language) ||
     LANGUAGE_OPTIONS[0];
@@ -186,6 +160,29 @@ export default function SolvePage() {
     window.addEventListener("resize", updateTerminalHeight);
     return () => window.removeEventListener("resize", updateTerminalHeight);
   }, []);
+
+  // 사이드바 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!isSidebarOpen) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      // 사이드바 외부를 클릭하고, 메뉴 버튼이 아닌 경우에만 닫기
+      if (
+        sidebarRef.current &&
+        !sidebarRef.current.contains(target) &&
+        menuButtonRef.current &&
+        !menuButtonRef.current.contains(target)
+      ) {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isSidebarOpen]);
 
   useEffect(() => {
     if (!problemId) {
@@ -341,39 +338,40 @@ export default function SolvePage() {
 
     // 모든 메시지 수신 (이벤트 타입 무관)
     eventSource.onmessage = (event) => {
-      console.log('SSE 기본 메시지 수신:', event);
+      console.log('SSE 메시지 수신:', event);
       console.log('메시지 데이터:', (event as MessageEvent).data);
-    };
 
-    // 연결 완료 이벤트
-    eventSource.addEventListener('connected', (event) => {
-      console.log('SSE connected 이벤트:', (event as MessageEvent).data);
-    });
-
-    // 대회 업데이트 이벤트
-    eventSource.addEventListener('contest-update', (event) => {
-      console.log('SSE contest-update 이벤트 수신');
       try {
         const data = JSON.parse((event as MessageEvent).data);
-        console.log('대회 정보 변경:', data);
+        console.log('파싱된 데이터:', data);
 
-        // changes 객체에서 데이터 추출
-        const changes = data.changes || {};
+        // CONTEST_UPDATED 이벤트 처리
+        if (data.eventType === 'CONTEST_UPDATED') {
+          console.log('대회 정보 업데이트:', data);
 
-        // 대회 정보 실시간 업데이트
-        setContestInfo((prev) => ({
-          ...prev,
-          startDate: changes.startDate ?? prev?.startDate,
-          endDate: changes.endDate ?? prev?.endDate,
-          status: changes.status ?? prev?.status,
-        }));
+          const changes = data.changes || {};
 
-        // 사용자에게 알림 표시
-        toast.info('대회 정보가 업데이트되었습니다.', { autoClose: 3000 });
+          // 대회 정보 실시간 업데이트
+          setContestInfo((prev) => ({
+            ...prev,
+            startDate: changes.startDate ?? prev?.startDate,
+            endDate: changes.endDate ?? prev?.endDate,
+            status: changes.status ?? prev?.status,
+          }));
+
+          // 사용자에게 알림 표시
+          let updateMessage = '대회 정보가 업데이트되었습니다.';
+          if (changes.startDate || changes.endDate) {
+            updateMessage = '대회 시간이 변경되었습니다.';
+          } else if (changes.title) {
+            updateMessage = '대회 제목이 변경되었습니다.';
+          }
+          toast.info(updateMessage, { autoClose: 3000 });
+        }
       } catch (error) {
-        console.error('SSE 이벤트 파싱 오류:', error);
+        console.error('SSE 메시지 파싱 오류:', error);
       }
-    });
+    };
 
     // 에러 처리
     eventSource.onerror = (error) => {
@@ -499,78 +497,21 @@ export default function SolvePage() {
     return lines.join("\n");
   };
 
-  const handleSubmitCode = async () => {
-    if (!problemId) {
-      setTerminalOutput("문제 ID가 없어 제출할 수 없습니다.");
-      return;
-    }
-    const numericProblemId = Number(problemId);
-    if (Number.isNaN(numericProblemId)) {
-      setTerminalOutput("유효한 문제 ID가 아닙니다.");
-      return;
-    }
-    if (!API_BASE_URL) {
-      setTerminalOutput("서버 주소가 설정되지 않았습니다.");
-      return;
-    }
-    if (!code.trim()) {
-      setTerminalOutput("제출할 코드를 작성해 주세요.");
-      return;
-    }
+  const handleNextProblem = () => {
+    const currentIndex = courseProblems.findIndex(
+      (p) => String(p.problemId) === String(problemId)
+    );
+    const isLastProblem = currentIndex === courseProblems.length - 1;
 
-    setTerminalOutput("채점 중입니다...");
-    setIsSubmitting(true);
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await fetch(`${API_BASE_URL}solve/grading`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({
-          problemId: numericProblemId,
-          code,
-          language,
-        }),
-      });
+    if (!isLastProblem && currentIndex !== -1 && contestCode) {
+      const nextProblem = courseProblems[currentIndex + 1];
+      navigate(`/contests/${contestCode}/solve/${nextProblem.problemId}`);
+    }
+  };
 
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "채점 요청이 실패했습니다.");
-      }
-
-      const data = await response.json();
-      setTerminalOutput(formatGradingResult(data));
-      setGradingDetails(Array.isArray(data?.details) ? data.details : []);
-      setGradingCacheByProblem((prev) => ({
-        ...prev,
-        [String(problemId ?? "")]: Array.isArray(data?.details)
-          ? data.details
-          : [],
-      }));
-
-      // Determine pass/fail via details[].passed
-      const passed = Array.isArray(data?.details)
-        ? data.details.some((d: { passed?: boolean }) => d?.passed === true)
-        : false;
-      if (passed) {
-        toast.success("정답입니다", { autoClose: 2500 });
-      } else {
-        toast.error("오답입니다.", { autoClose: 2500 });
-      }
-    } catch (error) {
-      setTerminalOutput(
-        error instanceof Error
-          ? error.message
-          : "채점 중 알 수 없는 오류가 발생했습니다."
-      );
-      toast.error(
-        error instanceof Error ? error.message : "채점 오류가 발생했습니다.",
-        { autoClose: 3000 }
-      );
-    } finally {
-      setIsSubmitting(false);
+  const handleEndTest = () => {
+    if (contestCode) {
+      navigate(`/contests/${contestCode}`);
     }
   };
 
@@ -586,58 +527,7 @@ export default function SolvePage() {
     });
   };
 
-  useEffect(() => {
-    if (!isChatOpen) return;
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isChatOpen]);
-
-  const openChat = () => setIsChatOpen(true);
-  const closeChat = () => setIsChatOpen(false);
   const toggleSidebar = () => setIsSidebarOpen((v) => !v);
-
-  const handleChatInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setChatInput(event.target.value);
-  };
-
-  const handleChatInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      if (event.nativeEvent.isComposing) {
-        return;
-      }
-      event.preventDefault();
-      handleChatSubmit();
-    }
-  };
-
-  const getNextMessageId = () => {
-    messageIdRef.current += 1;
-    return messageIdRef.current;
-  };
-
-  const appendMessage = (message: ChatMessage) => {
-    setMessages((prev) => [...prev, message]);
-  };
-
-  const appendUserMessage = (text: string) => {
-    const id = getNextMessageId();
-    appendMessage({ id, sender: "user", text });
-  };
-
-  const appendBotMessage = (text: string) => {
-    const id = getNextMessageId();
-    appendMessage({ id, sender: "bot", text });
-    return id;
-  };
-
-  const handleChatSubmit = () => {
-    if (!chatInput.trim() || isChatLoading) return;
-    const trimmed = chatInput.trim();
-    appendUserMessage(trimmed);
-    setChatInput("");
-
-    // AI 기능이 제거되었음을 알리는 메시지
-    appendBotMessage("죄송합니다. AI 챗봇 기능은 현재 사용할 수 없습니다.");
-  };
 
   const problemSections = problem
     ? [
@@ -702,6 +592,7 @@ export default function SolvePage() {
             ))}
           </Style.LanguageSelect>
           <Style.MenuButton
+            ref={menuButtonRef}
             type="button"
             aria-label="문제 목록 열기/닫기"
             onClick={toggleSidebar}
@@ -796,7 +687,11 @@ export default function SolvePage() {
             {activeResultTab === "result" ? (
               <Style.Terminal ref={terminalRef} $height={terminalHeight}>
                 <Style.TerminalHandle />
-                <Style.TerminalOutput>{terminalOutput}</Style.TerminalOutput>
+                <Style.TerminalOutput>
+                  <div style={{ color: "#a0aec0" }}>
+                    실행 결과가 여기에 표시됩니다.
+                  </div>
+                </Style.TerminalOutput>
               </Style.Terminal>
             ) : (
               <Style.Terminal ref={terminalRef} $height={terminalHeight}>
@@ -960,23 +855,42 @@ export default function SolvePage() {
               </Style.Terminal>
             )}
 
-            <Style.SubmitWrapper>
-              <Style.SubmitButton
-                onClick={handleSubmitCode}
-                disabled={isSubmitting || !problemId}
-                style={
-                  isSidebarOpen ? { marginRight: 268 } : { marginRight: 0 }
-                }
-              >
-                {isSubmitting ? "채점 중..." : "제출 후 채점하기"}
-              </Style.SubmitButton>
+            <Style.SubmitWrapper style={{ marginRight: isSidebarOpen ? 268 : 0 }}>
+              <div style={{ display: 'flex', gap: '24px' }}>
+                <Style.SubmitButton
+                  onClick={handleEndTest}
+                  disabled={!problemId}
+                  style={{
+                    backgroundColor: '#35454E',
+                    border: '1px solid #495D68'
+                  }}
+                >
+                  테스트 끝내기
+                </Style.SubmitButton>
+                {(() => {
+                  const currentIndex = courseProblems.findIndex(
+                    (p) => String(p.problemId) === String(problemId ?? "")
+                  );
+                  const isLastProblem =
+                    currentIndex === courseProblems.length - 1;
+
+                  return (
+                    <Style.SubmitButton
+                      onClick={isLastProblem ? handleEndTest : handleNextProblem}
+                      disabled={!problemId}
+                    >
+                      {isLastProblem ? "제출하기" : "다음 문제"}
+                    </Style.SubmitButton>
+                  );
+                })()}
+              </div>
             </Style.SubmitWrapper>
           </Style.ResultContainer>
         </Style.RightPanel>
         {isSidebarOpen && (
           <>
             <Style.ThinDivider />
-            <Style.RightSidebar>
+            <Style.RightSidebar ref={sidebarRef}>
               <Style.SidebarList>
                 {courseLoading
                   ? null
