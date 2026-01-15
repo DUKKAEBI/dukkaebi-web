@@ -331,52 +331,47 @@ export default function SolvePage() {
 
     sseConnectionRef.current = eventSource;
 
-    // 연결 상태 확인
     eventSource.onopen = () => {
       console.log('SSE 연결 열림 (onopen)');
     };
 
-    // 모든 메시지 수신 (이벤트 타입 무관)
-    eventSource.onmessage = (event) => {
-      console.log('SSE 메시지 수신:', event);
-      console.log('메시지 데이터:', (event as MessageEvent).data);
+    // 초기 연결 메시지 수신
+    eventSource.addEventListener('connected', (event) => {
+      console.log('SSE 연결 완료:', (event as MessageEvent).data);
+    });
+
+    // 대회 업데이트 메시지 수신 (서버에서 name("contest-update")로 보냄)
+    eventSource.addEventListener('contest-update', (event) => {
+      console.log('SSE 업데이트 수신:', event);
 
       try {
         const data = JSON.parse((event as MessageEvent).data);
         console.log('파싱된 데이터:', data);
 
-        // CONTEST_UPDATED 이벤트 처리
         if (data.eventType === 'CONTEST_UPDATED') {
-          console.log('대회 정보 업데이트:', data);
+          console.log('대회 정보 변경:', data);
 
-          const changes = data.changes || {};
-
-          // 대회 정보 실시간 업데이트
           setContestInfo((prev) => ({
             ...prev,
-            startDate: changes.startDate ?? prev?.startDate,
-            endDate: changes.endDate ?? prev?.endDate,
-            status: changes.status ?? prev?.status,
+            startDate: data.startDate ?? prev?.startDate,
+            endDate: data.endDate ?? prev?.endDate,
+            status: data.status ?? prev?.status,
           }));
 
-          // 사용자에게 알림 표시
-          let updateMessage = '대회 정보가 업데이트되었습니다.';
-          if (changes.startDate || changes.endDate) {
-            updateMessage = '대회 시간이 변경되었습니다.';
-          } else if (changes.title) {
-            updateMessage = '대회 제목이 변경되었습니다.';
-          }
-          toast.info(updateMessage, { autoClose: 3000 });
+          toast.info(data.message || '대회 정보가 업데이트되었습니다.');
         }
       } catch (error) {
         console.error('SSE 메시지 파싱 오류:', error);
       }
+    });
+
+    // 이름 없는 메시지용 (디버깅)
+    eventSource.onmessage = (event) => {
+      console.log('이름 없는 SSE 메시지:', event);
     };
 
-    // 에러 처리
     eventSource.onerror = (error) => {
-      console.error('SSE 연결 오류 (onerror):', error);
-      console.log('EventSource readyState:', eventSource?.readyState);
+      console.error('SSE 연결 오류:', error);
       eventSource?.close();
       sseConnectionRef.current = null;
     };
