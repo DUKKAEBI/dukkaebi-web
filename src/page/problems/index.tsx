@@ -47,9 +47,11 @@ export default function Problems() {
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // 페이지네이션 상태 추가
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  // 페이지네이션 상태 (서버 페이징: 0부터 시작)
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isFirst, setIsFirst] = useState(true);
+  const [isLast, setIsLast] = useState(true);
   const itemsPerPage = 15;
 
   // Close dropdown when clicking outside
@@ -70,14 +72,8 @@ export default function Problems() {
   }, []);
 
   useEffect(() => {
-    // 모든 필터가 null이면 전체 조회
-    if (difficultyFilter === null && !successRateFilter && !sortBy) {
-      fetchProblems();
-    } else {
-      // 필터가 하나라도 있으면 필터된 조회
-      fetchFilteredProblems();
-    }
-  }, [difficultyFilter, successRateFilter, sortBy]);
+    fetchProblems(currentPage);
+  }, [currentPage, difficultyFilter, successRateFilter, sortBy, searchTerm]);
 
   const difficultyMap: Record<string, number> = {
     GOLD: 1,
@@ -102,80 +98,6 @@ export default function Problems() {
       NOT_SOLVED: { solved: false, failed: false },
     };
 
-  useEffect(() => {
-    fetchProblems();
-  }, []);
-
-  const extractProblemList = (payload: any): any[] => {
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload?.data)) return payload.data;
-    if (Array.isArray(payload?.results)) return payload.results;
-    return [];
-  };
-
-  const fetchProblems = async () => {
-    setIsLoading(true);
-    try {
-      const response = await axiosInstance.get(`/problems`);
-      const list = extractProblemList(response.data);
-      mapProblems(list);
-    } catch (error) {
-      console.error("Failed to fetch problems:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchFilteredProblems = async () => {
-    setIsLoading(true);
-    try {
-      const params: Record<string, string> = {};
-
-      // 난이도 필터: null이면 빈 문자열, 아니면 해당 값
-      if (difficultyFilter !== null) {
-        params.difficulty = difficultyReverseMap[difficultyFilter];
-      } else {
-        params.difficulty = "";
-      }
-
-      // 정답률 필터: null이면 빈 문자열, 아니면 해당 값
-      if (successRateFilter) {
-        params.correctRate = successRateFilter === "asc" ? "low" : "high";
-      } else {
-        params.correctRate = "";
-      }
-
-      // 시간 필터: null이면 빈 문자열, 아니면 해당 값
-      if (sortBy) {
-        params.time = sortBy;
-      } else {
-        params.time = "";
-      }
-
-      const response = await axiosInstance.get(`/problems/filter`, { params });
-      const list = extractProblemList(response.data);
-      mapProblems(list);
-    } catch (error) {
-      console.error("Failed to fetch filtered problems:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchSearchProblems = async (query: string) => {
-    setIsLoading(true);
-    try {
-      const response = await axiosInstance.get(`/problems/search`, {
-        params: { name: query },
-      });
-      const list = extractProblemList(response.data);
-      mapProblems(list);
-    } catch (error) {
-      console.error("Failed to search problems:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const mapProblems = (apiProblems: any[]) => {
     if (!Array.isArray(apiProblems)) {
@@ -193,15 +115,46 @@ export default function Problems() {
     setProblems(mapped);
   };
 
+  const fetchProblems = async (page: number) => {
+    setIsLoading(true);
+    try {
+      const params: Record<string, any> = {
+        page,
+        size: itemsPerPage,
+      };
+
+      // 필터 적용
+      if (difficultyFilter !== null) {
+        params.difficulty = difficultyReverseMap[difficultyFilter];
+      }
+      if (successRateFilter) {
+        params.correctRate = successRateFilter === "asc" ? "low" : "high";
+      }
+      if (sortBy) {
+        params.time = sortBy;
+      }
+      if (searchTerm) {
+        params.name = searchTerm;
+      }
+
+      const response = await axiosInstance.get(`/problems`, { params });
+      const { content, totalPages: tp, first, last } = response.data;
+
+      mapProblems(content || []);
+      setTotalPages(tp || 0);
+      setIsFirst(first ?? true);
+      setIsLast(last ?? true);
+    } catch (error) {
+      console.error("Failed to fetch problems:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchTerm(value);
-    setCurrentPage(1); // 첫 페이지로 리셋
-    if (value.trim()) {
-      fetchSearchProblems(value);
-    } else {
-      fetchProblems();
-    }
+    setCurrentPage(0);
   };
 
   const handleDifficultySelect = (
@@ -211,14 +164,14 @@ export default function Problems() {
     setDifficultyFilter(level);
     setDifficultyLabel(label);
     setOpenDropdown(null);
-    setCurrentPage(1); // 첫 페이지로 리셋
+    setCurrentPage(0);
   };
 
   const handleTimeSelect = (time: string | null, label: string | null) => {
     setSortBy(time);
     setTimeLabel(label);
     setOpenDropdown(null);
-    setCurrentPage(1); // 첫 페이지로 리셋
+    setCurrentPage(0);
   };
 
   const handleSuccessRateSelect = (
@@ -228,45 +181,18 @@ export default function Problems() {
     setSuccessRateFilter(order);
     setSuccessRateLabel(label);
     setOpenDropdown(null);
-    setCurrentPage(1); // 첫 페이지로 리셋
-  };
-
-  let filteredProblems = problems.filter((problem) =>
-    problem.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (difficultyFilter !== null) {
-    filteredProblems = filteredProblems.filter(
-      (problem) => problem.difficulty === difficultyFilter
-    );
-  }
-
-  if (successRateFilter === "asc") {
-    filteredProblems = [...filteredProblems].sort(
-      (a, b) => a.successRate - b.successRate
-    );
-  } else if (successRateFilter === "desc") {
-    filteredProblems = [...filteredProblems].sort(
-      (a, b) => b.successRate - a.successRate
-    );
-  }
-
-  // 페이지네이션 계산 함수
-  const getPaginatedProblems = () => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredProblems.slice(startIndex, endIndex);
+    setCurrentPage(0);
   };
 
   // 페이지 범위 계산 (화면에 보이는 페이지 번호)
   const getPageRange = () => {
     const maxVisiblePages = 5;
     const halfVisible = Math.floor(maxVisiblePages / 2);
+    const displayPage = currentPage + 1;
 
-    let startPage = Math.max(1, currentPage - halfVisible);
+    let startPage = Math.max(1, displayPage - halfVisible);
     const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    // 끝에 도달했을 때 시작 페이지 조정
     if (endPage - startPage < maxVisiblePages - 1) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
@@ -278,35 +204,25 @@ export default function Problems() {
     return pages;
   };
 
-  // filteredProblems가 변경될 때마다 총 페이지 수 계산 및 현재 페이지 조정
-  useEffect(() => {
-    const total = Math.ceil(filteredProblems.length / itemsPerPage);
-    setTotalPages(total);
-
-    // 현재 페이지가 총 페이지 수를 초과하면 마지막 페이지로 이동
-    if (currentPage > total && total > 0) {
-      setCurrentPage(total);
-    }
-  }, [filteredProblems.length]);
-
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+    const zeroBasedPage = page - 1;
+    if (zeroBasedPage >= 0 && zeroBasedPage < totalPages) {
+      setCurrentPage(zeroBasedPage);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   // 이전/다음 페이지 핸들러
   const handlePrevPage = () => {
-    if (currentPage > 1) {
+    if (!isFirst) {
       setCurrentPage(currentPage - 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleNextPage = () => {
-    if (currentPage < totalPages) {
+    if (!isLast) {
       setCurrentPage(currentPage + 1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -504,11 +420,11 @@ export default function Problems() {
 
           {/* Table Body */}
           <S.TableBody>
-            {getPaginatedProblems().map((problem, index) => (
+            {problems.map((problem, index) => (
               <S.TableRow
                 key={problem.id}
                 onClick={() => navigate(`/solve/${problem.id}`)}
-                data-is-last={index === getPaginatedProblems().length - 1}
+                data-is-last={index === problems.length - 1}
               >
                 <S.TableCell>
                   {(problem.solved && (
@@ -537,8 +453,8 @@ export default function Problems() {
           <S.PaginationButton
             onClick={handlePrevPage}
             style={{
-              opacity: currentPage === 1 ? 0.5 : 1,
-              cursor: currentPage === 1 ? "not-allowed" : "pointer",
+              opacity: isFirst ? 0.5 : 1,
+              cursor: isFirst ? "not-allowed" : "pointer",
             }}
           >
             <S.ArrowIcon src={ArrowLeftIcon} alt="이전" />
@@ -547,7 +463,7 @@ export default function Problems() {
             {getPageRange().map((page) => (
               <S.PaginationNumber
                 key={page}
-                data-is-active={page === currentPage}
+                data-is-active={page === currentPage + 1}
                 onClick={() => handlePageChange(page)}
                 style={{ cursor: "pointer" }}
               >
@@ -558,8 +474,8 @@ export default function Problems() {
           <S.PaginationButton
             onClick={handleNextPage}
             style={{
-              opacity: currentPage === totalPages ? 0.5 : 1,
-              cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+              opacity: isLast ? 0.5 : 1,
+              cursor: isLast ? "not-allowed" : "pointer",
             }}
           >
             <S.ArrowIcon src={ArrowRightIcon} alt="다음" />
