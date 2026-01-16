@@ -131,29 +131,30 @@ export const MainContent = styled.main`
 `;
 
 export const SearchBar = styled.div`
-  width: 120%;
-  max-width: 388px;
-  background: #f6f6f6;
-  border: 1px solid #ededed;
+  width: 100%;
+  max-width: 794px;
+  height: 46px;
+  border: 1px solid var(--gray-4);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 20px;
+  padding: 0 20px;
+  background: var(--gray-5);
 `;
 
 export const SearchInput = styled.input`
   flex: 1;
-  background: transparent;
   border: none;
   outline: none;
+  background: transparent;
   font-family: "Pretendard", sans-serif;
   font-weight: 500;
   font-size: 14px;
-  color: #1d1d1d;
+  color: var(--black);
 
   &::placeholder {
-    color: #bdbdbd;
+    color: var(--gray-3);
   }
 `;
 
@@ -171,31 +172,32 @@ export const ContestsSection = styled.section`
 `;
 
 export const ContestsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 220px);
-
-  gap: 20px;
   width: 100%;
+  max-width: 1000px;
+  display: grid;
+  grid-template-columns: repeat(4, 183px);
+  gap: 20px 20px;
   justify-content: center;
 
-  @media (max-width: 850px) {
-    grid-template-columns: repeat(auto-fill, 150px);
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(auto-fill, 183px);
   }
 `;
 
 export const ContestCard = styled.div`
-  width: 100%;
+  width: 183px;
   display: flex;
   flex-direction: column;
+  cursor: pointer;
 `;
 
 export const CardImageWrapper = styled.div`
   position: relative;
-  width: 100%;
-  height: 0;
-  padding-bottom: 69.95%; /* 128/183 비율 유지 */
+  width: 183px;
+  height: 128px;
   border-radius: 8px 8px 0 0;
   overflow: hidden;
+  z-index: 1;
 `;
 
 export const CardImage = styled.img`

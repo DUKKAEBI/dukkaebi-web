@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
 import axiosInstance from "../../api/axiosInstance";
@@ -16,71 +16,91 @@ interface Contest {
   status: "JOINABLE" | "JOINED" | "ENDED";
   image: string;
 }
-type ContestApiItem = Omit<Contest, "image"> & { image?: string };
 
 // ============================
 // 이미지 매핑
 // ============================
-const IMAGE_MAP: Record<string, string> = {
-  "2학년 코딩 테스트": "https://i.ibb.co/Rp6GC0LG/dgsw.png",
-  "1학년 파이썬 코딩 테스트": "https://i.ibb.co/Cfyvb0J/python.png",
-  "C언어 코딩 테스트": "https://i.ibb.co/TBwmN9gG/c.png",
-  "제 1회 코딩 테스트": "https://i.ibb.co/bgdgkTBG/image.png",
-  "두카미 코딩테스트": "https://i.ibb.co/DDKHcv4N/ducami.png",
-};
+
 const DEFAULT_IMAGE = "https://i.ibb.co/Rp6GC0LG/dgsw.png";
 
-// ============================
-// 메인 컴포넌트
-// ============================
 export const ContestPage = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [currentSlide, setCurrentSlide] = useState(1);
-  const [contests, setContests] = useState<Contest[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-
   const navigate = useNavigate();
 
-  const ITEMS_PER_PAGE = 16;
+  // 상태 관리
+  const [contests, setContests] = useState<Contest[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1); // 1-based index
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentSlide, setCurrentSlide] = useState(1);
 
-  const filteredContests = contests.filter((contest) =>
-    contest.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // ============================
+  // 서버에서 데이터 불러오기
+  // ============================
+  useEffect(() => {
+    const fetchContests = async () => {
+      try {
+        // 서버의 페이징이 0부터 시작한다면 currentPage - 1을 전달해야 합니다.
+        const res = await axiosInstance.get(`/contest/list`, {
+          params: { page: currentPage - 1, size: 12 },
+        });
 
-  const totalPages = Math.ceil(filteredContests.length / ITEMS_PER_PAGE);
+        const data = res.data;
 
-  const currentContests = filteredContests.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+        // data.content가 배열인지 확인
+        if (data && Array.isArray(data.content)) {
+          const mappedContests = data.content.map((c: any) => ({
+            code: c.code,
+            title: c.title,
+            dDay: c.dDay,
+            participantCount: c.participantCount,
+            status: c.status,
+            // 서버의 imageUrl을 사용하거나 IMAGE_MAP에서 매핑
+            image: c.imageUrl ?? DEFAULT_IMAGE,
+          }));
+
+          setContests(mappedContests);
+          setTotalPages(data.totalPages || 1);
+        }
+      } catch (error) {
+        console.error("대회 목록 불러오기 실패", error);
+      }
+    };
+
+    fetchContests();
+  }, [currentPage]); // 페이지 변경 시 재호출
+
+  // 검색 필터링 (클라이언트 사이드)
+  const filteredContests = useMemo(() => {
+    return contests.filter((contest) =>
+      contest.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [contests, searchTerm]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setCurrentPage(1);
   };
 
+  // 페이지 번호 계산 로직
   const getPageNumbers = () => {
     const maxVisiblePages = 5;
     const pages = [];
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) pages.push(i);
-    } else {
-      let startPage = Math.max(1, currentPage - 2);
-      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-      if (endPage - startPage < maxVisiblePages - 1) {
-        startPage = Math.max(1, endPage - maxVisiblePages + 1);
-      }
-
-      for (let i = startPage; i <= endPage; i++) pages.push(i);
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
+    for (let i = startPage; i <= endPage; i++) {
+      if (i >= 1) pages.push(i);
+    }
     return pages;
   };
 
   const pageNumbers = getPageNumbers();
 
+  // 상태 텍스트/컬러 유틸리티
   const getStatusText = (status: Contest["status"]) => {
     switch (status) {
       case "JOINABLE":
@@ -89,6 +109,8 @@ export const ContestPage = () => {
         return "참여중";
       case "ENDED":
         return "대회 종료";
+      default:
+        return "";
     }
   };
 
@@ -100,6 +122,8 @@ export const ContestPage = () => {
         return "#E0E0E0";
       case "ENDED":
         return "#EB5757";
+      default:
+        return "#E0E0E0";
     }
   };
 
@@ -107,64 +131,15 @@ export const ContestPage = () => {
     return status === "JOINED" ? "#828282" : "#FFFFFF";
   };
 
-  const joinContest = async (contestCode: string) => {
-    const target = contests.find((c) => c.code === contestCode);
-    if (!target || target.status !== "JOINABLE") return;
-
-    const input = prompt("대회 코드를 입력해주세요.");
-    if (!input) return;
-
-    try {
-      await axiosInstance.post(`/contest/${input}/join`, null, {
-        params: { code: input },
-      });
-
-      alert("대회 참가에 성공했습니다.");
-      navigate(`/contests/${contestCode}`);
-    } catch (error) {
-      alert("대회 참가 실패. 코드를 다시 확인해주세요.");
-      console.error(error);
-    }
-  };
-
   const moveToContestDetail = (code: string) => {
     navigate(`/contests/${code}`);
   };
-
-  // ============================
-  // 서버에서 데이터 불러오기 + 이미지 매핑
-  // ============================
-  useEffect(() => {
-    const fetchContests = async () => {
-      try {
-        const res = await axiosInstance.get(`/contest/list`);
-
-        if (Array.isArray(res.data)) {
-          const contestsFromServer = res.data as ContestApiItem[];
-
-          // 🔥 서버 데이터에 이미지 붙이기
-          const contestsWithImages = contestsFromServer.map((c) => ({
-            ...c,
-            image: IMAGE_MAP[c.title] ?? c.image ?? DEFAULT_IMAGE,
-          }));
-
-          setContests(contestsWithImages);
-          return;
-        }
-      } catch (error) {
-        console.error("대회 목록 불러오기 실패", error);
-      }
-    };
-
-    fetchContests();
-  }, []);
 
   return (
     <>
       <S.Container>
         <Header />
 
-        {/* Hero Banner */}
         <S.HeroBanner>
           <S.HeroContent>
             <S.HeroTitle>
@@ -193,13 +168,11 @@ export const ContestPage = () => {
                 />
               </svg>
             </S.CarouselButton>
-
             <S.CarouselIndicator>
               <S.CarouselText $active>{currentSlide}</S.CarouselText>
               <S.CarouselDivider>|</S.CarouselDivider>
               <S.CarouselText $active={false}>5</S.CarouselText>
             </S.CarouselIndicator>
-
             <S.CarouselButton
               onClick={() => setCurrentSlide(Math.min(5, currentSlide + 1))}
             >
@@ -216,9 +189,7 @@ export const ContestPage = () => {
           </S.CarouselControls>
         </S.HeroBanner>
 
-        {/* Main Content */}
         <S.MainContent>
-          {/* Search */}
           <S.SearchBar>
             <S.SearchInput
               type="text"
@@ -228,18 +199,16 @@ export const ContestPage = () => {
             />
           </S.SearchBar>
 
-          {/* Contest List */}
           <S.ContestsSection>
             <S.ContestsGrid>
-              {currentContests.length > 0 ? (
-                currentContests.map((contest) => (
+              {filteredContests.length > 0 ? (
+                filteredContests.map((contest) => (
                   <S.ContestCard
                     key={contest.code}
                     onClick={() => moveToContestDetail(contest.code)}
                   >
                     <S.CardImageWrapper>
                       <S.CardImage src={contest.image} alt={contest.title} />
-
                       <S.CardBadge
                         $status={contest.status}
                         $bgColor={getStatusColor(contest.status)}
@@ -248,13 +217,10 @@ export const ContestPage = () => {
                         {getStatusText(contest.status)}
                       </S.CardBadge>
                     </S.CardImageWrapper>
-
                     <S.CardContent>
                       <S.CardTitle>{contest.title}</S.CardTitle>
                       <S.CardInfo>
-                        {contest.dDay !== "종료됨" &&
-                          `${contest.dDay}일 남음 ・ `}
-                        {contest.participantCount}명 참여중
+                        {contest.dDay} ・ {contest.participantCount}명 참여중
                       </S.CardInfo>
                     </S.CardContent>
                   </S.ContestCard>
@@ -268,11 +234,10 @@ export const ContestPage = () => {
               )}
             </S.ContestsGrid>
 
-            {/* Pagination */}
             <S.Pagination>
               <S.PaginationButton
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
               >
                 <svg width="24" height="24">
                   <path
@@ -300,7 +265,7 @@ export const ContestPage = () => {
               <S.PaginationButton
                 disabled={currentPage === totalPages}
                 onClick={() =>
-                  setCurrentPage(Math.min(totalPages, currentPage + 1))
+                  setCurrentPage((prev) => Math.min(totalPages, prev + 1))
                 }
               >
                 <svg width="24" height="24">
