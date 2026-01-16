@@ -23,7 +23,8 @@ import {
   PageButton,
 } from "./style";
 
-interface Notice {
+
+interface NoticeItem {
   noticeId: number;
   title: string;
   writer: string;
@@ -41,7 +42,7 @@ export interface NoticePageResponse {
 
 export default function NoticesPage() {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0); // 0-based
   const [searchQuery, setSearchQuery] = useState("");
   const [notices, setNotices] = useState<Notice[]>([]);
   const [pageArray, setPageArray] = useState<number[]>([]);
@@ -177,7 +178,7 @@ export default function NoticesPage() {
           {/* Pagination */}
           <PaginationWrapper>
             <Pagination>
-              <ArrowButton direction="left">
+              <ArrowButton direction="left" onClick={() => currentPage > 0 && setCurrentPage(currentPage - 1)}>
                 <img src={arrowLeft} alt="prev" />
               </ArrowButton>
 
@@ -193,7 +194,7 @@ export default function NoticesPage() {
                 ))}
               </Pages>
 
-              <ArrowButton direction="right">
+              <ArrowButton direction="right" onClick={() => currentPage < totalPages - 1 && setCurrentPage(currentPage + 1)}>
                 <img src={arrowRight} alt="next" />
               </ArrowButton>
             </Pagination>

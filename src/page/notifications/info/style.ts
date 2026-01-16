@@ -101,6 +101,30 @@ export const ContentText = styled.div`
   word-wrap: break-word;
 `;
 
+export const FileLink = styled.a`
+  display: inline-block;
+  margin-top: 20px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  text-decoration: none;
+  color: #374151;
+  font-size: 14px;
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #e5e7eb;
+  }
+`;
+
+export const AttachmentImage = styled.img`
+  max-width: 100%;
+  height: auto;
+  margin-top: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
+
 /* Navigation Buttons */
 /* Action Bar */
 export const ActionBar = styled.div`

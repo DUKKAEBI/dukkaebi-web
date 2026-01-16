@@ -13,6 +13,8 @@ interface NoticeDetail {
   writer: string;
   createdAt: string;
   content: string;
+  fileUrl: string;
+  createdAt: string;
 }
 
 export default function NoticeInfoPage() {
@@ -99,6 +101,9 @@ export default function NoticeInfoPage() {
           {/* Notice Content */}
           <S.NoticeContent>
             <S.ContentText>{notice.content}</S.ContentText>
+            {notice.fileUrl && (
+              <S.AttachmentImage src={notice.fileUrl} alt="첨부 파일" />
+            )}
           </S.NoticeContent>
 
           {/* Navigation Buttons */}
