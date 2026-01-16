@@ -165,6 +165,11 @@ const CourseDetailPage = () => {
       setLoading(false);
       return;
     }
+
+    // 사용자가 코스 상세 페이지에 들어오면 해당 코스의 이전 작업물을 초기화
+    localStorage.removeItem(`course_${courseId}_codes`);
+    localStorage.removeItem(`course_${courseId}_langs`);
+
     fetchCourseDetail(courseId);
   }, [courseId, fetchCourseDetail]);
 

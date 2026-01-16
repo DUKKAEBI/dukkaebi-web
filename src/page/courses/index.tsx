@@ -92,6 +92,17 @@ export default function CoursesPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
+        // 사용자가 코스 상세 페이지에 들어오면 해당 코스의 이전 작업물을 초기화
+        // localStorage에서 course_*_codes, course_*_langs 패턴의 항목 제거
+        Object.keys(localStorage).forEach((key) => {
+          if (
+            key.startsWith("course_") &&
+            (key.endsWith("_codes") || key.endsWith("_langs"))
+          ) {
+            localStorage.removeItem(key);
+          }
+        });
+
         // 사용자 정보 조회
         const userRes = await axiosInstance.get("/user");
         if (userRes.data) {
@@ -396,9 +407,9 @@ export default function CoursesPage() {
                     <S.CourseTitle>{c.title}</S.CourseTitle>
 
                     <S.CourseTagsWrapper>
-                  {(c.tags ?? []).slice(0, 4).map((t: string) => (
-                    <S.CourseTagChip key={t}>#{t}</S.CourseTagChip>
-                  ))}
+                      {(c.tags ?? []).slice(0, 4).map((t: string) => (
+                        <S.CourseTagChip key={t}>#{t}</S.CourseTagChip>
+                      ))}
                     </S.CourseTagsWrapper>
 
                     <S.CourseProgressSection>
