@@ -24,7 +24,7 @@ import {
 } from "./style";
 
 
-interface NoticeItem {
+interface Notice {
   noticeId: number;
   title: string;
   writer: string;
@@ -48,6 +48,7 @@ export default function NoticesPage() {
   const [pageArray, setPageArray] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(0);
 
   // 모든 공지 조회
   const fetchNotices = async (
@@ -63,6 +64,7 @@ export default function NoticesPage() {
       });
       const pageNumbers = Array.from({ length: res.data.totalPages }, (_, i) => i + 1);
       setPageArray(pageNumbers);
+      setTotalPages(res.data.totalPages);
       return res.data;
     } catch (error) {
       console.error("Error fetching notices:", error);
@@ -92,7 +94,7 @@ export default function NoticesPage() {
       try {
         setLoading(true);
         setError(null);
-        const data = await fetchNotices(currentPage - 1, 15);
+        const data = await fetchNotices(currentPage, 15);
         const sortedNotices = [...data.content].sort(
           (a, b) => b.noticeId - a.noticeId
         );
