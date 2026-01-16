@@ -131,7 +131,7 @@ export const MainContent = styled.main`
 `;
 
 export const SearchBar = styled.div`
-  width: 80%;
+  width: 840px;
   height: 44px;
   background: #f6f6f6;
   border: 1px solid #ededed;
@@ -162,8 +162,8 @@ export const SearchIcon = styled.div`
 `;
 
 export const ContestsSection = styled.section`
-  width: 100%;
-  max-width: 794px;
+  width: 840px;
+
   display: flex;
   flex-direction: column;
   gap: 60px;
@@ -172,14 +172,12 @@ export const ContestsSection = styled.section`
 
 export const ContestsGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, 220px);
-
+  grid-template-columns: repeat(4, 1fr);
   gap: 20px;
-  width: 100%;
-  justify-content: center;
+  width: 840px;
 
   @media (max-width: 850px) {
-    grid-template-columns: repeat(auto-fill, 150px);
+    grid-template-columns: repeat(2, 1fr);
   }
 `;
 

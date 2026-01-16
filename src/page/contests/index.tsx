@@ -165,6 +165,34 @@ export const ContestPage = () => {
     fetchContests(currentPage, searchTerm || undefined);
   }, [currentPage, searchTerm]);
 
+  // 대회 페이지 로드 시 이전 대회 관련 localStorage 데이터 초기화
+  useEffect(() => {
+    // localStorage에서 dukkaebi_ 패턴의 모든 대회 관련 데이터 제거
+    Object.keys(localStorage).forEach((key) => {
+      if (
+        key.startsWith("dukkaebi_codes") ||
+        key.startsWith("dukkaebi_langs_") ||
+        key.startsWith("dukkaebi_timeSpent_")
+      ) {
+        const contestCode = key.replace(
+          /^dukkaebi_codes|dukkaebi_langs_|dukkaebi_timeSpent_/,
+          ""
+        );
+        if (contestCode) {
+          // 해당 대회와 관련된 코드 보관소 삭제
+          localStorage.removeItem(`dukkaebi_codes_${contestCode}`);
+          // 해당 대회와 관련된 언어 설정 보관소 삭제
+          localStorage.removeItem(`dukkaebi_langs_${contestCode}`);
+          // 해당 대회와 관련된 시간 설정 보관소 삭제
+          localStorage.removeItem(`dukkaebi_timeSpent_${contestCode}`);
+          console.log(
+            `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`
+          );
+        }
+      }
+    });
+  }, []);
+
   return (
     <S.Container>
       <Header />
@@ -245,14 +273,6 @@ export const ContestPage = () => {
                 >
                   <S.CardImageWrapper>
                     <S.CardImage src={contest.image} alt={contest.title} />
-
-                    <S.CardBadge
-                      $status={contest.status}
-                      $bgColor={getStatusColor(contest.status)}
-                      $textColor={getStatusTextColor(contest.status)}
-                    >
-                      {getStatusText(contest.status)}
-                    </S.CardBadge>
                   </S.CardImageWrapper>
 
                   <S.CardContent>

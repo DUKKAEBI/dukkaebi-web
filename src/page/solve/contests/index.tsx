@@ -1,9 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  type ChangeEvent,
-} from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import type * as monacoEditor from "monaco-editor";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -15,7 +10,7 @@ import axiosInstance from "../../../api/axiosInstance";
 
 type ProblemDetail = {
   name: string;
-  description: string;  
+  description: string;
   input: string;
   output: string;
   exampleInput: string;
@@ -60,24 +55,55 @@ const LANGUAGE_OPTIONS: LanguageOption[] = [
 ];
 
 export default function SolvePage() {
+  //문제별 코드를 저장할 객체
+  const [codesByProblem, setCodesByProblem] = useState<Record<string, string>>(
+    () => {
+      try {
+        const stored = localStorage.getItem(`dukkaebi_codes_${contestCode}`);
+        return stored ? JSON.parse(stored) : {};
+      } catch {
+        return {};
+      }
+    }
+  );
+  // 상태 추가
+  const [langsByProblem, setLangsByProblem] = useState<Record<string, string>>(
+    () => {
+      try {
+        const stored = localStorage.getItem(`dukkaebi_langs_${contestCode}`);
+        return stored ? JSON.parse(stored) : {};
+      } catch {
+        return {};
+      }
+    }
+  );
+  // 현재 에디터에 보여줄 단일 코드 상태
+  const [currentCode, setCurrentCode] = useState("");
   const { contestCode, problemId } = useParams<{
     contestCode?: string;
     problemId?: string;
   }>();
   const navigate = useNavigate();
+
   // UI State
   const [sampleInput, setSampleInput] = useState("");
   const [sampleOutput, setSampleOutput] = useState("");
+  const [terminalOutput, setTerminalOutput] =
+    useState("실행 결과가 이곳에 표시됩니다.");
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState(LANGUAGE_OPTIONS[0].value);
   const [rightPanelWidth, setRightPanelWidth] = useState(65);
   const [isResizing, setIsResizing] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">("result");
+  const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
+    "result"
+  );
 
   // Problem State
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
-  const [problemStatus, setProblemStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [problemStatus, setProblemStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [problemError, setProblemError] = useState("");
 
   // Course/Contest State
@@ -87,20 +113,41 @@ export default function SolvePage() {
   const [timeLeft, setTimeLeft] = useState("");
 
   // Grading State
-  const [gradingDetails, setGradingDetails] = useState<Array<{
-    testCaseNumber?: number;
-    passed?: boolean;
-    input?: string;
-    expectedOutput?: string;
-    actualOutput?: string;
-  }>>([]);
-  const [gradingCacheByProblem, setGradingCacheByProblem] = useState<Record<string, Array<{
-    testCaseNumber?: number;
-    passed?: boolean;
-    input?: string;
-    expectedOutput?: string;
-    actualOutput?: string;
-  }>>>({});
+  const [gradingDetails, setGradingDetails] = useState<
+    Array<{
+      testCaseNumber?: number;
+      passed?: boolean;
+      input?: string;
+      expectedOutput?: string;
+      actualOutput?: string;
+    }>
+  >([]);
+  const [gradingCacheByProblem, setGradingCacheByProblem] = useState<
+    Record<
+      string,
+      Array<{
+        testCaseNumber?: number;
+        passed?: boolean;
+        input?: string;
+        expectedOutput?: string;
+        actualOutput?: string;
+      }>
+    >
+  >({});
+
+  // Time tracking state
+  const [timeSpentByProblem, setTimeSpentByProblem] = useState<
+    Record<string, number>
+  >(() => {
+    try {
+      const stored = localStorage.getItem(`dukkaebi_timeSpent_${contestCode}`);
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
 
   // Refs
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -111,13 +158,31 @@ export default function SolvePage() {
   const currentLanguageOption =
     LANGUAGE_OPTIONS.find((option) => option.value === language) ||
     LANGUAGE_OPTIONS[0];
+  // 언어 변경 핸들러 수정
   const handleLanguageChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setLanguage(event.target.value);
+    const newLang = event.target.value;
+    setLanguage(newLang);
+    if (problemId) {
+      setLangsByProblem((prev) => {
+        const updated = { ...prev, [problemId]: newLang };
+        // 언어 변경 시 localStorage에 저장
+        try {
+          localStorage.setItem(
+            `dukkaebi_langs_${contestCode}`,
+            JSON.stringify(updated)
+          );
+        } catch (e) {
+          console.error("Failed to save language to localStorage:", e);
+        }
+        return updated;
+      });
+    }
   };
 
   // Terminal (floating) size & resize state
   const [terminalHeight, setTerminalHeight] = useState(200); // px
   const terminalRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (!isResizing) return;
 
@@ -183,6 +248,33 @@ export default function SolvePage() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSidebarOpen]);
+
+  // Time tracking: 매초마다 현재 문제의 소요 시간 증가
+  useEffect(() => {
+    if (!problemId || !contestCode) return;
+
+    const timer = setInterval(() => {
+      setTimeSpentByProblem((prev) => {
+        const newTimes = { ...prev };
+        const key = String(problemId);
+        newTimes[key] = (prev[key] || 0) + 1;
+
+        // 로컬스토리지에 저장
+        try {
+          localStorage.setItem(
+            `dukkaebi_timeSpent_${contestCode}`,
+            JSON.stringify(newTimes)
+          );
+        } catch (e) {
+          console.error("Failed to save time spent to localStorage:", e);
+        }
+
+        return newTimes;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [problemId, contestCode]);
 
   useEffect(() => {
     if (!problemId) {
@@ -310,14 +402,14 @@ export default function SolvePage() {
 
     // 이미 연결되어 있으면 중복 연결 방지
     if (sseConnectionRef.current) {
-      console.log('SSE 이미 연결되어 있음, 중복 연결 방지');
+      console.log("SSE 이미 연결되어 있음, 중복 연결 방지");
       return;
     }
 
     const sseUrl = `${API_BASE_URL}contest/${contestCode}/subscribe`;
     const accessToken = localStorage.getItem("accessToken");
 
-    console.log('SSE 연결 시도:', sseUrl);
+    console.log("SSE 연결 시도:", sseUrl);
 
     const eventSource = new EventSourcePolyfill(sseUrl, {
       headers: accessToken
@@ -332,24 +424,24 @@ export default function SolvePage() {
     sseConnectionRef.current = eventSource;
 
     eventSource.onopen = () => {
-      console.log('SSE 연결 열림 (onopen)');
+      console.log("SSE 연결 열림 (onopen)");
     };
 
     // 초기 연결 메시지 수신
-    eventSource.addEventListener('connected', (event) => {
-      console.log('SSE 연결 완료:', (event as MessageEvent).data);
+    eventSource.addEventListener("connected", (event) => {
+      console.log("SSE 연결 완료:", (event as MessageEvent).data);
     });
 
     // 대회 업데이트 메시지 수신 (서버에서 name("contest-update")로 보냄)
-    eventSource.addEventListener('contest-update', (event) => {
-      console.log('SSE 업데이트 수신:', event);
+    eventSource.addEventListener("contest-update", (event) => {
+      console.log("SSE 업데이트 수신:", event);
 
       try {
         const data = JSON.parse((event as MessageEvent).data);
-        console.log('파싱된 데이터:', data);
+        console.log("파싱된 데이터:", data);
 
-        if (data.eventType === 'CONTEST_UPDATED') {
-          console.log('대회 정보 변경:', data);
+        if (data.eventType === "CONTEST_UPDATED") {
+          console.log("대회 정보 변경:", data);
 
           setContestInfo((prev) => ({
             ...prev,
@@ -358,27 +450,27 @@ export default function SolvePage() {
             status: data.status ?? prev?.status,
           }));
 
-          toast.info(data.message || '대회 정보가 업데이트되었습니다.');
+          toast.info(data.message || "대회 정보가 업데이트되었습니다.");
         }
       } catch (error) {
-        console.error('SSE 메시지 파싱 오류:', error);
+        console.error("SSE 메시지 파싱 오류:", error);
       }
     });
 
     // 이름 없는 메시지용 (디버깅)
     eventSource.onmessage = (event) => {
-      console.log('이름 없는 SSE 메시지:', event);
+      console.log("이름 없는 SSE 메시지:", event);
     };
 
     eventSource.onerror = (error) => {
-      console.error('SSE 연결 오류:', error);
+      console.error("SSE 연결 오류:", error);
       eventSource?.close();
       sseConnectionRef.current = null;
     };
 
     // 컴포넌트 언마운트 시 연결 종료
     return () => {
-      console.log('SSE 연결 종료 (cleanup)');
+      console.log("SSE 연결 종료 (cleanup)");
       eventSource?.close();
       sseConnectionRef.current = null;
     };
@@ -431,12 +523,54 @@ export default function SolvePage() {
     setSampleOutput(problem.exampleOutput || "");
   }, [problem]);
 
+  //문제(problemId)가 바뀔 때 에디터 코드 교체 로직
   useEffect(() => {
     if (!exampleInputRef.current) return;
     const textarea = exampleInputRef.current;
     textarea.style.height = "auto";
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [sampleInput]);
+
+  useEffect(() => {
+    if (!problemId) return;
+
+    // 캐시된 코드가 있으면 가져오고, 없으면 빈 문자열
+    const savedCode = codesByProblem[problemId] || "";
+    setCurrentCode(savedCode);
+  }, [problemId]); // codesByProblem을 의존성에 넣지 않아야 전환 시점에만 작동함
+
+  // 3. 에디터 내용 변경 시 호출될 핸들러
+  const handleEditorChange = (value: string | undefined) => {
+    const newCode = value || "";
+    setCurrentCode(newCode); // 현재 화면 업데이트
+
+    if (problemId) {
+      // 전체 코드 저장소 업데이트 (각 문제별 코드 보존)
+      setCodesByProblem((prev) => ({
+        ...prev,
+        [problemId]: newCode,
+      }));
+    }
+  };
+
+  // 코드를 localStorage에 저장하는 헬퍼 함수
+  const saveCodeToLocalStorage = () => {
+    try {
+      localStorage.setItem(
+        `dukkaebi_codes_${contestCode}`,
+        JSON.stringify(codesByProblem)
+      );
+    } catch (e) {
+      console.error("Failed to save code to localStorage:", e);
+    }
+  };
+
+  // problemId 변경 시 효과 추가
+  useEffect(() => {
+    if (!problemId) return;
+    const savedLang = langsByProblem[problemId] || LANGUAGE_OPTIONS[0].value;
+    setLanguage(savedLang);
+  }, [problemId]);
 
   const formatGradingResult = (result: {
     status?: string;
@@ -492,7 +626,154 @@ export default function SolvePage() {
     return lines.join("\n");
   };
 
+  const handleTestCode = async () => {
+    if (!problemId) {
+      setTerminalOutput("문제 ID가 없어 테스트할 수 없습니다.");
+      return;
+    }
+    const numericProblemId = Number(problemId);
+    if (Number.isNaN(numericProblemId)) {
+      setTerminalOutput("유효한 문제 ID가 아닙니다.");
+      return;
+    }
+    if (!API_BASE_URL) {
+      setTerminalOutput("서버 주소가 설정되지 않았습니다.");
+      return;
+    }
+    if (!currentCode.trim()) {
+      setTerminalOutput("테스트할 코드를 작성해 주세요.");
+      return;
+    }
+
+    setTerminalOutput("테스트 중입니다...");
+    setIsTesting(true);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await fetch(`${API_BASE_URL}solve/test`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          problemId: numericProblemId,
+          code: currentCode,
+          language,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "테스트 요청이 실패했습니다.");
+      }
+
+      const data = await response.json();
+      setTerminalOutput(formatGradingResult(data));
+      setGradingDetails(Array.isArray(data?.details) ? data.details : []);
+
+      // Determine pass/fail based on details[].passed
+      const passed = Array.isArray(data?.details)
+        ? data.details.some((d: { passed?: boolean }) => d?.passed === true)
+        : false;
+      if (passed) {
+        toast.success("테스트 통과", { autoClose: 2500 });
+      } else {
+        toast.error("테스트 실패", { autoClose: 2500 });
+      }
+    } catch (error) {
+      setTerminalOutput(
+        error instanceof Error
+          ? error.message
+          : "테스트 중 알 수 없는 오류가 발생했습니다."
+      );
+      toast.error(
+        error instanceof Error ? error.message : "테스트 오류가 발생했습니다.",
+        { autoClose: 3000 }
+      );
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const handleSubmitCode = async () => {
+    if (!problemId) {
+      setTerminalOutput("문제 ID가 없어 제출할 수 없습니다.");
+      return;
+    }
+    const numericProblemId = Number(problemId);
+    if (Number.isNaN(numericProblemId)) {
+      setTerminalOutput("유효한 문제 ID가 아닙니다.");
+      return;
+    }
+    if (!API_BASE_URL) {
+      setTerminalOutput("서버 주소가 설정되지 않았습니다.");
+      return;
+    }
+    if (!currentCode.trim()) {
+      setTerminalOutput("제출할 코드를 작성해 주세요.");
+      return;
+    }
+
+    // 제출 전에 코드 저장
+    saveCodeToLocalStorage();
+
+    setTerminalOutput("채점 중입니다...");
+    setIsSubmitting(true);
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const timeSpent = timeSpentByProblem[String(problemId)] || 0;
+
+      const response = await fetch(`${API_BASE_URL}solve/grading`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          problemId: numericProblemId,
+          code: currentCode,
+          language,
+          timeSpentSeconds: timeSpent,
+        }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "채점 요청이 실패했습니다.");
+      }
+
+      const data = await response.json();
+      setTerminalOutput(formatGradingResult(data));
+      setGradingDetails(Array.isArray(data?.details) ? data.details : []);
+
+      // Determine pass/fail based on details[].passed
+      const passed = Array.isArray(data?.details)
+        ? data.details.some((d: { passed?: boolean }) => d?.passed === true)
+        : false;
+      if (passed) {
+        toast.success("정답입니다", { autoClose: 2500 });
+      } else {
+        toast.error("오답입니다.", { autoClose: 2500 });
+      }
+    } catch (error) {
+      setTerminalOutput(
+        error instanceof Error
+          ? error.message
+          : "채점 중 알 수 없는 오류가 발생했습니다."
+      );
+      toast.error(
+        error instanceof Error ? error.message : "채점 오류가 발생했습니다.",
+        { autoClose: 3000 }
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleNextProblem = () => {
+    // 다음 문제로 넘어가기 전에 코드 저장
+    saveCodeToLocalStorage();
+
     const currentIndex = courseProblems.findIndex(
       (p) => String(p.problemId) === String(problemId)
     );
@@ -646,8 +927,8 @@ export default function SolvePage() {
               height="100%"
               width="100%"
               language={currentLanguageOption.monaco}
-              value={code}
-              onChange={(value) => setCode(value || "")}
+              value={currentCode}
+              onChange={handleEditorChange}
               beforeMount={handleEditorBeforeMount}
               theme="dukkaebi-dark"
               options={{
@@ -682,11 +963,7 @@ export default function SolvePage() {
             {activeResultTab === "result" ? (
               <Style.Terminal ref={terminalRef} $height={terminalHeight}>
                 <Style.TerminalHandle />
-                <Style.TerminalOutput>
-                  <div style={{ color: "#a0aec0" }}>
-                    실행 결과가 여기에 표시됩니다.
-                  </div>
-                </Style.TerminalOutput>
+                <Style.TerminalOutput>{terminalOutput}</Style.TerminalOutput>
               </Style.Terminal>
             ) : (
               <Style.Terminal ref={terminalRef} $height={terminalHeight}>
@@ -850,34 +1127,52 @@ export default function SolvePage() {
               </Style.Terminal>
             )}
 
-            <Style.SubmitWrapper style={{ marginRight: isSidebarOpen ? 268 : 0 }}>
-              <div style={{ display: 'flex', gap: '24px' }}>
+            <Style.SubmitWrapper
+              style={{ marginRight: isSidebarOpen ? 268 : 0 }}
+            >
+              <div style={{ display: "flex", gap: "12px" }}>
                 <Style.SubmitButton
                   onClick={handleEndTest}
                   disabled={!problemId}
                   style={{
-                    backgroundColor: '#35454E',
-                    border: '1px solid #495D68'
+                    backgroundColor: "#35454E",
+                    border: "1px solid #495D68",
                   }}
                 >
-                  테스트 끝내기
+                  끝내기
                 </Style.SubmitButton>
-                {(() => {
-                  const currentIndex = courseProblems.findIndex(
-                    (p) => String(p.problemId) === String(problemId ?? "")
-                  );
-                  const isLastProblem =
-                    currentIndex === courseProblems.length - 1;
-
-                  return (
-                    <Style.SubmitButton
-                      onClick={isLastProblem ? handleEndTest : handleNextProblem}
-                      disabled={!problemId}
-                    >
-                      {isLastProblem ? "제출하기" : "다음 문제"}
-                    </Style.SubmitButton>
-                  );
-                })()}
+                <Style.SubmitButton
+                  onClick={handleTestCode}
+                  disabled={!problemId || isTesting}
+                  style={{
+                    backgroundColor: "#3E5C7A",
+                    border: "1px solid #4A6B8F",
+                  }}
+                >
+                  {isTesting ? "테스트 중..." : "테스트"}
+                </Style.SubmitButton>
+                <Style.SubmitButton
+                  onClick={handleSubmitCode}
+                  disabled={!problemId || isSubmitting}
+                >
+                  {isSubmitting ? "제출 중..." : "제출"}
+                </Style.SubmitButton>
+                <Style.SubmitButton
+                  onClick={handleNextProblem}
+                  disabled={
+                    !problemId ||
+                    courseProblems.findIndex(
+                      (p) => String(p.problemId) === String(problemId ?? "")
+                    ) ===
+                      courseProblems.length - 1
+                  }
+                  style={{
+                    backgroundColor: "#35454E",
+                    border: "1px solid #495D68",
+                  }}
+                >
+                  다음 문제
+                </Style.SubmitButton>
               </div>
             </Style.SubmitWrapper>
           </Style.ResultContainer>

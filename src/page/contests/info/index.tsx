@@ -99,6 +99,18 @@ export const ContestDetailPage = () => {
           `/contest/${contestCode}`
         );
         setContestDetails(response.data);
+
+        if (contestCode) {
+          // 해당 대회와 관련된 코드 보관소 삭제
+          localStorage.removeItem(`dukkaebi_codes${contestCode}`);
+          // 해당 대회와 관련된 언어 설정 보관소 삭제
+          localStorage.removeItem(`dukkaebi_langs_${contestCode}`);
+          // 해당 대회와 관련된 시간 설정 보관소 삭제
+          localStorage.removeItem(`dukkaebi_timeSpent_${contestCode}`);
+          console.log(
+            `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`
+          );
+        }
       } catch (error) {
         console.error("Error fetching contest details:", error);
       }
