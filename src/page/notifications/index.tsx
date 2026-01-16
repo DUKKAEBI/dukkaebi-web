@@ -23,6 +23,7 @@ import {
   PageButton,
 } from "./style";
 
+
 interface NoticeItem {
   noticeId: number;
   title: string;
@@ -31,12 +32,10 @@ interface NoticeItem {
   hits: number;
 }
 
-interface NoticeResponse {
-  content: NoticeItem[];
-  currentPage: number;
-  totalPages: number;
+export interface NoticePageResponse {
+  content: Notice[];
   totalElements: number;
-  size: number;
+  totalPages: number;
   first: boolean;
   last: boolean;
 }
@@ -45,52 +44,69 @@ export default function NoticesPage() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(0); // 0-based
   const [searchQuery, setSearchQuery] = useState("");
-  const [notices, setNotices] = useState<NoticeItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [totalPages, setTotalPages] = useState(0);
-  const pageSize = 10; // 고정 사이즈
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [pageArray, setPageArray] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchNotices();
-  }, [currentPage]);
-
-  const fetchNotices = async () => {
-    setLoading(true);
+  // 모든 공지 조회
+  const fetchNotices = async (
+    page: number = 0,
+    size: number = 15
+  ): Promise<NoticePageResponse> => {
     try {
-      const response = await axiosInstance.get<NoticeResponse>('/notice', {
+      const res = await axiosInstance.get<NoticePageResponse>("/notice", {
         params: {
-          page: currentPage,
-          size: pageSize,
+          page: page,
+          size: size,
         },
       });
-      setNotices(response.data.content);
-      setTotalPages(response.data.totalPages);
+      const pageNumbers = Array.from({ length: res.data.totalPages }, (_, i) => i + 1);
+      setPageArray(pageNumbers);
+      return res.data;
     } catch (error) {
-      console.error('Failed to fetch notices:', error);
-    } finally {
-      setLoading(false);
+      console.error("Error fetching notices:", error);
+      throw error;
     }
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page - 1); // 1-based to 0-based
-  };
-
-  const renderPageButtons = () => {
-    const pages = [];
-    for (let i = 1; i <= totalPages; i++) {
-      pages.push(
-        <PageButton
-          key={i}
-          active={currentPage + 1 === i}
-          onClick={() => handlePageChange(i)}
-        >
-          {i}
-        </PageButton>
+  // 공지 검색 
+  const searchNotices = async () => {
+    try {
+      const res = await axiosInstance.get<Notice[]>("/notice/search", {
+        params: {
+          keyword: searchQuery,
+        },
+      });
+      const sortedNotices = [...res.data].sort(
+        (a, b) => b.noticeId - a.noticeId
       );
+      setNotices(sortedNotices);
+    } catch (error) {
+      console.error("Error searching notices:", error);
     }
-    return pages;
-  };
+  }
+
+  useEffect(() => {
+    const loadNotices = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await fetchNotices(currentPage - 1, 15);
+        const sortedNotices = [...data.content].sort(
+          (a, b) => b.noticeId - a.noticeId
+        );
+        setNotices(sortedNotices);
+      } catch (err) {
+        setError("공지사항을 불러올 수 없습니다.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadNotices();
+  }, [currentPage]);
 
   return (
     <Page>
@@ -105,8 +121,13 @@ export default function NoticesPage() {
               placeholder="공지사항을 검색하세요.."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  searchNotices();
+                }
+              }}
             />
-            <img src={search} alt="search" />
+            <img src={search} alt="search" onClick={searchNotices}/>
           </SearchBar>
 
           {/* Table */}
@@ -119,7 +140,26 @@ export default function NoticesPage() {
               <span>조회</span>
             </TableHeader>
 
-            {notices.map((notice, index) => (
+            {loading ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#9ca3af' }}>
+                  로딩 중...
+                </span>
+              </TableRow>
+            ) : error ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#ef4444' }}>
+                  {error}
+                </span>
+              </TableRow>
+            ) : notices.length === 0 ? (
+              <TableRow isLast={true}>
+                <span style={{ gridColumn: '1 / -1', textAlign: 'center', color: '#9ca3af' }}>
+                  {searchQuery ? '검색 결과가 없습니다.' : '아직 공지사항이 없습니다.'}
+                </span>
+              </TableRow>
+            ) : (
+              notices.map((notice, index) => (
               <TableRow
                 key={notice.noticeId}
                 isLast={index === notices.length - 1}
@@ -131,7 +171,8 @@ export default function NoticesPage() {
                 <span>{notice.date}</span>
                 <span>{notice.hits}</span>
               </TableRow>
-            ))}
+            ))
+            )}
           </NoticeTable>
 
           {/* Pagination */}
@@ -142,7 +183,15 @@ export default function NoticesPage() {
               </ArrowButton>
 
               <Pages>
-                {renderPageButtons()}
+                {pageArray.map((page) => (
+                  <PageButton
+                    key={page}
+                    active={currentPage === page}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </PageButton>
+                ))}
               </Pages>
 
               <ArrowButton direction="right" onClick={() => currentPage < totalPages - 1 && setCurrentPage(currentPage + 1)}>

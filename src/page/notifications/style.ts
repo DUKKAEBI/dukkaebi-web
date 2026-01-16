@@ -61,6 +61,8 @@ export const TableHeader = styled.div`
   border: 1px solid #e5e7eb;
   font-size: 14px;
   color: #6b7280;
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
 `;
 
 export const TableRow = styled.div<{ isLast?: boolean }>`
@@ -95,25 +97,25 @@ export const PaginationWrapper = styled.div`
 `;
 
 export const Pagination = styled.div`
-  position: relative;
-  width: 200px;
-  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
 `;
 
 export const ArrowButton = styled.button<{ direction: "left" | "right" }>`
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  ${({ direction }) => (direction === "left" ? "left: 0;" : "right: 0;")}
   background: none;
   border: none;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
 export const Pages = styled.div`
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   gap: 12px;
 `;

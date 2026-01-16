@@ -1,14 +1,17 @@
 //todo : api 연결(서버 반환 방식에 따라 공지사항 이미지 표시 방법 반영)
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Header } from "../../../components/header";
 import { Footer } from "../../../components/footer";
 import * as S from "./style";
 import axiosInstance from "../../../api/axiosInstance";
+// TODO: Uncomment when API is ready
+// import axiosInstance from "../../../api/axiosInstance";
 
 interface NoticeDetail {
   title: string;
   writer: string;
+  createdAt: string;
   content: string;
   fileUrl: string;
   createdAt: string;
@@ -19,11 +22,15 @@ export default function NoticeInfoPage() {
   const navigate = useNavigate();
   const [notice, setNotice] = useState<NoticeDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     const fetchNotice = async () => {
+      if (hasFetched.current) return;
+      hasFetched.current = true;
+      
       try {
-        const response = await axiosInstance.get<NoticeDetail>(`/notice/${id}`);
+        const response = await axiosInstance.get(`/notice/${id}`);
         setNotice(response.data);
       } catch (error) {
         console.error("Error fetching notice:", error);
