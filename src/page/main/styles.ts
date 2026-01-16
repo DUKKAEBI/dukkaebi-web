@@ -121,6 +121,40 @@ export const StreakInfo = styled.div`
   gap: 16px;
 `;
 
+export const NoticeSection = styled.div`
+  width: 100%;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+export const NoticeTitleGroup = styled.div`
+  padding: 0 4px;
+`;
+
+export const NoticeList = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: row; /* 가로 정렬 */
+  gap: 16px;
+  overflow-x: auto; /* 내용이 많으면 가로 스크롤 생성 */
+  padding-bottom: 8px;
+
+  &::-webkit-scrollbar {
+    height: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 4px;
+  }
+
+  & > div {
+    min-width: 280px;
+    max-width: 280px;
+  }
+`;
+
 export const StreakContent = styled.div`
   display: flex;
   align-items: center;
