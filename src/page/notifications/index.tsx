@@ -1,11 +1,12 @@
 // todo : api연결, pagination 부분에 페이지 버튼 동적으로 변경
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
 import arrowLeft from "../../assets/image/notifications/arrow-left.png";
 import arrowRight from "../../assets/image/notifications/arrow-right.png";
 import search from "../../assets/image/notifications/search.png";
+import axiosInstance from "../../api/axiosInstance";
 
 import {
   Page,
@@ -22,18 +23,74 @@ import {
   PageButton,
 } from "./style";
 
+interface NoticeItem {
+  noticeId: number;
+  title: string;
+  writer: string;
+  date: string;
+  hits: number;
+}
+
+interface NoticeResponse {
+  content: NoticeItem[];
+  currentPage: number;
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+}
+
 export default function NoticesPage() {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0); // 0-based
   const [searchQuery, setSearchQuery] = useState("");
+  const [notices, setNotices] = useState<NoticeItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const pageSize = 10; // 고정 사이즈
 
-  const notices = Array.from({ length: 15 }, (_, i) => ({
-    id: 15 - i,
-    title: "DGSW 프로그래밍 대회 관련 안내",
-    author: "이**",
-    date: "2026.01.01",
-    views: 10,
-  }));
+  useEffect(() => {
+    fetchNotices();
+  }, [currentPage]);
+
+  const fetchNotices = async () => {
+    setLoading(true);
+    try {
+      const response = await axiosInstance.get<NoticeResponse>('/notice', {
+        params: {
+          page: currentPage,
+          size: pageSize,
+        },
+      });
+      setNotices(response.data.content);
+      setTotalPages(response.data.totalPages);
+    } catch (error) {
+      console.error('Failed to fetch notices:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page - 1); // 1-based to 0-based
+  };
+
+  const renderPageButtons = () => {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(
+        <PageButton
+          key={i}
+          active={currentPage + 1 === i}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </PageButton>
+      );
+    }
+    return pages;
+  };
 
   return (
     <Page>
@@ -64,15 +121,15 @@ export default function NoticesPage() {
 
             {notices.map((notice, index) => (
               <TableRow
-                key={notice.id}
+                key={notice.noticeId}
                 isLast={index === notices.length - 1}
-                onClick={() => navigate(`/notifications/${notice.id}`)}
+                onClick={() => navigate(`/notifications/${notice.noticeId}`)}
               >
-                <span>{notice.id}</span>
+                <span>{notice.noticeId}</span>
                 <span>{notice.title}</span>
-                <span>{notice.author}</span>
+                <span>{notice.writer}</span>
                 <span>{notice.date}</span>
-                <span>{notice.views}</span>
+                <span>{notice.hits}</span>
               </TableRow>
             ))}
           </NoticeTable>
@@ -80,23 +137,15 @@ export default function NoticesPage() {
           {/* Pagination */}
           <PaginationWrapper>
             <Pagination>
-              <ArrowButton direction="left">
+              <ArrowButton direction="left" onClick={() => currentPage > 0 && setCurrentPage(currentPage - 1)}>
                 <img src={arrowLeft} alt="prev" />
               </ArrowButton>
 
               <Pages>
-                {[1, 2, 3, 4, 5].map((page) => (
-                  <PageButton
-                    key={page}
-                    active={currentPage === page}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </PageButton>
-                ))}
+                {renderPageButtons()}
               </Pages>
 
-              <ArrowButton direction="right">
+              <ArrowButton direction="right" onClick={() => currentPage < totalPages - 1 && setCurrentPage(currentPage + 1)}>
                 <img src={arrowRight} alt="next" />
               </ArrowButton>
             </Pagination>
