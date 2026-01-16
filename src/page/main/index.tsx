@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import * as S from "./styles";
 import dubiImage from "../../assets/image/main/dubi.png";
 import fireIcon from "../../assets/image/main/solar_fire-bold-duotone.svg";
-import arrowIcon from "../../assets/image/main/arrow.svg";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
 import axiosInstance from "../../api/axiosInstance";
+import NoticeCard from "../../components/main/noticeCard";
+import { useNavigate } from "react-router-dom";
 
 type ContributionsResponse = Record<string, number>;
 
@@ -17,6 +18,15 @@ interface HeatmapCellData {
   date: string;
   intensity: string;
   solved: number;
+}
+
+interface Notice {
+  noticeId: number;
+  title: string;
+  writer: string;
+  date: string;
+  content: string;
+  fileUrl?: string;
 }
 
 const WEEKS_TO_DISPLAY = 17;
@@ -61,42 +71,16 @@ const generateHeatmapData = (
   return cells;
 };
 
-const recommendedCourses = [
-  {
-    id: 1,
-    difficulty: "난이도 : 상",
-    title: "자료구조 알고리즘",
-    tags: ["#큐", "#스택", "#이진탐색", "#그래프"],
-  },
-  {
-    id: 2,
-    difficulty: "난이도 : 중",
-    title: "DP 집중 연습",
-    tags: ["#dp", "#동적계획법", "#냅색", "#계단오르기"],
-  },
-  {
-    id: 3,
-    difficulty: "난이도 : 중상",
-    title: "그리디 & 구현",
-    tags: ["#그리디", "#시뮬레이션", "#구현", "#정렬"],
-  },
-  {
-    id: 4,
-    difficulty: "난이도 : 하",
-    title: "입출력 리마인드",
-    tags: ["#입출력", "#문자열", "#기본구현"],
-  },
-  {
-    id: 5,
-    difficulty: "난이도 : 상",
-    title: "그래프 최단거리",
-    tags: ["#다익스트라", "#벨만포드", "#플로이드워셜"],
-  },
-];
-
 const Main = () => {
   const [streak, setStreak] = useState(0);
   const [contributions, setContributions] = useState<ContributionsResponse>({});
+  const [notices, setNotices] = useState<Notice[]>([]);
+
+  const navigate = useNavigate();
+
+  const handleNoticeClick = (id: number) => {
+    navigate(`/notifications/${id}`);
+  };
 
   useEffect(() => {
     const fetchActivity = async () => {
@@ -113,39 +97,40 @@ const Main = () => {
           1
         );
 
-        const [contributionsResponse, streakResponse] = await Promise.all([
-          axiosInstance.get<ContributionsResponse>(
-            "/user/activity/contributions",
-            {
-              params: {
-                start: formatDate(contributionsStart),
-                end: formatDate(contributionsEnd),
-              },
-            }
-          ),
-          axiosInstance.get<StreakResponse>("/user/activity/streak"),
-        ]);
+        const [contributionsResponse, streakResponse, noticeResponse] =
+          await Promise.all([
+            axiosInstance.get<ContributionsResponse>(
+              "/user/activity/contributions",
+              {
+                params: {
+                  start: formatDate(contributionsStart),
+                  end: formatDate(contributionsEnd),
+                },
+              }
+            ),
+            axiosInstance.get<StreakResponse>("/user/activity/streak"),
+            axiosInstance.get<{ content: Notice[] }>("/notice/home"), // 공지사항 API 추가
+          ]);
 
+        // 데이터 파싱 로직 (기존 유지)
         const contributionsData =
-          (
-            contributionsResponse.data as ContributionsResponse & {
-              data?: ContributionsResponse;
-            }
-          )?.data ||
+          (contributionsResponse.data as any)?.data ||
           contributionsResponse.data ||
           {};
         setContributions(contributionsData);
 
         const streakData =
-          (streakResponse.data as StreakResponse & { data?: StreakResponse })
-            ?.data || streakResponse.data;
+          (streakResponse.data as any)?.data || streakResponse.data;
         setStreak(
           typeof streakData?.streak === "number" ? streakData.streak : 0
         );
+
+        // 공지사항 데이터 세팅 (최대 5개)
+        const noticeData =
+          (noticeResponse.data as any)?.content || noticeResponse.data || [];
+        setNotices(noticeData.slice(0, 5));
       } catch (error) {
-        console.error("Failed to load home activity data:", error);
-        setContributions({});
-        setStreak(0);
+        console.error("Failed to load home data:", error);
       }
     };
 
@@ -224,6 +209,27 @@ const Main = () => {
             </S.HeatmapSection>
           </S.StatsCard>
         </S.HeroSection>
+
+        <S.NoticeSection>
+          <S.NoticeTitleGroup>
+            <span style={{ fontSize: "18px", fontWeight: "bold" }}>
+              최근 공지사항
+            </span>
+          </S.NoticeTitleGroup>
+          <S.NoticeList>
+            {notices.map((notice) => (
+              <NoticeCard
+                key={notice.noticeId}
+                title={notice.title}
+                author={notice.writer}
+                date={notice.date} // 날짜만 표시
+                content={notice.content}
+                fileUrl={notice.fileUrl}
+                onClick={() => handleNoticeClick(notice.noticeId)}
+              />
+            ))}
+          </S.NoticeList>
+        </S.NoticeSection>
       </S.MainContent>
 
       <Footer />

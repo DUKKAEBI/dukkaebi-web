@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { toast } from "react-toastify";
 import * as S from "./style";
 import iconMessage from "../../assets/image/auth/Message.png";
 import iconChat from "../../assets/image/auth/Chat.png";
@@ -44,9 +45,15 @@ export default function Login() {
       localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("accessToken", accessToken);
 
+      toast.success("로그인되었습니다.");
       navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        toast.error("아이디 또는 비밀번호가 올바르지 않습니다.");
+      } else {
+        toast.error("로그인에 실패했습니다.");
+      }
     } finally {
       setIsLoading(false);
     }

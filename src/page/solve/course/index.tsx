@@ -392,7 +392,7 @@ export default function SolvePage() {
   };
 
   const toggleSidebar = () => setIsSidebarOpen((v) => !v);
-  const handleExitSolvePage = () => navigate(`/course/${courseId}`);
+  const handleExitSolvePage = () => navigate(`/courses/${courseId}`);
   const handleSidebarItemClick = (pid: number) =>
     navigate(`/courses/${courseId}/solve/${pid}`);
 

@@ -14,7 +14,6 @@ interface NoticeDetail {
   createdAt: string;
   content: string;
   fileUrl: string;
-  createdAt: string;
 }
 
 export default function NoticeInfoPage() {

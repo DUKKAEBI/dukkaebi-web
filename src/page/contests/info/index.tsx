@@ -4,7 +4,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Header } from "../../../components/header";
 
-// 문제 타입 정의
+// ============================
+// 상수 및 이미지 매핑
+// ============================
+const DEFAULT_IMAGE = "https://i.ibb.co/Rp6GC0LG/dgsw.png";
+
+// ============================
+// 타입 정의
+// ============================
 interface Problem {
   problemId: number;
   name: string;
@@ -24,6 +31,7 @@ interface ContestDetail {
   status: "JOINABLE" | "JOINED" | "ENDED";
   participantCount: number;
   problems: Problem[];
+  imageUrl?: string; // API에서 내려오는 이미지 필드 추가
 }
 
 export const ContestDetailPage = () => {
@@ -47,11 +55,13 @@ export const ContestDetailPage = () => {
     return Math.round((solvedCount / contestDetails.problems.length) * 100);
   };
 
+  // 이미지 결정 로직
+  const contestImage = contestDetails?.imageUrl || DEFAULT_IMAGE;
+
   const startTest = () => {
     if (!contestDetails || !contestCode) return;
 
     const now = new Date();
-
     const startDateTime = new Date(contestDetails.startDate);
     startDateTime.setHours(0, 0, 0, 0);
 
@@ -75,7 +85,7 @@ export const ContestDetailPage = () => {
     if (contestDetails.status === "JOINABLE") {
       const input = prompt("대회 코드를 입력해주세요.");
       if (!input) return;
-      // 참여 API 호출: /student/contest/{code}/join
+
       axiosInstance
         .post(`/student/contest/${contestDetails.code}/join`, null, {
           params: { code: input },
@@ -122,19 +132,16 @@ export const ContestDetailPage = () => {
   return (
     <>
       <S.Container>
-        {/* Header */}
         <Header />
 
-        {/* Contest Info Section */}
         <S.ContestInfoSection>
           <S.ContestInfoContent>
-            {/* Contest Image */}
+            {/* 수정된 부분: contestImage 변수 사용 */}
             <S.ContestImage
-              src="https://i.ibb.co/bgdgkTBG/image.png"
-              alt="DGSW 프로그래밍 대회"
+              src={contestImage}
+              alt={contestDetails?.title || "대회 이미지"}
             />
 
-            {/* Contest Details */}
             <S.ContestDetails>
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 12 }}
@@ -151,7 +158,6 @@ export const ContestDetailPage = () => {
                 </S.ContestDescription>
               </div>
 
-              {/* Progress Bar */}
               <S.ProgressSection>
                 <S.ProgressBarContainer>
                   <S.ProgressBar progress={calculateProgress()} />
@@ -162,12 +168,9 @@ export const ContestDetailPage = () => {
           </S.ContestInfoContent>
         </S.ContestInfoSection>
 
-        {/* Main Content Area */}
         <S.MainContentArea>
-          {/* Problems List */}
           <S.ProblemsSection>
             <S.ProblemsTable>
-              {/* Table Header */}
               <S.TableHeader>
                 <S.TableHeaderLeft>
                   <S.HeaderCell>번호</S.HeaderCell>
@@ -178,7 +181,6 @@ export const ContestDetailPage = () => {
                 </S.TableHeaderRight>
               </S.TableHeader>
 
-              {/* Table Body */}
               <S.TableBody>
                 {contestDetails?.problems.map((problem, index) => (
                   <S.TableRow
@@ -199,7 +201,6 @@ export const ContestDetailPage = () => {
             </S.ProblemsTable>
           </S.ProblemsSection>
 
-          {/* Contest Info Card */}
           <S.ContestInfoCard>
             <S.CardContent>
               <S.CardInfo>
@@ -208,9 +209,8 @@ export const ContestDetailPage = () => {
                   <S.CardDetail>
                     시작 일시 : {contestDetails?.startDate} 12:00
                   </S.CardDetail>
-                  {/* <S.CardDetail>코딩 테스트 시간 : 30분</S.CardDetail> */}
                   <S.CardDetail>
-                    총 {contestDetails?.problems.length}문제
+                    총 {contestDetails?.problems.length || 0}문제
                   </S.CardDetail>
                 </S.CardDetails>
               </S.CardInfo>
