@@ -35,39 +35,33 @@ const DEFAULT_IMAGE = "https://i.ibb.co/Rp6GC0LG/dgsw.png";
 // 메인 컴포넌트
 // ============================
 export const ContestPage = () => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(1);
   const [contests, setContests] = useState<Contest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [totalPages, setTotalPages] = useState(0);
+  const [isFirst, setIsFirst] = useState(true);
+  const [isLast, setIsLast] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const ITEMS_PER_PAGE = 16;
 
-  const filteredContests = contests.filter((contest) =>
-    contest.title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalPages = Math.ceil(filteredContests.length / ITEMS_PER_PAGE);
-
-  const currentContests = filteredContests.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1);
+    setCurrentPage(0);
   };
 
   const getPageNumbers = () => {
     const maxVisiblePages = 5;
     const pages = [];
+    const displayPage = currentPage + 1;
 
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) pages.push(i);
     } else {
-      let startPage = Math.max(1, currentPage - 2);
+      let startPage = Math.max(1, displayPage - 2);
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
       if (endPage - startPage < maxVisiblePages - 1) {
@@ -135,30 +129,41 @@ export const ContestPage = () => {
   // ============================
   // 서버에서 데이터 불러오기 + 이미지 매핑
   // ============================
-  useEffect(() => {
-    const fetchContests = async () => {
-      try {
-        const res = await axiosInstance.get(`/contest/list`);
-
-        if (Array.isArray(res.data)) {
-          const contestsFromServer = res.data as ContestApiItem[];
-
-          // 🔥 서버 데이터에 이미지 붙이기
-          const contestsWithImages = contestsFromServer.map((c) => ({
-            ...c,
-            image: IMAGE_MAP[c.title] ?? c.image ?? DEFAULT_IMAGE,
-          }));
-
-          setContests(contestsWithImages);
-          return;
-        }
-      } catch (error) {
-        console.error("대회 목록 불러오기 실패", error);
+  const fetchContests = async (page: number, search?: string) => {
+    setIsLoading(true);
+    try {
+      const params: Record<string, any> = {
+        page,
+        size: ITEMS_PER_PAGE,
+      };
+      if (search) {
+        params.search = search;
       }
-    };
 
-    fetchContests();
-  }, []);
+      const res = await axiosInstance.get(`/contest/list`, { params });
+
+      const { content, totalPages: tp, first, last } = res.data;
+
+      const contestsFromServer = (content || []) as ContestApiItem[];
+      const contestsWithImages = contestsFromServer.map((c) => ({
+        ...c,
+        image: IMAGE_MAP[c.title] ?? c.image ?? DEFAULT_IMAGE,
+      }));
+
+      setContests(contestsWithImages);
+      setTotalPages(tp || 0);
+      setIsFirst(first ?? true);
+      setIsLast(last ?? true);
+    } catch (error) {
+      console.error("대회 목록 불러오기 실패", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchContests(currentPage, searchTerm || undefined);
+  }, [currentPage, searchTerm]);
 
   return (
     <S.Container>
@@ -232,8 +237,8 @@ export const ContestPage = () => {
         {/* Contest List */}
         <S.ContestsSection>
           <S.ContestsGrid>
-            {currentContests.length > 0 ? (
-              currentContests.map((contest) => (
+            {contests.length > 0 ? (
+              contests.map((contest) => (
                 <S.ContestCard
                   key={contest.code}
                   onClick={() => moveToContestDetail(contest.code)}
@@ -272,8 +277,8 @@ export const ContestPage = () => {
           {/* Pagination */}
           <S.Pagination>
             <S.PaginationButton
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={isFirst}
+              onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
             >
               <svg width="24" height="24">
                 <path
@@ -290,8 +295,8 @@ export const ContestPage = () => {
               {pageNumbers.map((num) => (
                 <S.PageNumber
                   key={num}
-                  $active={num === currentPage}
-                  onClick={() => setCurrentPage(num)}
+                  $active={num === currentPage + 1}
+                  onClick={() => setCurrentPage(num - 1)}
                 >
                   {num}
                 </S.PageNumber>
@@ -299,9 +304,9 @@ export const ContestPage = () => {
             </S.PaginationNumbers>
 
             <S.PaginationButton
-              disabled={currentPage === totalPages}
+              disabled={isLast}
               onClick={() =>
-                setCurrentPage(Math.min(totalPages, currentPage + 1))
+                setCurrentPage(Math.min(totalPages - 1, currentPage + 1))
               }
             >
               <svg width="24" height="24">
