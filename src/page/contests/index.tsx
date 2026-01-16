@@ -209,13 +209,7 @@ export const ContestPage = () => {
                   >
                     <S.CardImageWrapper>
                       <S.CardImage src={contest.image} alt={contest.title} />
-                      <S.CardBadge
-                        $status={contest.status}
-                        $bgColor={getStatusColor(contest.status)}
-                        $textColor={getStatusTextColor(contest.status)}
-                      >
-                        {getStatusText(contest.status)}
-                      </S.CardBadge>
+       
                     </S.CardImageWrapper>
                     <S.CardContent>
                       <S.CardTitle>{contest.title}</S.CardTitle>
