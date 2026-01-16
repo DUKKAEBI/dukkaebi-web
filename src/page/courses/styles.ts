@@ -44,7 +44,8 @@ export const TopSection = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  align-items: center;
+  align-items: flex-start;
+  padding-left: 20%;
   height: 230px;
   gap: 32px;
 `;
@@ -117,8 +118,14 @@ export const ProgressLabel = styled.div`
   color: ${COLORS.grayText};
 `;
 
+export const ProgressBarRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 export const ProgressBar = styled.div`
-  width: 100%;
+  width: 73%;
   height: 10px;
   background: #f1f1f1;
   border-radius: 999px;
@@ -133,6 +140,13 @@ export const ProgressFill = styled.div<{ $percent: number }>`
   transition: width 0.36s ease;
 `;
 
+export const ProgressPercentText = styled.div`
+  font-weight: 700;
+  color: #BDBDBD;
+  font-size: 13px;
+  white-space: nowrap;
+`;
+
 export const RightProfileMeta = styled.div`
   color: #BDBDBD;
   font-family: "Pretendard", sans-serif;
@@ -143,7 +157,7 @@ export const RightProfileMeta = styled.div`
   white-space: nowrap;
   align-self: flex-end;
   margin-bottom: 17px;
-  margin-left: 5px;
+  margin-left: 25px;
   margin-right: 5px;
 `;
 
@@ -176,11 +190,12 @@ export const Tag = styled.span`
 export const CourseGrid = styled.div`
   width: 100%;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
+  grid-template-columns:  repeat(auto-fill, 210px);
+  gap: 58px;    
   margin-top: 20px;
   max-width: 1280px;
-  padding: 0 10px;
+  padding: 0;
+  justify-content: center;
 
   @media (max-width: 900px) {
     grid-template-columns: repeat(2, 1fr);
@@ -197,14 +212,15 @@ export const CourseCard = styled.div`
   border-radius: 12px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 8px;
+
   cursor: default;
   position: relative;
-  padding: 24px 20px 20px 20px;
-  height: 251px;
-  flex: 1 0 0;
+  padding: 18px 18px 18px 18px;
+  width: 245px;
+  height: 310px;
 `;
 
 export const CourseImage = styled.img`
@@ -212,12 +228,15 @@ export const CourseImage = styled.img`
 `;
 
 export const CourseTitle = styled.div`
-  font-family: Pretendard, sans-serif;
+  color: #000;
+
+  /* Body/Normal */
+  font-family: Pretendard;
   font-size: 16px;
   font-style: normal;
   font-weight: 500;
   line-height: normal;
-  color: #000;
+
   padding: 0;
   margin-top: 0;
   width: 100%;
@@ -233,15 +252,26 @@ export const CourseMeta = styled.div`
 `;
 
 export const CourseProgressBar = styled.div`
-  width: 154px;
+  width: 208px;
   height: 0;
   flex-shrink: 0;
-  border-top: 2px solid ${COLORS.primary};
-  overflow: hidden;
+  position: relative;
+  border-top: 3px solid #E0E0E0;
+  border-radius: 999px;
 `;
 
 export const CourseProgressFill = styled.div<{ $percent: number }>`
-  display: none;
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: ${(p) => {
+    const percent = Math.min(100, Math.max(0, p.$percent));
+    return `${(154 * percent) / 100}px`;
+  }};
+  height: 0;
+  border-top: 3px solid #00B4B7;
+  border-radius: 999px;
+  transition: width 0.3s ease;
 `;
 
 export const CourseBadge = styled.div`
@@ -259,12 +289,15 @@ export const CourseBadge = styled.div`
 
 /* 새로운 카드 스타일 */
 export const CourseDifficultyLabel = styled.p`
-  font-family: Pretendard, sans-serif;
+  color: var(--Brand-Colors-Primary, #00B4B7);
+
+  /* Body/Extra Small */
+  font-family: Pretendard;
   font-size: 12px;
   font-style: normal;
   font-weight: 500;
   line-height: normal;
-  color: #00b4b7;
+
   margin: 0;
   width: 100%;
   text-align: left;
@@ -273,35 +306,38 @@ export const CourseDifficultyLabel = styled.p`
 export const CourseTagsWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
   align-items: flex-start;
   width: 100%;
+  margin-top: 16px;
 `;
 
 export const CourseTagChip = styled.div`
-  background-color: ${COLORS.grayLight};
-  border: 1px solid ${COLORS.grayBorder};
-  border-radius: 4px;
-  padding: 8px 16px;
   display: flex;
+  padding: 4px 16px;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 10px;
+  border-radius: 4px;
+  border: 1px solid var(--Gray-Colors-Gray4, #EDEDED);
+  background: var(--Gray-Colors-Gray5, #F6F6F6);
 
   font-family: "Pretendard", sans-serif;
   font-size: 14px;
+  font-style: normal;
   font-weight: 500;
-  color: ${COLORS.grayText};
   line-height: normal;
+  color: ${COLORS.grayText};
   white-space: nowrap;
 `;
 
 export const CourseProgressSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
+  margin-top: auto;
 `;
 
 export const CourseProgressPercent = styled.p`
@@ -342,10 +378,10 @@ export const SectionTitle = styled.div`
   font-family: "Pretendard", sans-serif;
   font-size: 16px;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   line-height: normal;
-  text-align: left;
+  text-align: left;  
   width: 100%;
   max-width: 1280px;
-  margin: 20px 0 10px 21px;
+  margin: 40px -275px 5px 0;  
 `;

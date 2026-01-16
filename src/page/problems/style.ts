@@ -110,6 +110,32 @@ export const MainContent = styled.div`
   margin: 0 auto;
 `;
 
+export const SearchBar = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+
+    font-size: 14px;
+    color: #111827;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  img {
+    cursor: pointer;
+  }
+`;
+
 // Search Box
 export const SearchBox = styled.div`
   width: 840px;
@@ -122,6 +148,19 @@ export const SearchBox = styled.div`
   justify-content: space-between;
   padding: 0 20px;
   margin-bottom: 30px;
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+
+    font-size: 14px;
+    color: #111827;
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
 `;
 
 export const SearchInput = styled.input`

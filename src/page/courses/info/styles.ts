@@ -186,12 +186,12 @@ export const TableBody = styled.div`
   flex-direction: column;
 `;
 
-export const TableRow = styled.div<{ isLast?: boolean; $clickable?: boolean }>`
+export const TableRow = styled.div<{ $isLast?: boolean; $clickable?: boolean }>`
   display: grid;
   grid-template-columns: 80px 1fr 140px;
   padding: 18px 20px;
   align-items: center;
-  border-bottom: ${(p) => (p.isLast ? "none" : "1px solid #ededed")};
+  border-bottom: ${(p) => (p.$isLast ? "none" : "1px solid #ededed")};
   cursor: ${(p) => (p.$clickable ? "pointer" : "default")};
 
   &:hover {

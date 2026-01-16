@@ -56,7 +56,8 @@ export default function CoursesPage() {
   const navigate = useNavigate();
 
   // Growth별 이미지 매핑
-  const getAvatarImage = (growth: string) => {
+  const getAvatarImage = (growth?: string) => {
+    if (!growth) return copper;
     const growthMap: Record<string, string> = {
       COPPER: copper,
       SILVER: silver,
@@ -70,8 +71,8 @@ export default function CoursesPage() {
   };
 
   // Growth별 ProfileTitle 텍스트와 색상 결정
-  const getGrowthStyle = (growth: string) => {
-    const growthUpper = growth.toUpperCase();
+  const getGrowthStyle = (growth?: string) => {
+    const growthUpper = (growth ?? "").toUpperCase();
     const colorMap: Record<string, { text: string; color: string }> = {
       COPPER: { text: "동깨비", color: "#B87333" },
       SILVER: { text: "은깨비", color: "#C0C0C0" },
@@ -299,29 +300,28 @@ export default function CoursesPage() {
                 </div>
               </S.ProgressLabel>
 
-              <S.ProgressBar>
-                <S.ProgressFill
-                  $percent={
-                    courseCounts.total > 0
-                      ? Math.round(
-                          (courseCounts.completed / courseCounts.total) * 100
-                        )
-                      : 0
-                  }
-                />
-              </S.ProgressBar>
+              <S.ProgressBarRow>
+                <S.ProgressBar>
+                  <S.ProgressFill
+                    $percent={
+                      courseCounts.total > 0
+                        ? Math.round(
+                            (courseCounts.completed / courseCounts.total) * 100
+                          )
+                        : 0
+                    }
+                  />
+                </S.ProgressBar>
+                <S.ProgressPercentText>
+                  {courseCounts.total > 0
+                    ? Math.round(
+                        (courseCounts.completed / courseCounts.total) * 100
+                      )
+                    : 0}
+                  % 진행
+                </S.ProgressPercentText>
+              </S.ProgressBarRow>
             </S.ProgressWrapper>
-
-            <S.RightProfileMeta>
-              <div style={{ fontWeight: 700, color: "#BDBDBD" }}>
-                {courseCounts.total > 0
-                  ? Math.round(
-                      (courseCounts.completed / courseCounts.total) * 100
-                    )
-                  : 0}
-                % 진행
-              </div>
-            </S.RightProfileMeta>
           </S.ProfileRow>
 
           {/* 탭 영역 */}
@@ -396,9 +396,9 @@ export default function CoursesPage() {
                     <S.CourseTitle>{c.title}</S.CourseTitle>
 
                     <S.CourseTagsWrapper>
-                      {(c.tags ?? []).slice(0, 4).map((t: string) => (
-                        <S.CourseTagChip key={t}>{t}</S.CourseTagChip>
-                      ))}
+                  {(c.tags ?? []).slice(0, 4).map((t: string) => (
+                    <S.CourseTagChip key={t}>#{t}</S.CourseTagChip>
+                  ))}
                     </S.CourseTagsWrapper>
 
                     <S.CourseProgressSection>

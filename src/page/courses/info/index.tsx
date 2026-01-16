@@ -245,7 +245,7 @@ const CourseDetailPage = () => {
                 courseData.problems.map((problem, index) => (
                   <S.TableRow
                     key={problem.id}
-                    isLast={index === courseData.problems.length - 1}
+                    $isLast={index === courseData.problems.length - 1}
                     $clickable
                     onClick={() => handleProblemClick(problem.id)}
                   >
@@ -261,7 +261,7 @@ const CourseDetailPage = () => {
                   </S.TableRow>
                 ))
               ) : (
-                <S.TableRow isLast>
+                <S.TableRow $isLast>
                   <S.IndexCell>--</S.IndexCell>
                   <S.TitleCell>
                     {error ?? "등록된 문제가 없습니다."}
