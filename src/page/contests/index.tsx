@@ -17,7 +17,7 @@ interface Contest {
   status: "JOINABLE" | "JOINED" | "ENDED";
   image: string;
 }
-type ContestApiItem = Omit<Contest, "image"> & { image?: string };
+type ContestApiItem = Omit<Contest, "image"> & { imageUrl?: string };
 
 // ============================
 // 이미지 매핑
@@ -147,7 +147,7 @@ export const ContestPage = () => {
       const contestsFromServer = (content || []) as ContestApiItem[];
       const contestsWithImages = contestsFromServer.map((c) => ({
         ...c,
-        image: IMAGE_MAP[c.title] ?? c.image ?? DEFAULT_IMAGE,
+        image: c.imageUrl || IMAGE_MAP[c.title] || DEFAULT_IMAGE,
       }));
 
       setContests(contestsWithImages);
