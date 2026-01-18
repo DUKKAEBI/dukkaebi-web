@@ -3,6 +3,7 @@ import axiosInstance from "../../../api/axiosInstance";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Header } from "../../../components/header";
+import { toast } from "react-toastify";
 
 // ============================
 // 상수 및 이미지 매핑
@@ -91,10 +92,16 @@ export const ContestDetailPage = () => {
           params: { code: input },
         })
         .then(() => {
-          proceedToFirstProblem();
+          toast.success("대회 참가에 성공했습니다.");
+          // 대회 정보를 다시 불러와서 상태를 JOINED로 업데이트
+          axiosInstance
+            .get<ContestDetail>(`/contest/${contestCode}`)
+            .then((response) => {
+              setContestDetails(response.data);
+            });
         })
         .catch(() => {
-          alert("대회 코드가 일치하지 않거나 참여할 수 없습니다.");
+          toast.error("대회 코드가 일치하지 않거나 참여할 수 없습니다.");
         });
       return;
     }
