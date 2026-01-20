@@ -24,5 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+pakage-lock.json
 
 test.md
