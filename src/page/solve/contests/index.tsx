@@ -882,7 +882,7 @@ export default function SolvePage() {
 
       if (data.errorMessage || data.status !== "ACCEPTED") {
         setTerminalOutput(formatJudgeResult(data));
-        toast.warning("제출이 완료되었습니다.");
+        toast.error("오답입니다");
       } else if (data.status === "ACCEPTED") {
         toast.success("정답입니다");
       }
