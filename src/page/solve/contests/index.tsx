@@ -116,6 +116,8 @@ export default function SolvePage() {
     contestCode ? `dukkaebi_codes_${contestCode}` : "";
   const getLocalTimeKey = (contestCode?: string) =>
     contestCode ? `dukkaebi_timeSpent_${contestCode}` : "";
+  const getSubmittedKey = (contestCode?: string) =>
+    contestCode ? `dukkaebi_submitted_${contestCode}` : "";
 
   // Grading State
   const [gradingDetails, setGradingDetails] = useState<
@@ -157,6 +159,17 @@ export default function SolvePage() {
   // Terminal (floating) size & resize state
   const [terminalHeight, setTerminalHeight] = useState(200); // px
   const terminalRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!contestCode) return;
+
+    const key = getSubmittedKey(contestCode);
+    const raw = localStorage.getItem(key);
+    if (raw) {
+      setSubmittedProblems(new Set(JSON.parse(raw)));
+    }
+  }, [contestCode]);
+
   useEffect(() => {
     if (!isResizing) return;
 
@@ -727,27 +740,6 @@ export default function SolvePage() {
     return () => clearInterval(interval);
   }, [problemId]);
 
-  //문제별 저장 여부 확인 (사이드바 표시용도)
-  const isProblemDirty = (pid: string | number) => {
-    const s = codeStateByProblem[pid];
-    if (!s) return false;
-
-    return (
-      s.currentCode !== s.savedCode || s.currentLanguage !== s.savedLanguage
-    );
-  };
-  // 문제별 저장 완료 여부(사이드바 표시용도)
-  const isProblemSaved = (pid: string | number) => {
-    const s = codeStateByProblem[pid];
-    if (!s) return false;
-
-    const hasSaved = s.savedCode.trim().length > 0;
-    const isDirty =
-      s.currentCode !== s.savedCode || s.currentLanguage !== s.savedLanguage;
-
-    return hasSaved && !isDirty;
-  };
-
   //헤더에 현재 문제 풀이 시간 표시용 함수
   const formatTime = (sec: number) => {
     const m = Math.floor(sec / 60);
@@ -879,7 +871,15 @@ export default function SolvePage() {
       }
 
       // 제출 성공 시 제출 완료 목록에 추가
-      setSubmittedProblems((prev) => new Set([...prev, String(problemId)]));
+      setSubmittedProblems((prev) => {
+        const next = new Set(prev);
+        next.add(String(problemId));
+        localStorage.setItem(
+          getSubmittedKey(contestCode),
+          JSON.stringify([...next]),
+        );
+        return next;
+      });
 
       // 제출 성공 시 저장도 자동으로 수행
       setCodeStateByProblem((prev) => ({
@@ -1540,6 +1540,10 @@ export default function SolvePage() {
                 {courseLoading
                   ? null
                   : courseProblems.map((p, idx) => {
+                      const isSubmitted = submittedProblems.has(
+                        String(p.problemId),
+                      );
+
                       const active =
                         String(p.problemId) === String(problemId ?? "");
 
@@ -1567,14 +1571,11 @@ export default function SolvePage() {
                             }}
                           >
                             {(() => {
-                              const isDirty = isProblemDirty(p.problemId);
-                              const isSaved = isProblemSaved(p.problemId);
-
-                              // 저장됨
-                              if (!isDirty && isSaved) {
+                              // 제출 완료
+                              if (isSubmitted) {
                                 return (
                                   <span
-                                    title="저장됨"
+                                    title="제출 완료"
                                     style={{
                                       width: "50px",
                                       height: "20px",
@@ -1588,16 +1589,16 @@ export default function SolvePage() {
                                       color: "#ffffff",
                                     }}
                                   >
-                                    저장됨
+                                    제출 완료
                                   </span>
                                 );
                               }
 
-                              // 미저장
-                              if (isDirty) {
+                              // 미제출
+                              if (!isSubmitted) {
                                 return (
                                   <span
-                                    title="저장되지 않은 코드가 있습니다"
+                                    title="미제출"
                                     style={{
                                       width: "50px",
                                       height: "20px",
@@ -1611,7 +1612,7 @@ export default function SolvePage() {
                                       color: "#ffffff",
                                     }}
                                   >
-                                    미저장
+                                    미제출
                                   </span>
                                 );
                               }
