@@ -5,7 +5,7 @@ import {
   type ChangeEvent,
   type KeyboardEvent,
 } from "react";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import type * as monacoEditor from "monaco-editor";
 import Editor from "@monaco-editor/react";
@@ -416,12 +416,6 @@ export default function SolvePage() {
 
   return (
     <Style.SolveContainer ref={containerRef}>
-      <ToastContainer
-        position="top-right"
-        theme="dark"
-        newestOnTop
-        closeOnClick
-      />
       <Style.Header>
         <Style.BackButton
           type="button"
