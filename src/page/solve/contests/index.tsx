@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import type * as monacoEditor from "monaco-editor";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -779,6 +779,7 @@ export default function SolvePage() {
 
       // 에러 메시지가 있으면 실행 결과에 바로 출력
       if (data.errorMessage) {
+        toast.error("실행에 실패하였습니다.");
         setTerminalOutput(formatJudgeResult(data));
         setActiveResultTab("result");
         // 테스트 케이스 탭에도 결과 저장
@@ -801,8 +802,7 @@ export default function SolvePage() {
         ...prev,
         [String(problemId)]: data.details ?? [],
       }));
-
-      handleSubmitCode();
+      toast.success("테스트가 완료되었습니다");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "테스트 중 오류 발생");
     } finally {
@@ -823,19 +823,6 @@ export default function SolvePage() {
       const accessToken = localStorage.getItem("accessToken");
       const timeSpent = timeSpentByProblem[String(problemId)] ?? 0;
 
-      const testRes = await fetch(`${API_BASE_URL}solve/test`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body: JSON.stringify({
-          problemId: Number(problemId),
-          code,
-          language,
-        }),
-      });
-
       const res = await fetch(`${API_BASE_URL}solve/grading`, {
         method: "POST",
         headers: {
@@ -850,27 +837,30 @@ export default function SolvePage() {
         }),
       });
 
-      if (!res.ok) {
-        throw new Error(await res.text());
-      }
+      //코드 저장
+      await axiosInstance.post(
+        `${API_BASE_URL}solve/save`,
+        {
+          problemId: Number(problemId),
+          code,
+          language,
+        },
+        {
+          headers: accessToken
+            ? { Authorization: `Bearer ${accessToken}` }
+            : undefined,
+        },
+      );
 
       const data = await res.json();
 
-      if (data.errorMessage) {
+      if (data.errorMessage || data.status !== "ACCEPTED") {
         setTerminalOutput(formatJudgeResult(data));
-        setActiveResultTab("result");
-        // 테스트 케이스 탭에도 결과 저장
-        if (data.details && Array.isArray(data.details)) {
-          setGradingDetails(data.details);
-          setGradingCacheByProblem((prev) => ({
-            ...prev,
-            [String(problemId)]: data.details,
-          }));
-        }
-        return;
+        toast.warning("제출이 완료되었습니다.");
+      } else if (data.status === "ACCEPTED") {
+        toast.success("제출이 완료되었습니다.");
       }
 
-      // 제출 성공 시 제출 완료 목록에 추가
       setSubmittedProblems((prev) => {
         const next = new Set(prev);
         next.add(String(problemId));
@@ -912,8 +902,6 @@ export default function SolvePage() {
         ...prev,
         [String(problemId)]: data.details ?? [],
       }));
-
-      toast.success("제출이 완료되었습니다.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "제출 중 오류 발생");
     } finally {
@@ -1112,12 +1100,6 @@ export default function SolvePage() {
 
   return (
     <Style.SolveContainer ref={containerRef}>
-      <ToastContainer
-        position="top-right"
-        theme="dark"
-        newestOnTop
-        closeOnClick
-      />
       <Style.Header>
         <Style.BackButton
           type="button"

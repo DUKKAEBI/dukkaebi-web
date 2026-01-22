@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import type * as monacoEditor from "monaco-editor";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Editor from "@monaco-editor/react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -400,8 +400,6 @@ export default function SolvePage() {
 
   return (
     <Style.SolveContainer ref={containerRef}>
-      <ToastContainer position="top-right" theme="dark" autoClose={2500} />
-
       <Style.Header>
         <Style.BackButton onClick={handleExitSolvePage}>‹</Style.BackButton>
         <Style.HeaderTitle>

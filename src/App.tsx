@@ -8,19 +8,18 @@ function App() {
   return (
     <>
       <GlobalStyle />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
       <ToastContainer
         position="top-right"
-        autoClose={3000}
+        autoClose={1500}
         hideProgressBar={false}
         closeOnClick
         pauseOnHover
       />
+      <BrowserRouter>
+        <AppRoutes />
+      </BrowserRouter>
     </>
   );
 }
 
 export default App;
-  
