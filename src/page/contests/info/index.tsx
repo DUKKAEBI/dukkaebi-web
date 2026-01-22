@@ -91,10 +91,20 @@ export const ContestDetailPage = () => {
       return;
     }
 
-    const proceedToFirstProblem = () => {
-      const firstProblemId = contestDetails.problems[0]?.problemId;
-      if (!firstProblemId) return;
-      navigate(`/contests/${contestCode}/solve/${firstProblemId}`);
+    const proceedToFirstNotSolvedProblem = () => {
+      // NOT_SOLVED인 첫 문제 찾기
+      const firstNotSolved = contestDetails.problems.find(
+        (p) => p.solvedResult === "NOT_SOLVED",
+      );
+
+      // 모든 문제를 이미 풀었다면 첫 문제로 이동
+      const targetProblemId = firstNotSolved
+        ? firstNotSolved.problemId
+        : contestDetails.problems[0]?.problemId;
+
+      if (!targetProblemId) return;
+
+      navigate(`/contests/${contestCode}/solve/${targetProblemId}`);
     };
 
     if (contestDetails.status === "JOINABLE") {
@@ -120,7 +130,7 @@ export const ContestDetailPage = () => {
       return;
     }
 
-    proceedToFirstProblem();
+    proceedToFirstNotSolvedProblem();
   };
 
   useEffect(() => {
@@ -139,7 +149,7 @@ export const ContestDetailPage = () => {
           // 해당 대회와 관련된 시간 설정 보관소 삭제
           localStorage.removeItem(`dukkaebi_timeSpent_${contestCode}`);
           console.log(
-            `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`
+            `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`,
           );
         }
       } catch (error) {
