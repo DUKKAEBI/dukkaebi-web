@@ -1480,16 +1480,6 @@ export default function SolvePage() {
                 >
                   테스트 끝내기
                 </Style.SubmitButton>
-                <Style.SubmitButton
-                  onClick={handleTestCode}
-                  disabled={!problemId || isTesting}
-                  style={{
-                    backgroundColor: "#3E5C7A",
-                    border: "1px solid #4A6B8F",
-                  }}
-                >
-                  {isTesting ? "테스트 중..." : "테스트"}
-                </Style.SubmitButton>
 
                 <Style.SubmitButton
                   onClick={handlePrevProblem}
@@ -1521,6 +1511,16 @@ export default function SolvePage() {
                 >
                   코드 저장하기
                 </Style.SaveButton>
+                <Style.SubmitButton
+                  onClick={handleTestCode}
+                  disabled={!problemId || isTesting}
+                  style={{
+                    backgroundColor: "#3E5C7A",
+                    border: "1px solid #4A6B8F",
+                  }}
+                >
+                  {isTesting ? "테스트 중..." : "테스트"}
+                </Style.SubmitButton>
                 <Style.SubmitButton
                   onClick={handleSubmitCode}
                   disabled={!problemId || isSubmitting}
