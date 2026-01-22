@@ -46,7 +46,7 @@ const mapSolvedToIntensity = (solved: number): string => {
 };
 
 const generateHeatmapData = (
-  contributions: ContributionsResponse = {}
+  contributions: ContributionsResponse = {},
 ): HeatmapCellData[] => {
   const today = new Date();
   const startDate = new Date(today);
@@ -81,6 +81,18 @@ const Main = () => {
   const handleNoticeClick = (id: number) => {
     navigate(`/notifications/${id}`);
   };
+  
+  useEffect(() => {
+    Object.keys(localStorage).forEach((key) => {
+      if (
+        key.startsWith("dukkaebi_codes_") ||
+        key.startsWith("dukkaebi_timeSpent_") ||
+        key.startsWith("dukkaebi_submitted_")
+      ) {
+        localStorage.removeItem(key);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const fetchActivity = async () => {
@@ -89,12 +101,12 @@ const Main = () => {
         const contributionsStart = new Date(
           today.getFullYear(),
           today.getMonth() - 1,
-          1
+          1,
         );
         const contributionsEnd = new Date(
           today.getFullYear(),
           today.getMonth() + 1,
-          1
+          1,
         );
 
         const [contributionsResponse, streakResponse, noticeResponse] =
@@ -106,7 +118,7 @@ const Main = () => {
                   start: formatDate(contributionsStart),
                   end: formatDate(contributionsEnd),
                 },
-              }
+              },
             ),
             axiosInstance.get<StreakResponse>("/user/activity/streak"),
             axiosInstance.get<{ content: Notice[] }>("/notice/home"), // 공지사항 API 추가
@@ -122,7 +134,7 @@ const Main = () => {
         const streakData =
           (streakResponse.data as any)?.data || streakResponse.data;
         setStreak(
-          typeof streakData?.streak === "number" ? streakData.streak : 0
+          typeof streakData?.streak === "number" ? streakData.streak : 0,
         );
 
         // 공지사항 데이터 세팅 (최대 5개)
@@ -139,7 +151,7 @@ const Main = () => {
 
   const heatmapData = useMemo(
     () => generateHeatmapData(contributions),
-    [contributions]
+    [contributions],
   );
 
   return (
