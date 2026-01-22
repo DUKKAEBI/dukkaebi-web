@@ -795,10 +795,9 @@ export default function SolvePage() {
 
       const data = await res.json();
 
-      // 에러 메시지가 있으면 실행 결과에 바로 출력
-      if (data.errorMessage) {
-        toast.error("실행에 실패하였습니다.");
+      if (data.errorMessage || data.status !== "ACCEPTED") {
         setTerminalOutput(formatJudgeResult(data));
+        toast.error("오답입니다");
         setActiveResultTab("result");
         // 테스트 케이스 탭에도 결과 저장
         if (data.details && Array.isArray(data.details)) {
@@ -808,10 +807,11 @@ export default function SolvePage() {
             [String(problemId)]: data.details,
           }));
         }
-        return;
+      } else if (data.status === "ACCEPTED") {
+        toast.success("정답입니다");
       }
 
-      // 정상일 때
+      toast.success("테스트가 완료되었습니다");
       setTerminalOutput("테스트가 완료되었습니다.");
       setGradingDetails(data.details ?? []);
 
@@ -820,9 +820,9 @@ export default function SolvePage() {
         ...prev,
         [String(problemId)]: data.details ?? [],
       }));
-      toast.success("테스트가 완료되었습니다");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "테스트 중 오류 발생");
+      console.log(err);
+      toast.error("테스트에 실패하였습니다");
     } finally {
       setIsTesting(false);
     }
