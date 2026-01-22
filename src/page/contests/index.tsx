@@ -37,7 +37,8 @@ export const ContestPage = () => {
     Object.keys(localStorage).forEach((key) => {
       if (
         key.startsWith("dukkaebi_codes_") ||
-        key.startsWith("dukkaebi_timeSpent_")
+        key.startsWith("dukkaebi_timeSpent_") ||
+        key.startsWith("dukkaebi_submitted_")
       ) {
         localStorage.removeItem(key);
       }

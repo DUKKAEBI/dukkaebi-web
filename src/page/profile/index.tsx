@@ -50,7 +50,7 @@ const getDayOfWeek = (date: Date): number => {
 
 // Transform contributions data to heatmap format (23 weeks × 7 days)
 const generateHeatmapData = (
-  contributions: ContributionsResponse = {}
+  contributions: ContributionsResponse = {},
 ): HeatmapCellData[][] => {
   const data: HeatmapCellData[][] = Array.from({ length: 23 }, () => []);
   const today = new Date();
@@ -130,7 +130,7 @@ const getTierName = (score: number): string => {
 
 // Get next tier threshold and progress
 const getTierProgress = (
-  score: number
+  score: number,
 ): { nextTier: string; nextScore: number; progress: number } => {
   if (score >= 5000) {
     return { nextTier: "", nextScore: 5000, progress: 100 };
@@ -170,7 +170,7 @@ const Profile = () => {
   const [streak, setStreak] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [heatmapData, setHeatmapData] = useState<HeatmapCellData[][]>(
-    generateHeatmapData()
+    generateHeatmapData(),
   );
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
@@ -202,6 +202,18 @@ const Profile = () => {
   };
 
   useEffect(() => {
+    Object.keys(localStorage).forEach((key) => {
+      if (
+        key.startsWith("dukkaebi_codes_") ||
+        key.startsWith("dukkaebi_timeSpent_") ||
+        key.startsWith("dukkaebi_submitted_")
+      ) {
+        localStorage.removeItem(key);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     const fetchUserData = async () => {
       try {
         const today = new Date();
@@ -225,7 +237,7 @@ const Profile = () => {
                   start: formatDate(startDate),
                   end: formatDate(endDate),
                 },
-              }
+              },
             ),
             axiosInstance.get<StreakResponse>("/user/activity/streak"),
           ]);
@@ -251,7 +263,7 @@ const Profile = () => {
           (streakResponse.data as StreakResponse & { data?: StreakResponse })
             ?.data || streakResponse.data;
         setStreak(
-          typeof streakData?.streak === "number" ? streakData.streak : 0
+          typeof streakData?.streak === "number" ? streakData.streak : 0,
         );
       } catch (error) {
         console.error("Failed to fetch profile data:", error);

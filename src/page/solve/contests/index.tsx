@@ -894,7 +894,7 @@ export default function SolvePage() {
         setTerminalOutput(formatJudgeResult(data));
         toast.warning("제출이 완료되었습니다.");
       } else if (data.status === "ACCEPTED") {
-        toast.success("제출이 완료되었습니다.");
+        toast.success("정답입니다");
       }
 
       setSubmittedProblems((prev) => {
@@ -938,8 +938,10 @@ export default function SolvePage() {
         ...prev,
         [String(problemId)]: data.details ?? [],
       }));
+      toast.success("제출에 성공하였습니다");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "제출 중 오류 발생");
+      toast.error("제출에 실패하였습니다.");
+      console.log(err);
     } finally {
       setIsSubmitting(false);
     }
