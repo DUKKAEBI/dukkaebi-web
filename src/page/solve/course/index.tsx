@@ -1,10 +1,4 @@
-import {
-  useState,
-  useRef,
-  useEffect,
-  type ChangeEvent,
-  type KeyboardEvent,
-} from "react";
+import { useState, useRef, useEffect, type ChangeEvent } from "react";
 import type * as monacoEditor from "monaco-editor";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -81,13 +75,13 @@ export default function SolvePage() {
     () => {
       const saved = localStorage.getItem(`course_${courseId}_codes`);
       return saved ? JSON.parse(saved) : {};
-    }
+    },
   );
   const [langsByProblem, setLangsByProblem] = useState<Record<string, string>>(
     () => {
       const saved = localStorage.getItem(`course_${courseId}_langs`);
       return saved ? JSON.parse(saved) : {};
-    }
+    },
   );
 
   const [code, setCode] = useState(``);
@@ -97,7 +91,7 @@ export default function SolvePage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(
-    INITIAL_CHAT_MESSAGES
+    INITIAL_CHAT_MESSAGES,
   );
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
   const [problemStatus, setProblemStatus] = useState<
@@ -110,7 +104,7 @@ export default function SolvePage() {
   const [courseProblems, setCourseProblems] = useState<CourseProblemItem[]>([]);
   const [courseLoading, setCourseLoading] = useState(false);
   const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
-    "result"
+    "result",
   );
 
   const [gradingDetails, setGradingDetails] = useState<
@@ -323,14 +317,14 @@ export default function SolvePage() {
   useEffect(() => {
     localStorage.setItem(
       `course_${courseId}_codes`,
-      JSON.stringify(codesByProblem)
+      JSON.stringify(codesByProblem),
     );
   }, [codesByProblem, courseId]);
 
   useEffect(() => {
     localStorage.setItem(
       `course_${courseId}_langs`,
-      JSON.stringify(langsByProblem)
+      JSON.stringify(langsByProblem),
     );
   }, [langsByProblem, courseId]);
 

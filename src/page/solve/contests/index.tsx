@@ -80,10 +80,15 @@ export default function SolvePage() {
   const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
     "result",
   );
+
   //코드 저장 여부
   const [codeStateByProblem, setCodeStateByProblem] = useState<
     Record<string, CodeSnapshot>
   >({});
+  //코드 제출 여부
+  const [submittedProblems, setSubmittedProblems] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Problem State
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
@@ -337,6 +342,74 @@ export default function SolvePage() {
     fetchCourse();
     return () => controller.abort();
   }, [contestCode]);
+
+  // 모든 문제의 상태를 로드하는 useEffect
+  useEffect(() => {
+    if (!contestCode || !API_BASE_URL || courseProblems.length === 0) return;
+
+    const controller = new AbortController();
+
+    const fetchAllProblemStates = async () => {
+      try {
+        const accessToken = localStorage.getItem("accessToken");
+
+        // 모든 문제의 저장된 코드 상태를 한 번에 가져오기
+        const promises = courseProblems.map(async (p) => {
+          try {
+            const res = await axiosInstance(
+              `${API_BASE_URL}solve/saved/${p.problemId}`,
+              {
+                signal: controller.signal,
+                headers: accessToken
+                  ? { Authorization: `Bearer ${accessToken}` }
+                  : undefined,
+              },
+            );
+
+            if (res.data) {
+              const { code, language } = res.data;
+              return {
+                problemId: p.problemId,
+                savedCode: code,
+                savedLanguage: language,
+              };
+            }
+            return null;
+          } catch (error) {
+            // 저장된 코드가 없는 경우는 무시
+            return null;
+          }
+        });
+
+        const results = await Promise.all(promises);
+
+        // 저장된 코드가 있는 문제들의 상태 업데이트
+        const newCodeStates: Record<string, CodeSnapshot> = {};
+        results.forEach((result) => {
+          if (result) {
+            newCodeStates[String(result.problemId)] = {
+              savedCode: result.savedCode,
+              savedLanguage: result.savedLanguage,
+              currentCode: result.savedCode,
+              currentLanguage: result.savedLanguage,
+            };
+          }
+        });
+
+        setCodeStateByProblem((prev) => ({
+          ...prev,
+          ...newCodeStates,
+        }));
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("문제 상태 불러오기 실패:", error);
+        }
+      }
+    };
+
+    fetchAllProblemStates();
+    return () => controller.abort();
+  }, [contestCode, courseProblems]);
 
   // SSE 연결을 통한 실시간 대회 정보 업데이트
   useEffect(() => {
@@ -654,16 +727,6 @@ export default function SolvePage() {
     return () => clearInterval(interval);
   }, [problemId]);
 
-  //Dirty 판단 (문제별)
-  const isDirty = (() => {
-    if (!problemId) return false;
-    const s = codeStateByProblem[problemId];
-    if (!s) return false;
-    return (
-      s.currentCode !== s.savedCode || s.currentLanguage !== s.savedLanguage
-    );
-  })();
-
   //문제별 저장 여부 확인 (사이드바 표시용도)
   const isProblemDirty = (pid: string | number) => {
     const s = codeStateByProblem[pid];
@@ -698,6 +761,7 @@ export default function SolvePage() {
       toast.error("테스트할 코드를 작성해 주세요.");
       return;
     }
+    setIsTesting(true);
 
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -725,6 +789,14 @@ export default function SolvePage() {
       if (data.errorMessage) {
         setTerminalOutput(formatJudgeResult(data));
         setActiveResultTab("result");
+        // 테스트 케이스 탭에도 결과 저장
+        if (data.details && Array.isArray(data.details)) {
+          setGradingDetails(data.details);
+          setGradingCacheByProblem((prev) => ({
+            ...prev,
+            [String(problemId)]: data.details,
+          }));
+        }
         return;
       }
 
@@ -738,7 +810,7 @@ export default function SolvePage() {
         [String(problemId)]: data.details ?? [],
       }));
 
-      handleSubmitCode;
+      handleSubmitCode();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "테스트 중 오류 발생");
     } finally {
@@ -753,9 +825,24 @@ export default function SolvePage() {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
       const accessToken = localStorage.getItem("accessToken");
       const timeSpent = timeSpentByProblem[String(problemId)] ?? 0;
+
+      const testRes = await fetch(`${API_BASE_URL}solve/test`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify({
+          problemId: Number(problemId),
+          code,
+          language,
+        }),
+      });
 
       const res = await fetch(`${API_BASE_URL}solve/grading`, {
         method: "POST",
@@ -780,17 +867,53 @@ export default function SolvePage() {
       if (data.errorMessage) {
         setTerminalOutput(formatJudgeResult(data));
         setActiveResultTab("result");
+        // 테스트 케이스 탭에도 결과 저장
+        if (data.details && Array.isArray(data.details)) {
+          setGradingDetails(data.details);
+          setGradingCacheByProblem((prev) => ({
+            ...prev,
+            [String(problemId)]: data.details,
+          }));
+        }
         return;
+      }
+
+      // 제출 성공 시 제출 완료 목록에 추가
+      setSubmittedProblems((prev) => new Set([...prev, String(problemId)]));
+
+      // 제출 성공 시 저장도 자동으로 수행
+      setCodeStateByProblem((prev) => ({
+        ...prev,
+        [problemId]: {
+          savedCode: code,
+          savedLanguage: language,
+          currentCode: code,
+          currentLanguage: language,
+        },
+      }));
+
+      // localStorage에서 미저장 코드 제거
+      if (contestCode) {
+        const key = getLocalCodeKey(contestCode);
+        if (key) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            delete parsed[String(problemId)];
+            localStorage.setItem(key, JSON.stringify(parsed));
+          }
+        }
       }
 
       setTerminalOutput("채점이 완료되었습니다.");
       setGradingDetails(data.details ?? []);
 
-      setGradingDetails(data.details ?? []);
       setGradingCacheByProblem((prev) => ({
         ...prev,
         [String(problemId)]: data.details ?? [],
       }));
+
+      toast.success("제출이 완료되었습니다.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "제출 중 오류 발생");
     } finally {
@@ -834,6 +957,7 @@ export default function SolvePage() {
     return lines.join("\n");
   };
 
+  //이후 문제로 가는 함수
   const handleNextProblem = () => {
     const currentIndex = courseProblems.findIndex(
       (p) => String(p.problemId) === String(problemId),
@@ -843,6 +967,19 @@ export default function SolvePage() {
     if (!isLastProblem && currentIndex !== -1 && contestCode) {
       const nextProblem = courseProblems[currentIndex + 1];
       navigate(`/contests/${contestCode}/solve/${nextProblem.problemId}`);
+    }
+  };
+
+  // 이전 문제로 가는 함수
+  const handlePrevProblem = () => {
+    const currentIndex = courseProblems.findIndex(
+      (p) => String(p.problemId) === String(problemId),
+    );
+    const isFirstProblem = currentIndex === 0;
+
+    if (!isFirstProblem && currentIndex !== -1 && contestCode) {
+      const prevProblem = courseProblems[currentIndex - 1];
+      navigate(`/contests/${contestCode}/solve/${prevProblem.problemId}`);
     }
   };
 
@@ -1031,7 +1168,9 @@ export default function SolvePage() {
         </Style.HeaderActions>
       </Style.Header>
 
-      <Style.PageContent>
+      <Style.PageContent
+        style={{ paddingRight: isSidebarOpen ? "250px" : "0" }}
+      >
         <Style.LeftPanel>
           <Style.LeftPanelContent>
             {statusMessage && (
@@ -1329,9 +1468,7 @@ export default function SolvePage() {
               </Style.Terminal>
             )}
 
-            <Style.SubmitWrapper
-              style={{ marginRight: isSidebarOpen ? 268 : 0 }}
-            >
+            <Style.SubmitWrapper style={{ marginRight: 0 }}>
               <div style={{ display: "flex", gap: "24px" }}>
                 <Style.SubmitButton
                   onClick={handleEndTest}
@@ -1353,6 +1490,30 @@ export default function SolvePage() {
                 >
                   {isTesting ? "테스트 중..." : "테스트"}
                 </Style.SubmitButton>
+
+                <Style.SubmitButton
+                  onClick={handlePrevProblem}
+                  disabled={
+                    !problemId ||
+                    courseProblems.findIndex(
+                      (p) => String(p.problemId) === String(problemId),
+                    ) === 0
+                  }
+                >
+                  {"이전 문제"}
+                </Style.SubmitButton>
+                <Style.SubmitButton
+                  onClick={handleNextProblem}
+                  disabled={
+                    !problemId ||
+                    courseProblems.findIndex(
+                      (p) => String(p.problemId) === String(problemId),
+                    ) ===
+                      courseProblems.length - 1
+                  }
+                >
+                  {"다음 문제"}
+                </Style.SubmitButton>
                 <Style.SaveButton
                   onClick={handleSaveTest}
                   disabled={!problemId}
@@ -1366,12 +1527,6 @@ export default function SolvePage() {
                 >
                   {isSubmitting ? "제출 중..." : "제출"}
                 </Style.SubmitButton>
-                <Style.SubmitButton
-                  onClick={handleNextProblem}
-                  disabled={!problemId}
-                >
-                  {"다음 문제"}
-                </Style.SubmitButton>
               </div>
             </Style.SubmitWrapper>
           </Style.ResultContainer>
@@ -1380,15 +1535,13 @@ export default function SolvePage() {
           <>
             <Style.ThinDivider />
             <Style.RightSidebar ref={sidebarRef}>
+              <Style.SidebarHeader>문제 목록</Style.SidebarHeader>
               <Style.SidebarList>
                 {courseLoading
                   ? null
                   : courseProblems.map((p, idx) => {
                       const active =
                         String(p.problemId) === String(problemId ?? "");
-
-                      const isDirty = isProblemDirty(p.problemId);
-                      const isSaved = isProblemSaved(p.problemId);
 
                       return (
                         <Style.SidebarItem
@@ -1402,17 +1555,70 @@ export default function SolvePage() {
 
                           <Style.SidebarItemTitle>
                             {p.name}
-
-                            {isDirty && (
-                              <Style.DirtyDot title="저장되지 않은 코드가 있습니다" />
-                            )}
-
-                            {!isDirty && isSaved && (
-                              <Style.SavedCheck title="저장된 문제입니다">
-                                ✓
-                              </Style.SavedCheck>
-                            )}
                           </Style.SidebarItemTitle>
+
+                          {/* 상태 표시를 오른쪽으로 이동 */}
+                          <div
+                            style={{
+                              marginLeft: "auto",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                            }}
+                          >
+                            {(() => {
+                              const isDirty = isProblemDirty(p.problemId);
+                              const isSaved = isProblemSaved(p.problemId);
+
+                              // 저장됨
+                              if (!isDirty && isSaved) {
+                                return (
+                                  <span
+                                    title="저장됨"
+                                    style={{
+                                      width: "50px",
+                                      height: "20px",
+                                      borderRadius: "10%",
+                                      backgroundColor: "#59b549",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: "11px",
+                                      fontWeight: "bold",
+                                      color: "#ffffff",
+                                    }}
+                                  >
+                                    저장됨
+                                  </span>
+                                );
+                              }
+
+                              // 미저장
+                              if (isDirty) {
+                                return (
+                                  <span
+                                    title="저장되지 않은 코드가 있습니다"
+                                    style={{
+                                      width: "50px",
+                                      height: "20px",
+                                      borderRadius: "10%",
+                                      backgroundColor: "#e45d5d",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      fontSize: "11px",
+                                      fontWeight: "bold",
+                                      color: "#ffffff",
+                                    }}
+                                  >
+                                    미저장
+                                  </span>
+                                );
+                              }
+
+                              return null;
+                            })()}
+                          </div>
                         </Style.SidebarItem>
                       );
                     })}

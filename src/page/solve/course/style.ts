@@ -10,7 +10,10 @@ export const SolveContainer = styled.div`
   padding: 0;
   background: #263238;
   color: white;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -79,7 +82,6 @@ export const PageContent = styled.div`
   width: 100%;
   position: relative;
   min-height: 0;
-  /* 리액트에서 인라인 스타일로 padding-right: 250px를 동적 할당합니다 */
   transition: padding-right 0.1s ease-out;
 `;
 
@@ -269,7 +271,21 @@ export const SidebarItemTitle = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
 `;
+export const DirtyDot = styled.span`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  margin-left: 6px;
+  display: inline-block;
+`;
 
+export const SavedCheck = styled.span`
+  margin-left: 6px;
+  color: #4ade80; /* green-400 */
+  font-size: 14px;
+  font-weight: 700;
+`;
 export const ThinDivider = styled.div`
   display: none; /* fixed 구조에서는 필요 없음 */
 `;
@@ -336,6 +352,27 @@ export const SubmitWrapper = styled.div`
   right: 20px;
   bottom: 24px;
   z-index: 5;
+`;
+
+export const SaveButton = styled.button`
+  background: #00b4b7;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #00969a;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
 `;
 
 export const SubmitButton = styled.button`

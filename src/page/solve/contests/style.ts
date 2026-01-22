@@ -86,7 +86,7 @@ export const PageContent = styled.div`
   width: 100%;
   position: relative;
   min-height: 0;
-  padding-right: 0; // 👈 사이드바 공간 확보는 조건부로 처리
+  transition: padding-right 0.1s ease-out;
 `;
 
 export const LeftPanel = styled.div`
