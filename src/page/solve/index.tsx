@@ -67,7 +67,7 @@ export default function SolvePage() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(
-    INITIAL_CHAT_MESSAGES
+    INITIAL_CHAT_MESSAGES,
   );
   const [problem, setProblem] = useState<ProblemDetail | null>(null);
   const [problemStatus, setProblemStatus] = useState<
@@ -77,7 +77,7 @@ export default function SolvePage() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
-    "result"
+    "result",
   );
   const [gradingDetails, setGradingDetails] = useState<
     Array<{
@@ -152,7 +152,7 @@ export default function SolvePage() {
       setProblem(null);
       setProblemStatus("error");
       setProblemError(
-        "서버 주소가 설정되어 있지 않습니다. .env의 VITE_API_URL 값을 확인하세요."
+        "서버 주소가 설정되어 있지 않습니다. .env의 VITE_API_URL 값을 확인하세요.",
       );
       return;
     }
@@ -184,7 +184,7 @@ export default function SolvePage() {
         setProblemError(
           error instanceof Error
             ? error.message
-            : "문제 정보를 가져오는 중 오류가 발생했습니다."
+            : "문제 정보를 가져오는 중 오류가 발생했습니다.",
         );
         setSampleInput("");
         setSampleOutput("");
@@ -246,16 +246,16 @@ export default function SolvePage() {
         "",
         `테스트 케이스 ${detail.testCaseNumber ?? "?"} : ${
           detail.passed ? "통과" : "실패"
-        }`
+        }`,
       );
       lines.push(`입력값: ${(detail.input ?? "X").replace(/\s+$/, "") || "X"}`);
       if (detail.expectedOutput !== undefined) {
         lines.push(
-          `기댓값: ${(detail.expectedOutput ?? "").replace(/\s+$/, "") || "X"}`
+          `기댓값: ${(detail.expectedOutput ?? "").replace(/\s+$/, "") || "X"}`,
         );
       }
       lines.push(
-        `실제값: ${(detail.actualOutput ?? "").replace(/\s+$/, "") || "X"}`
+        `실제값: ${(detail.actualOutput ?? "").replace(/\s+$/, "") || "X"}`,
       );
     }
 
@@ -320,11 +320,11 @@ export default function SolvePage() {
       setTerminalOutput(
         error instanceof Error
           ? error.message
-          : "채점 중 알 수 없는 오류가 발생했습니다."
+          : "채점 중 알 수 없는 오류가 발생했습니다.",
       );
       toast.error(
         error instanceof Error ? error.message : "채점 오류가 발생했습니다.",
-        { autoClose: 3000 }
+        { autoClose: 3000 },
       );
     } finally {
       setIsSubmitting(false);
@@ -407,8 +407,8 @@ export default function SolvePage() {
     problemStatus === "loading"
       ? "문제를 불러오는 중입니다..."
       : problemStatus === "error"
-      ? problemError || "문제를 불러오지 못했습니다."
-      : "";
+        ? problemError || "문제를 불러오지 못했습니다."
+        : "";
 
   const handleExitSolvePage = () => {
     navigate("/problems");
@@ -617,7 +617,7 @@ export default function SolvePage() {
                             >
                               {String(d.testCaseNumber ?? idx + 1).padStart(
                                 2,
-                                "0"
+                                "0",
                               )}
                             </td>
                             <td

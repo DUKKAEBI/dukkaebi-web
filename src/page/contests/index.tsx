@@ -33,6 +33,17 @@ export const ContestPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(1);
 
+  useEffect(() => {
+    Object.keys(localStorage).forEach((key) => {
+      if (
+        key.startsWith("dukkaebi_codes_") ||
+        key.startsWith("dukkaebi_timeSpent_")
+      ) {
+        localStorage.removeItem(key);
+      }
+    });
+  }, []);
+
   // ============================
   // 서버에서 데이터 불러오기
   // ============================
@@ -72,7 +83,7 @@ export const ContestPage = () => {
   // 검색 필터링 (클라이언트 사이드)
   const filteredContests = useMemo(() => {
     return contests.filter((contest) =>
-      contest.title.toLowerCase().includes(searchTerm.toLowerCase())
+      contest.title.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [contests, searchTerm]);
 
@@ -208,8 +219,10 @@ export const ContestPage = () => {
                     onClick={() => moveToContestDetail(contest.code)}
                   >
                     <S.CardImageWrapper>
-                      <S.CardImage src={contest.image} alt={contest.title} />
-       
+                      <S.CardImage
+                        src={contest.image ? contest.image : DEFAULT_IMAGE}
+                        alt={contest.title}
+                      />
                     </S.CardImageWrapper>
                     <S.CardContent>
                       <S.CardTitle>{contest.title}</S.CardTitle>
