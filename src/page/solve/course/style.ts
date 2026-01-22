@@ -79,7 +79,6 @@ export const PageContent = styled.div`
   width: 100%;
   position: relative;
   min-height: 0;
-  /* 리액트에서 인라인 스타일로 padding-right: 250px를 동적 할당합니다 */
   transition: padding-right 0.1s ease-out;
 `;
 

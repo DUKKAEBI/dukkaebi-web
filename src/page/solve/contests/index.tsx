@@ -80,6 +80,7 @@ export default function SolvePage() {
   const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
     "result",
   );
+
   //코드 저장 여부
   const [codeStateByProblem, setCodeStateByProblem] = useState<
     Record<string, CodeSnapshot>
@@ -1031,7 +1032,9 @@ export default function SolvePage() {
         </Style.HeaderActions>
       </Style.Header>
 
-      <Style.PageContent>
+      <Style.PageContent
+        style={{ paddingRight: isSidebarOpen ? "250px" : "0" }}
+      >
         <Style.LeftPanel>
           <Style.LeftPanelContent>
             {statusMessage && (
@@ -1329,9 +1332,7 @@ export default function SolvePage() {
               </Style.Terminal>
             )}
 
-            <Style.SubmitWrapper
-              style={{ marginRight: isSidebarOpen ? 268 : 0 }}
-            >
+            <Style.SubmitWrapper style={{ marginRight: 0 }}>
               <div style={{ display: "flex", gap: "24px" }}>
                 <Style.SubmitButton
                   onClick={handleEndTest}
