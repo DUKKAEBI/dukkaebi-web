@@ -747,6 +747,42 @@ export default function SolvePage() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
+  //결과 문자열 만들어주는 함수
+  const formatJudgeResult = (data: any) => {
+    const lines: string[] = [];
+
+    // 1. 상단 요약
+    lines.push("오답입니다.", "");
+    lines.push(`채점 결과: ${data.status}`);
+    lines.push(
+      `통과한 테스트: ${data.passedTestCases} / ${data.totalTestCases}`,
+    );
+    lines.push(`실행 시간: ${data.executionTime}ms`, "");
+
+    // 2. 오류 메시지
+    if (data.errorMessage) {
+      lines.push("오류 메시지:");
+      lines.push(data.errorMessage.trim(), "");
+    }
+
+    // 3. 테스트 케이스 상세
+    if (Array.isArray(data.details)) {
+      data.details.forEach((tc: any) => {
+        lines.push(
+          `테스트 케이스 ${tc.testCaseNumber} : ${tc.passed ? "성공" : "실패"}`,
+        );
+        lines.push(`입력값: ${tc.input || "X"}`);
+        lines.push(`기댓값: ${tc.expectedOutput}`);
+        lines.push(
+          `실제값: ${tc.actualOutput || data.errorMessage?.trim() || ""}`,
+        );
+        lines.push("");
+      });
+    }
+
+    return lines.join("\n");
+  };
+
   const handleTestCode = async () => {
     if (!problemId || !API_BASE_URL) return;
     if (!code.trim()) {
@@ -907,42 +943,6 @@ export default function SolvePage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  //결과 문자열 만들어주는 함수
-  const formatJudgeResult = (data: any) => {
-    const lines: string[] = [];
-
-    // 1. 상단 요약
-    lines.push("오답입니다.", "");
-    lines.push(`채점 결과: ${data.status}`);
-    lines.push(
-      `통과한 테스트: ${data.passedTestCases} / ${data.totalTestCases}`,
-    );
-    lines.push(`실행 시간: ${data.executionTime}ms`, "");
-
-    // 2. 오류 메시지
-    if (data.errorMessage) {
-      lines.push("오류 메시지:");
-      lines.push(data.errorMessage.trim(), "");
-    }
-
-    // 3. 테스트 케이스 상세
-    if (Array.isArray(data.details)) {
-      data.details.forEach((tc: any) => {
-        lines.push(
-          `테스트 케이스 ${tc.testCaseNumber} : ${tc.passed ? "성공" : "실패"}`,
-        );
-        lines.push(`입력값: ${tc.input || "X"}`);
-        lines.push(`기댓값: ${tc.expectedOutput}`);
-        lines.push(
-          `실제값: ${tc.actualOutput || data.errorMessage?.trim() || ""}`,
-        );
-        lines.push("");
-      });
-    }
-
-    return lines.join("\n");
   };
 
   //이후 문제로 가는 함수
