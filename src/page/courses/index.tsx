@@ -37,7 +37,7 @@ export default function CoursesPage() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"inprogress" | "completed">(
-    "inprogress"
+    "inprogress",
   );
   const [pageByTab, setPageByTab] = useState<
     Record<"inprogress" | "completed", number>
@@ -89,6 +89,17 @@ export default function CoursesPage() {
   };
 
   useEffect(() => {
+    Object.keys(localStorage).forEach((key) => {
+      if (
+        key.startsWith("dukkaebi_codes_") ||
+        key.startsWith("dukkaebi_timeSpent_")
+      ) {
+        localStorage.removeItem(key);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -136,7 +147,7 @@ export default function CoursesPage() {
               status: "inprogress",
               progress: it.progressPercent ?? it.progress ?? 0,
               tags: (it.tags ?? it.keywords ?? []) as string[],
-            }))
+            })),
           );
         }
 
@@ -146,8 +157,8 @@ export default function CoursesPage() {
           const list = Array.isArray(raw)
             ? (raw as any[])
             : Array.isArray(raw?.courses)
-            ? (raw.courses as any[])
-            : [];
+              ? (raw.courses as any[])
+              : [];
           completedCount = list.length;
           nextCourses.push(
             ...list.map<CourseItem>((it) => ({
@@ -160,7 +171,7 @@ export default function CoursesPage() {
               status: "completed" as const,
               progress: it.progressPercent ?? it.progress ?? 100,
               tags: (it.tags ?? it.keywords ?? []) as string[],
-            }))
+            })),
           );
         }
 
@@ -211,7 +222,7 @@ export default function CoursesPage() {
               status: "inprogress",
               progress: it.progressPercent ?? it.progress ?? 0,
               tags: (it.tags ?? it.keywords ?? []) as string[],
-            }))
+            })),
           );
         }
 
@@ -220,8 +231,8 @@ export default function CoursesPage() {
           const list = Array.isArray(raw)
             ? (raw as any[])
             : Array.isArray(raw?.courses)
-            ? (raw.courses as any[])
-            : [];
+              ? (raw.courses as any[])
+              : [];
           completedCount = list.length;
           nextCourses.push(
             ...list.map<CourseItem>((it) => ({
@@ -234,7 +245,7 @@ export default function CoursesPage() {
               status: "completed" as const,
               progress: it.progressPercent ?? it.progress ?? 100,
               tags: (it.tags ?? it.keywords ?? []) as string[],
-            }))
+            })),
           );
         }
 
@@ -265,7 +276,7 @@ export default function CoursesPage() {
 
   const totalPages = Math.max(
     1,
-    Math.ceil(filteredCourses.length / ITEMS_PER_PAGE)
+    Math.ceil(filteredCourses.length / ITEMS_PER_PAGE),
   );
   const currentPage = Math.min(pageByTab[activeTab], totalPages);
 
@@ -317,7 +328,7 @@ export default function CoursesPage() {
                     $percent={
                       courseCounts.total > 0
                         ? Math.round(
-                            (courseCounts.completed / courseCounts.total) * 100
+                            (courseCounts.completed / courseCounts.total) * 100,
                           )
                         : 0
                     }
@@ -326,7 +337,7 @@ export default function CoursesPage() {
                 <S.ProgressPercentText>
                   {courseCounts.total > 0
                     ? Math.round(
-                        (courseCounts.completed / courseCounts.total) * 100
+                        (courseCounts.completed / courseCounts.total) * 100,
                       )
                     : 0}
                   % 진행
@@ -393,7 +404,7 @@ export default function CoursesPage() {
                 const endIndex = startIndex + ITEMS_PER_PAGE;
                 const paginatedCourses = filteredCourses.slice(
                   startIndex,
-                  endIndex
+                  endIndex,
                 );
 
                 return paginatedCourses.map((c: CourseItem) => (

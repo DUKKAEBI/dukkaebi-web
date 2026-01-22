@@ -38,9 +38,23 @@ interface ContestDetail {
 export const ContestDetailPage = () => {
   const { contestCode } = useParams<{ contestCode: string }>();
   const [contestDetails, setContestDetails] = useState<ContestDetail | null>(
-    null
+    null,
   );
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!contestCode) return;
+
+    // 문제 풀이 관련 로컬스토리지 정리
+    Object.keys(localStorage).forEach((key) => {
+      if (
+        key.startsWith("dukkaebi_codes_") ||
+        key.startsWith("dukkaebi_timeSpent_")
+      ) {
+        localStorage.removeItem(key);
+      }
+    });
+  }, [contestCode]);
 
   // 문제 진행도 계산 함수
   const calculateProgress = (): number => {
@@ -50,7 +64,7 @@ export const ContestDetailPage = () => {
 
     const solvedCount = contestDetails.problems.filter(
       (problem) =>
-        problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED"
+        problem.solvedResult === "SOLVED" || problem.solvedResult === "FAILED",
     ).length;
 
     return Math.round((solvedCount / contestDetails.problems.length) * 100);
@@ -113,7 +127,7 @@ export const ContestDetailPage = () => {
     const fetchContestDetails = async () => {
       try {
         const response = await axiosInstance.get<ContestDetail>(
-          `/contest/${contestCode}`
+          `/contest/${contestCode}`,
         );
         setContestDetails(response.data);
 
