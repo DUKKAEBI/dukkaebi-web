@@ -333,8 +333,6 @@ export default function SolvePage() {
           }),
         );
 
-        console.log(items);
-
         setCourseProblems(items);
       } catch (err) {
         console.error("대회 문제 불러오기 실패:", err);
@@ -420,14 +418,11 @@ export default function SolvePage() {
 
     // 이미 연결되어 있으면 중복 연결 방지
     if (sseConnectionRef.current) {
-      console.log("SSE 이미 연결되어 있음, 중복 연결 방지");
       return;
     }
 
     const sseUrl = `${API_BASE_URL}contest/${contestCode}/subscribe`;
     const accessToken = localStorage.getItem("accessToken");
-
-    console.log("SSE 연결 시도:", sseUrl);
 
     const eventSource = new EventSourcePolyfill(sseUrl, {
       headers: accessToken
@@ -456,11 +451,8 @@ export default function SolvePage() {
 
       try {
         const data = JSON.parse((event as MessageEvent).data);
-        console.log("파싱된 데이터:", data);
 
         if (data.eventType === "CONTEST_UPDATED") {
-          console.log("대회 정보 변경:", data);
-
           setContestInfo((prev) => ({
             ...prev,
             startDate: data.startDate ?? prev?.startDate,
@@ -882,7 +874,7 @@ export default function SolvePage() {
 
       if (data.errorMessage || data.status !== "ACCEPTED") {
         setTerminalOutput(formatJudgeResult(data));
-        toast.warning("제출이 완료되었습니다.");
+        toast.error("오답입니다");
       } else if (data.status === "ACCEPTED") {
         toast.success("정답입니다");
       }
@@ -1532,11 +1524,6 @@ export default function SolvePage() {
                       const active =
                         String(p.problemId) === String(problemId ?? "");
                       const isSubmitted = p.solvedResult === "제출";
-                      console.log(
-                        "사이드바 이이템 정보",
-                        p.problemId,
-                        p.solvedResult,
-                      );
 
                       return (
                         <Style.SidebarItem
