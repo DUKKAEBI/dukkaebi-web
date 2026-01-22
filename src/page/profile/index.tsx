@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import * as S from "./styles";
 import copperDubi from "../../assets/image/profile/dubi-rank/copper-dubi.png";
 import silverDubi from "../../assets/image/profile/dubi-rank/silver-dubi.png";
@@ -171,6 +172,34 @@ const Profile = () => {
   const [heatmapData, setHeatmapData] = useState<HeatmapCellData[][]>(
     generateHeatmapData()
   );
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+
+  const handleLogout = async () => {
+    try {
+      await axiosInstance.post("/user/logout");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      toast.success("로그아웃되었습니다.");
+      setTimeout(() => {
+        window.location.assign("/login");
+      }, 500);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await axiosInstance.delete("/user/delete");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      window.location.assign("/");
+    } catch (error) {
+      console.error("Failed to delete account:", error);
+      alert("회원탈퇴에 실패했습니다. 다시 시도해주세요.");
+    }
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -252,37 +281,12 @@ const Profile = () => {
               <S.UserName>{name || "로딩 중..."}</S.UserName>
               <S.Divider />
             </S.ProfileSection>
-
-            <S.StatsSection>
-              <S.StatItem>
-                <S.StatLabel>맞은 문제</S.StatLabel>
-                <S.StatValue>200</S.StatValue>
-              </S.StatItem>
-              <S.StatItem>
-                <S.StatLabel>제출</S.StatLabel>
-                <S.StatValue>300</S.StatValue>
-              </S.StatItem>
-              <S.StatItem>
-                <S.StatLabel>틀린 문제</S.StatLabel>
-                <S.StatValue>100</S.StatValue>
-              </S.StatItem>
-              <S.StatItem>
-                <S.StatLabel $error>시간 초과</S.StatLabel>
-                <S.StatValue>18</S.StatValue>
-              </S.StatItem>
-              <S.StatItem>
-                <S.StatLabel $error>메모리 초과</S.StatLabel>
-                <S.StatValue>20</S.StatValue>
-              </S.StatItem>
-              <S.StatItem>
-                <S.StatLabel $error>런타임에러</S.StatLabel>
-                <S.StatValue>1</S.StatValue>
-              </S.StatItem>
-              <S.StatItem>
-                <S.StatLabel $error>컴파일에러</S.StatLabel>
-                <S.StatValue>2</S.StatValue>
-              </S.StatItem>
-            </S.StatsSection>
+            <S.AccountActions>
+              <S.AccountButton onClick={handleLogout}>로그아웃</S.AccountButton>
+              <S.AccountButton onClick={() => setShowDeleteModal(true)}>
+                회원탈퇴
+              </S.AccountButton>
+            </S.AccountActions>
           </S.Sidebar>
 
           {/* Right Content Area */}
@@ -366,6 +370,27 @@ const Profile = () => {
 
       {/* Footer */}
       <Footer />
+
+      {/* 회원탈퇴 확인 모달 */}
+      {showDeleteModal && (
+        <S.ModalOverlay onClick={() => setShowDeleteModal(false)}>
+          <S.ModalContent onClick={(e) => e.stopPropagation()}>
+            <S.ModalTitle>회원탈퇴</S.ModalTitle>
+            <S.ModalDescription>
+              정말 탈퇴하시겠습니까? 탈퇴 시 모든 데이터가 삭제되며 복구할 수
+              없습니다.
+            </S.ModalDescription>
+            <S.ModalButtons>
+              <S.ModalButton onClick={() => setShowDeleteModal(false)}>
+                취소
+              </S.ModalButton>
+              <S.ModalButton $danger onClick={handleDeleteAccount}>
+                탈퇴하기
+              </S.ModalButton>
+            </S.ModalButtons>
+          </S.ModalContent>
+        </S.ModalOverlay>
+      )}
     </S.PageWrapper>
   );
 };

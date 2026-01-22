@@ -106,12 +106,14 @@ export const Sidebar = styled.div`
   flex-direction: column;
   gap: 32px;
   flex-shrink: 0;
+  align-self: stretch;
 `;
 
 export const ProfileSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  align-items: center;
+  gap: 18px;
 `;
 
 export const ProfileImage = styled.img`
@@ -125,6 +127,7 @@ export const UserName = styled.div`
   color: black;
   font-size: 20px;
   font-weight: 600;
+  text-align: center;
 `;
 
 export const Divider = styled.div`
@@ -134,10 +137,87 @@ export const Divider = styled.div`
   margin-top: 8px;
 `;
 
-export const StatsSection = styled.div`
+export const AccountActions = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
+`;
+
+export const AccountButton = styled.button`
+  background: none;
+  border: none;
+  padding: 0;
+  color: #eb5757;
+  font-size: 16px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+export const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+export const ModalContent = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+`;
+
+export const ModalTitle = styled.h2`
+  font-size: 20px;
+  font-weight: 600;
+  color: #1d1d1d;
+  margin: 0;
+`;
+
+export const ModalDescription = styled.p`
+  font-size: 14px;
+  color: #828282;
+  margin: 0;
+  line-height: 1.5;
+`;
+
+export const ModalButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+`;
+
+export const ModalButton = styled.button<{ $danger?: boolean }>`
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+
+  background: ${(props) => (props.$danger ? "#eb5757" : "#f6f6f6")};
+  color: ${(props) => (props.$danger ? "white" : "#1d1d1d")};
+
+  &:hover {
+    background: ${(props) => (props.$danger ? "#d64545" : "#ededed")};
+  }
 `;
 
 export const StatItem = styled.div`

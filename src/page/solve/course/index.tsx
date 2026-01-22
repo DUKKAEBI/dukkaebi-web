@@ -76,6 +76,20 @@ export default function SolvePage() {
   const [sampleOutput, setSampleOutput] = useState("");
   const [terminalOutput, setTerminalOutput] =
     useState("실행 결과가 이곳에 표시됩니다.");
+  //문제별 코드 및 언어 보관소 상태 추가
+  const [codesByProblem, setCodesByProblem] = useState<Record<string, string>>(
+    () => {
+      const saved = localStorage.getItem(`course_${courseId}_codes`);
+      return saved ? JSON.parse(saved) : {};
+    }
+  );
+  const [langsByProblem, setLangsByProblem] = useState<Record<string, string>>(
+    () => {
+      const saved = localStorage.getItem(`course_${courseId}_langs`);
+      return saved ? JSON.parse(saved) : {};
+    }
+  );
+
   const [code, setCode] = useState(``);
   const [language, setLanguage] = useState(LANGUAGE_OPTIONS[0].value);
   const [rightPanelWidth, setRightPanelWidth] = useState(65);
@@ -98,6 +112,7 @@ export default function SolvePage() {
   const [activeResultTab, setActiveResultTab] = useState<"result" | "tests">(
     "result"
   );
+
   const [gradingDetails, setGradingDetails] = useState<
     Array<{
       testCaseNumber?: number;
@@ -128,8 +143,17 @@ export default function SolvePage() {
     LANGUAGE_OPTIONS.find((option) => option.value === language) ||
     LANGUAGE_OPTIONS[0];
 
+  // 언어 선택 변경 핸들러
   const handleLanguageChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    setLanguage(event.target.value);
+    const newLang = event.target.value;
+    setLanguage(newLang);
+
+    if (problemId) {
+      setLangsByProblem((prev) => ({
+        ...prev,
+        [problemId]: newLang,
+      }));
+    }
   };
 
   // Terminal height state
@@ -280,6 +304,49 @@ export default function SolvePage() {
     textarea.style.height = `${textarea.scrollHeight}px`;
   }, [sampleInput]);
 
+  //문제(problemId)가 바뀔 때 보관소에서 데이터 불러오기
+  useEffect(() => {
+    if (!problemId) return;
+
+    const savedCode = codesByProblem[problemId] || "";
+    const savedLang = langsByProblem[problemId] || LANGUAGE_OPTIONS[0].value;
+
+    setCode(savedCode);
+    setLanguage(savedLang);
+    setTerminalOutput("실행 결과가 이곳에 표시됩니다.");
+    setGradingDetails([]);
+
+    // 의존성 배열에서 보관소 객체는 제외하고 problemId만 남깁니다.
+  }, [problemId]);
+
+  // 데이터가 바뀔 때마다 로컬스토리지에 저장
+  useEffect(() => {
+    localStorage.setItem(
+      `course_${courseId}_codes`,
+      JSON.stringify(codesByProblem)
+    );
+  }, [codesByProblem, courseId]);
+
+  useEffect(() => {
+    localStorage.setItem(
+      `course_${courseId}_langs`,
+      JSON.stringify(langsByProblem)
+    );
+  }, [langsByProblem, courseId]);
+
+  //에디터 내용 변경 핸들러
+  const handleEditorChange = (val: string | undefined) => {
+    const newCode = val || "";
+    setCode(newCode); // 현재 화면 업데이트
+
+    if (problemId) {
+      setCodesByProblem((prev) => ({
+        ...prev,
+        [problemId]: newCode,
+      }));
+    }
+  };
+
   const handleSubmitCode = async () => {
     if (!problemId || !code.trim()) return;
     setIsSubmitting(true);
@@ -325,7 +392,7 @@ export default function SolvePage() {
   };
 
   const toggleSidebar = () => setIsSidebarOpen((v) => !v);
-  const handleExitSolvePage = () => navigate(`/course/${courseId}`);
+  const handleExitSolvePage = () => navigate(`/courses/${courseId}`);
   const handleSidebarItemClick = (pid: number) =>
     navigate(`/courses/${courseId}/solve/${pid}`);
 
@@ -406,14 +473,16 @@ export default function SolvePage() {
             <Editor
               height="100%"
               language={currentLanguageOption.monaco}
+              // 7. 수정된 에디터 가변값 설정
               value={code}
-              onChange={(val) => setCode(val || "")}
+              onChange={handleEditorChange}
               beforeMount={handleEditorBeforeMount}
               theme="dukkaebi-dark"
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
                 wordWrap: "on",
+                scrollBeyondLastLine: false,
               }}
             />
           </Style.EditorContainer>

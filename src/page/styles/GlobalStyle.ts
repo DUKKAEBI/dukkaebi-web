@@ -60,4 +60,14 @@ export const GlobalStyle = createGlobalStyle`
   body {
     font-family: 'Pretendard', sans-serif;
   }
+
+  .Toastify__toast-container {
+    width: auto;
+  }
+
+  .Toastify__toast {
+    min-width: 320px;
+    width: fit-content;
+    font-family: 'Pretendard', sans-serif;
+  }
 `;
