@@ -303,13 +303,12 @@ export default function SolvePage() {
     setGradingDetails(gradingCacheByProblem[key] ?? []);
   }, [problemId, gradingCacheByProblem]);
 
-  // Fetch course problems for sidebar
   useEffect(() => {
     if (!contestCode || !API_BASE_URL) return;
     const controller = new AbortController();
-    const fetchCourse = async () => {
+
+    const fetchContestProblems = async () => {
       try {
-        setCourseLoading(true);
         const accessToken = localStorage.getItem("accessToken");
         const res = await axiosInstance(
           `${API_BASE_URL}contest/${contestCode}`,
@@ -321,38 +320,29 @@ export default function SolvePage() {
           },
         );
 
-        const data: any = await res.data;
-        // store contest timing/status info if provided
-        setContestInfo({
-          startDate: data?.startDate,
-          endDate: data?.endDate,
-          status: data?.status,
-        });
+        const data = res.data;
 
-        const courseData: CourseDetail = {
-          courseId: data?.courseId ?? 0,
-          title: data?.title ?? "",
-          problems: Array.isArray(data?.problems) ? data.problems : [],
-        };
-        const items = Array.isArray(courseData.problems)
-          ? (courseData.problems as any[]).map((p, idx) => ({
-              problemId: p?.problemId ?? idx + 1,
-              name: p?.name ?? `문제 ${idx + 1}`,
-              difficulty: p?.difficulty,
-              solvedResult: p?.solvedResult,
-            }))
-          : [];
+        // problems 배열이 있는 경우
+        const items: CourseProblemItem[] = (data.problems ?? []).map(
+          (p: any) => ({
+            problemId: p.problemId,
+            name: p.name,
+            difficulty: p.difficulty,
+            // solvedResult나 state 기반으로 제출 여부 처리
+            solvedResult: p.solvedResult === "NOT_SOLVED" ? "미제출" : "제출",
+          }),
+        );
+
+        console.log(items);
+
         setCourseProblems(items);
-      } catch (e) {
-        if (!controller.signal.aborted) {
-          // keep silent on sidebar errors
-          setCourseProblems([]);
-        }
-      } finally {
-        setCourseLoading(false);
+      } catch (err) {
+        console.error("대회 문제 불러오기 실패:", err);
+        setCourseProblems([]);
       }
     };
-    fetchCourse();
+
+    fetchContestProblems();
     return () => controller.abort();
   }, [contestCode]);
 
@@ -1086,12 +1076,28 @@ export default function SolvePage() {
   };
 
   const handleSidebarItemClick = (pid: number) => {
-    const hasAnyDirty = Object.values(codeStateByProblem).some(
-      (s) =>
-        s.currentCode !== s.savedCode || s.currentLanguage !== s.savedLanguage,
-    );
+    if (!problemId) return;
 
-    if (hasAnyDirty) {
+    // 1. 서버에서 가져온 코드 상태 확인
+    const serverState = codeStateByProblem[String(problemId)];
+
+    let hasDirty = false;
+
+    if (serverState) {
+      hasDirty =
+        serverState.currentCode !== serverState.savedCode ||
+        serverState.currentLanguage !== serverState.savedLanguage;
+    } else if (contestCode) {
+      // 2. 서버 상태 없으면 localStorage 확인
+      const localKey = getLocalCodeKey(contestCode);
+      const localRaw = localStorage.getItem(localKey);
+      const localCodes: Record<string, string> = localRaw
+        ? JSON.parse(localRaw)
+        : {};
+      hasDirty = localCodes[String(problemId)] !== undefined;
+    }
+
+    if (hasDirty) {
       alert("저장되지 않은 코드가 있습니다.");
       return;
     }
@@ -1099,7 +1105,6 @@ export default function SolvePage() {
     if (!contestCode) return;
     navigate(`/contests/${contestCode}/solve/${pid}`);
   };
-
   return (
     <Style.SolveContainer ref={containerRef}>
       <Style.Header>
@@ -1524,12 +1529,14 @@ export default function SolvePage() {
                 {courseLoading
                   ? null
                   : courseProblems.map((p, idx) => {
-                      const isSubmitted = submittedProblems.has(
-                        String(p.problemId),
-                      );
-
                       const active =
                         String(p.problemId) === String(problemId ?? "");
+                      const isSubmitted = p.solvedResult === "제출";
+                      console.log(
+                        "사이드바 이이템 정보",
+                        p.problemId,
+                        p.solvedResult,
+                      );
 
                       return (
                         <Style.SidebarItem
