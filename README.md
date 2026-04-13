@@ -15,6 +15,5 @@ editor : monaco-editor, @monaco-editor/react
 
 ---
 
-- 클로드 init 으로 만든 설명 파일, ai 한테 넣고 프로젝트 구조 질문해도 가능할것 같음 (학생화면 기준임
-  [관리자 페이지는 포함되어 있지 않음])
-  [전채내용](init-all.md) | [요약본](init-summary.md)
+[관리자 페이지는 포함되어 있지 않음])
+[전체내용](init-all.md) | [요약본](init-summary.md)
