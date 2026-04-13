@@ -51,8 +51,6 @@ npm install
 
 ```env
 VITE_API_URL="https://your-api-host"
-VITE_GOOGLE_API_KEY="your-gemini-api-key"
-VITE_GOOGLE_MODEL="gemini-2.0-flash"
 ```
 
 클라이언트에 노출되는 모든 환경 변수는 Vite 규칙에 따라 `VITE_` 접두사가 필요합니다. `VITE_API_URL`은 백엔드 기본 URL이며, 풀이 관련 훅에서 항상 `/`로 끝나도록 정규화됩니다.
