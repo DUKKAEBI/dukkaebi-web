@@ -49,11 +49,11 @@
 
 세 개의 풀이 경로가 동일한 UI 구성 요소를 공유합니다.
 
-| 경로                                      | 컨텍스트          | 컨테이너 파일                       |
-| ----------------------------------------- | ----------------- | ----------------------------------- |
-| `/solve/:problemId`                       | 일반 문제 풀이    | `src/page/solve/problems/index.tsx` |
-| `/courses/:courseId/solve/:problemId`     | 강의 내 문제 풀이 | `src/page/solve/course/index.tsx`   |
-| `/contests/:contestCode/solve/:problemId` | 대회 내 문제 풀이 | `src/page/solve/contests/index.tsx` |
+| 경로                                         | 컨텍스트            | 컨테이너 파일                        |
+| -------------------------------------------- | ------------------- | ------------------------------------ |
+| `/solve/:problemId`                          | 일반 문제 풀이      | `src/page/solve/problems/index.tsx`  |
+| `/courses/:courseId/solve/:problemId`        | 강의 내 문제 풀이   | `src/page/solve/course/index.tsx`    |
+| `/contests/:contestCode/solve/:problemId`    | 대회 내 문제 풀이   | `src/page/solve/contests/index.tsx`  |
 
 **⚠️ 주의**: 공통 훅(`hooks/solve`)과 공통 컴포넌트(`components/solve`)로 많은 로직이 추출되어 있지만, 세 컨테이너는 실질적으로 서로 복사-붙여넣기 관계에 가깝습니다. 한 곳의 버그를 고쳤다면 나머지 두 곳도 반드시 확인하세요. 예컨대 `contests`에는 "끝내기 / 테스트 / 제출 / 다음 문제" 네 개의 액션 버튼이 있고, `course`에는 사이드바 토글이 기본으로 열려 있으며, `problems`에는 사이드바 자체가 없습니다.
 
@@ -192,11 +192,11 @@ src/
 
 로그인과 회원가입은 `axiosInstance`를 **거치지 않고** `axios`를 직접 import해서 호출합니다(인터셉터 루프를 피하기 위한 의도된 예외).
 
-| 위치                        | 메서드 | 경로            | 요청 body                                    |
-| --------------------------- | ------ | --------------- | -------------------------------------------- |
-| `src/page/login/index.tsx`  | POST   | `/auth/sign-in` | `{ loginId, password }`                      |
-| `src/page/signup/index.tsx` | POST   | `/auth/sign-up` | `{ loginId, password, nickname }`            |
-| `src/api/axiosInstance.ts`  | POST   | `/auth/refresh` | `{ token: refreshToken }` (401 시 내부 호출) |
+| 위치                        | 메서드 | 경로              | 요청 body                                   |
+| --------------------------- | ------ | ----------------- | ------------------------------------------- |
+| `src/page/login/index.tsx`  | POST   | `/auth/sign-in`   | `{ loginId, password }`                     |
+| `src/page/signup/index.tsx` | POST   | `/auth/sign-up`   | `{ loginId, password, nickname }`           |
+| `src/api/axiosInstance.ts`  | POST   | `/auth/refresh`   | `{ token: refreshToken }` (401 시 내부 호출) |
 
 성공 시 `accessToken`과 `refreshToken`을 `localStorage`에 저장하고 `navigate("/")`로 이동합니다.
 
@@ -205,11 +205,9 @@ src/
 인증이 필요한 나머지 모든 요청은 반드시 `axiosInstance`를 통해 호출해야 합니다.
 
 **요청 인터셉터**
-
 - `localStorage.accessToken`을 읽어 `Authorization: Bearer <token>` 헤더를 자동 주입.
 
 **응답 인터셉터**
-
 - `error.response?.status === 401 && !originalRequest._retry` 조건일 때:
   1. `_retry` 플래그를 `true`로 세팅하여 무한 루프 방지.
   2. `POST {VITE_API_URL}/auth/refresh`에 `{ token: refreshToken }` body로 재발급 요청 (raw `axios` 사용 — 본인의 인터셉터를 다시 타지 않기 위해).
@@ -298,7 +296,6 @@ import * as Style from "../../page/solve/problems/style";
 `@tanstack/react-query`는 `package.json`에 있지만 **실제로는 사용되지 않습니다**(`QueryClientProvider`도 마운트되어 있지 않음). 의존성 정리 시 검토 대상이거나, 단계적 도입의 출발점으로 사용할 수 있습니다.
 
 로딩 상태는 훅마다 두 가지 중 하나를 씁니다:
-
 - `status: "idle" | "loading" | "success" | "error"` (`useProblem`)
 - 단순 `isLoading: boolean` (`useCourse`, `useContest`, 페이지 컨테이너들)
 
@@ -328,39 +325,34 @@ import * as Style from "../../page/solve/problems/style";
 프론트엔드가 실제로 호출하는 엔드포인트 목록입니다(`VITE_API_URL` 기준). 정식 스펙이 아니라 **코드 리버스 엔지니어링 결과**이므로, 정확한 스키마는 백엔드 팀에 문의하거나 각 훅 / 페이지의 zod 스키마를 참고하세요.
 
 ### 인증
-
-| 메서드 | 경로            | 사용처                             | 비고                                                      |
-| ------ | --------------- | ---------------------------------- | --------------------------------------------------------- |
-| POST   | `/auth/sign-in` | `page/login`                       | `{ loginId, password }` → `{ accessToken, refreshToken }` |
-| POST   | `/auth/sign-up` | `page/signup`                      | `{ loginId, password, nickname }`                         |
-| POST   | `/auth/refresh` | `api/axiosInstance` (401 인터셉터) | `{ token: refreshToken }` → `{ accessToken }`             |
+| 메서드 | 경로              | 사용처                              | 비고                                |
+| ------ | ----------------- | ----------------------------------- | ----------------------------------- |
+| POST   | `/auth/sign-in`   | `page/login`                        | `{ loginId, password }` → `{ accessToken, refreshToken }` |
+| POST   | `/auth/sign-up`   | `page/signup`                       | `{ loginId, password, nickname }`   |
+| POST   | `/auth/refresh`   | `api/axiosInstance` (401 인터셉터)  | `{ token: refreshToken }` → `{ accessToken }` |
 
 ### 사용자 / 활동
-
-| 메서드 | 경로                           | 사용처                                                             |
-| ------ | ------------------------------ | ------------------------------------------------------------------ |
-| GET    | `/user`                        | `page/profile`, `page/courses`                                     |
-| GET    | `/user/activity/contributions` | `page/main`, `page/profile` (query: `start`, `end` — `YYYY-MM-DD`) |
-| GET    | `/user/activity/streak`        | `page/main`, `page/profile`                                        |
-| POST   | `/user/logout`                 | `page/profile`                                                     |
-| DELETE | `/user/delete`                 | `page/profile` (회원 탈퇴)                                         |
+| 메서드 | 경로                              | 사용처                     |
+| ------ | --------------------------------- | -------------------------- |
+| GET    | `/user`                           | `page/profile`, `page/courses` |
+| GET    | `/user/activity/contributions`    | `page/main`, `page/profile` (query: `start`, `end` — `YYYY-MM-DD`) |
+| GET    | `/user/activity/streak`           | `page/main`, `page/profile` |
+| POST   | `/user/logout`                    | `page/profile`             |
+| DELETE | `/user/delete`                    | `page/profile` (회원 탈퇴) |
 
 ### 문제
-
-| 메서드 | 경로                   | 사용처                   | 비고                                                                                                                                           |
-| ------ | ---------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET    | `/problems`            | `page/problems`          | query: `page`, `size`, `difficulty`, `correctRate`, `time`, `name`. 응답: `{ content[], totalPages, first, last }` (Spring Data Pageable 형태) |
-| GET    | `/problems/:problemId` | `hooks/solve/useProblem` | 응답: `{ name, description, input, output, exampleInput, exampleOutput }`                                                                      |
+| 메서드 | 경로                       | 사용처                   | 비고                              |
+| ------ | -------------------------- | ------------------------ | --------------------------------- |
+| GET    | `/problems`                | `page/problems`          | query: `page`, `size`, `difficulty`, `correctRate`, `time`, `name`. 응답: `{ content[], totalPages, first, last }` (Spring Data Pageable 형태) |
+| GET    | `/problems/:problemId`     | `hooks/solve/useProblem` | 응답: `{ name, description, input, output, exampleInput, exampleOutput }` |
 
 ### 채점
-
-| 메서드 | 경로             | 사용처                   | body                                               |
-| ------ | ---------------- | ------------------------ | -------------------------------------------------- |
-| POST   | `/solve/grading` | `hooks/solve/useGrading` | `{ problemId, code, language, timeSpentSeconds? }` |
-| POST   | `/solve/test`    | `hooks/solve/useGrading` | `{ problemId, code, language }`                    |
+| 메서드 | 경로              | 사용처                   | body                                            |
+| ------ | ----------------- | ------------------------ | ----------------------------------------------- |
+| POST   | `/solve/grading`  | `hooks/solve/useGrading` | `{ problemId, code, language, timeSpentSeconds? }` |
+| POST   | `/solve/test`     | `hooks/solve/useGrading` | `{ problemId, code, language }`                 |
 
 응답 스키마:
-
 ```ts
 {
   status?: "ACCEPTED" | string,
@@ -379,42 +371,39 @@ import * as Style from "../../page/solve/problems/style";
 ```
 
 ### 강의 (코스)
-
-| 메서드 | 경로                             | 사용처                  |
-| ------ | -------------------------------- | ----------------------- |
-| GET    | `/course/:courseId`              | `hooks/solve/useCourse` |
-| GET    | `/student/course/joinable`       | `page/courses/explore`  |
-| GET    | `/student/course/in-progress`    | `page/courses`          |
-| GET    | `/student/course/completed`      | `page/courses`          |
-| POST   | `/student/course/:courseId/join` | `page/courses/info`     |
+| 메서드 | 경로                                 | 사용처                     |
+| ------ | ------------------------------------ | -------------------------- |
+| GET    | `/course/:courseId`                  | `hooks/solve/useCourse`    |
+| GET    | `/student/course/joinable`           | `page/courses/explore`     |
+| GET    | `/student/course/in-progress`        | `page/courses`             |
+| GET    | `/student/course/completed`          | `page/courses`             |
+| POST   | `/student/course/:courseId/join`     | `page/courses/info`        |
 
 ### 대회 (콘테스트)
-
-| 메서드 | 경로                              | 사용처                                             |
-| ------ | --------------------------------- | -------------------------------------------------- |
-| GET    | `/contest/list`                   | `page/contests/list`                               |
-| GET    | `/contest/:contestCode`           | `hooks/solve/useContest`                           |
-| SSE    | `/contest/:contestCode/subscribe` | `hooks/solve/useContest` (event: `contest-update`) |
+| 메서드 | 경로                                   | 사용처                   |
+| ------ | -------------------------------------- | ------------------------ |
+| GET    | `/contest/list`                        | `page/contests/list`     |
+| GET    | `/contest/:contestCode`                | `hooks/solve/useContest` |
+| SSE    | `/contest/:contestCode/subscribe`      | `hooks/solve/useContest` (event: `contest-update`) |
 
 ### 공지사항
-
-| 메서드 | 경로           | 사용처                    |
-| ------ | -------------- | ------------------------- |
-| GET    | `/notice/home` | `page/main` (홈 최근 5건) |
-| GET    | `/notice/:id`  | `page/notifications/info` |
+| 메서드 | 경로             | 사용처                    |
+| ------ | ---------------- | ------------------------- |
+| GET    | `/notice/home`   | `page/main` (홈 최근 5건) |
+| GET    | `/notice/:id`    | `page/notifications/info` |
 
 ## localStorage 키 목록
 
 현재 클라이언트에서 사용하는 모든 localStorage 키입니다.
 
-| 키                                          | 값                               | 설정 / 삭제 위치                                                                   |
-| ------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
-| `accessToken`                               | JWT access token (문자열)        | `page/login`, `api/axiosInstance`, 로그아웃/탈퇴/refresh 실패 시 제거              |
-| `refreshToken`                              | JWT refresh token (문자열)       | `page/login`, 로그아웃/탈퇴/refresh 실패 시 제거                                   |
-| `<storageKey>_codes`                        | `{ [problemId]: code }` JSON     | `hooks/solve/useSolveForm` — `storageKey`가 전달된 경우만                          |
-| `<storageKey>_langs`                        | `{ [problemId]: language }` JSON | `hooks/solve/useSolveForm` — `storageKey`가 전달된 경우만                          |
-| `dukkaebi_timeSpent_<contestCode>`          | `{ [problemId]: seconds }` JSON  | `hooks/solve/useContest` — 1초마다 갱신                                            |
-| `dukkaebi_codes_*` / `dukkaebi_submitted_*` | 레거시 (현재 세터 없음)          | `page/main` / `page/profile`가 **삭제만** 하므로 과거 버전의 잔존 데이터 청소 용도 |
+| 키                                          | 값                                   | 설정 / 삭제 위치                                              |
+| ------------------------------------------- | ------------------------------------ | ------------------------------------------------------------- |
+| `accessToken`                               | JWT access token (문자열)            | `page/login`, `api/axiosInstance`, 로그아웃/탈퇴/refresh 실패 시 제거 |
+| `refreshToken`                              | JWT refresh token (문자열)           | `page/login`, 로그아웃/탈퇴/refresh 실패 시 제거              |
+| `<storageKey>_codes`                        | `{ [problemId]: code }` JSON         | `hooks/solve/useSolveForm` — `storageKey`가 전달된 경우만     |
+| `<storageKey>_langs`                        | `{ [problemId]: language }` JSON     | `hooks/solve/useSolveForm` — `storageKey`가 전달된 경우만     |
+| `dukkaebi_timeSpent_<contestCode>`          | `{ [problemId]: seconds }` JSON      | `hooks/solve/useContest` — 1초마다 갱신                       |
+| `dukkaebi_codes_*` / `dukkaebi_submitted_*` | 레거시 (현재 세터 없음)              | `page/main` / `page/profile`가 **삭제만** 하므로 과거 버전의 잔존 데이터 청소 용도 |
 
 `page/main`과 `page/profile`은 마운트 시 `dukkaebi_codes_*`, `dukkaebi_timeSpent_*`, `dukkaebi_submitted_*` 접두사의 키를 모두 제거합니다. 즉 **홈이나 프로필 페이지를 거치면 대회 문제의 체류 시간이 날아갑니다** — 의도된 동작으로 보이지만, 사용자가 실수로 홈으로 돌아가면 기록이 사라지는 경계 조건입니다.
 
@@ -478,9 +467,9 @@ const profile = profileSchema.parse(data);
 ```ts
 export const LANGUAGE_OPTIONS = [
   { value: "python", label: "Python", monaco: "python" },
-  { value: "cpp", label: "C++", monaco: "cpp" },
-  { value: "java", label: "Java", monaco: "java" },
-  { value: "go", label: "Go", monaco: "go" }, // ← 추가
+  { value: "cpp",    label: "C++",    monaco: "cpp" },
+  { value: "java",   label: "Java",   monaco: "java" },
+  { value: "go",     label: "Go",     monaco: "go" }, // ← 추가
 ] as const;
 ```
 
@@ -518,19 +507,16 @@ export const LANGUAGE_OPTIONS = [
 테스트 자동화가 없으므로, PR을 머지하기 전 최소한 다음을 **수동으로** 확인하세요.
 
 **빌드 / 린트**
-
 - [ ] `npm run build` 통과 (타입 체크 포함)
 - [ ] `npm run lint` 무경고
 
 **인증 / 흐름**
-
 - [ ] 회원가입 → 로그인 → 홈 진입
 - [ ] 로그아웃 후 `/`에 접근해 토큰이 없는 상태에서도 페이지가 깨지지 않는지
 - [ ] `localStorage.accessToken`을 수동으로 망가뜨린 후 어떤 API 호출이든 날리면 `/auth/refresh`가 호출되고 원래 요청이 재시도되는지 (DevTools Network 탭에서 확인)
 - [ ] `localStorage.refreshToken`도 함께 망가뜨리면 `/login`으로 하드 리다이렉트되는지
 
 **풀이 화면 (세 라우트 모두)**
-
 - [ ] `/solve/:problemId` 에서 코드 작성 → 제출 → "정답" 또는 "오답" 표시까지
 - [ ] `/courses/:courseId/solve/:problemId` 에서 사이드바가 열려 있고 형제 문제 클릭 시 네비게이션되는지
 - [ ] `/contests/:contestCode/solve/:problemId` 에서 상단의 `timeLeft` 카운트다운이 매초 갱신되는지, "다음 문제" 버튼이 마지막 문제에서 비활성화되는지, SSE 메시지가 들어왔을 때 toast가 뜨는지
@@ -538,7 +524,6 @@ export const LANGUAGE_OPTIONS = [
 - [ ] 문제 간 이동 → 언어 선택이 문제별로 독립적으로 유지되는지
 
 **UI / 스타일**
-
 - [ ] `React does not recognize the $X prop on a DOM element` 콘솔 경고 없음 (= transient prop에 `$` 빠진 것 없음)
 - [ ] 창 크기를 줄였을 때 에디터/결과 패널의 비율이 20~80% 사이로 clamp되는지
 - [ ] Pretendard 폰트가 로드되는지 (DevTools Network 탭에서 jsdelivr 요청 확인)
