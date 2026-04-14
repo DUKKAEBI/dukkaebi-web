@@ -88,10 +88,6 @@ npm install
 
 ```env
 VITE_API_URL="https://your-api-host"
-# 아래 두 변수는 Gemini 연동 기능이 차후 추가될 예정으로 선언만 되어 있고,
-# 현재 src/ 내부 코드에서 직접 참조하지 않습니다. 없어도 앱은 정상 동작합니다.
-VITE_GOOGLE_API_KEY="..."
-VITE_GOOGLE_MODEL="gemini-2.0-flash"
 ```
 
 - 클라이언트에 노출될 변수는 Vite 규칙에 따라 `VITE_` 접두사가 **반드시** 필요합니다. 접두사가 없으면 `import.meta.env`로 읽히지 않습니다.

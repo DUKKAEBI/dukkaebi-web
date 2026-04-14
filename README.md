@@ -88,11 +88,6 @@ npm install
 
 ```env
 VITE_API_URL="https://your-api-host"
-# The two variables below are reserved for a Gemini integration that isn't wired
-# up yet. They aren't referenced by any code under src/ and the app runs fine
-# without them.
-VITE_GOOGLE_API_KEY="..."
-VITE_GOOGLE_MODEL="gemini-2.0-flash"
 ```
 
 - Any variable exposed to the client **must** start with `VITE_` — otherwise `import.meta.env` won't read it.
