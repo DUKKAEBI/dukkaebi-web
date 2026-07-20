@@ -106,7 +106,7 @@ export default function SolvePage() {
     testCode(code, language);
   };
 
-  const isContestOngoing = contestPhase === "ONGOING";
+  const isContestOngoing = contestPhase === "ONGOING"; // 제출/테스트 허용 여부
 
   const handleSubmitCode = () => {
     // 대회 제출은 진행 중 상태에서만 허용
