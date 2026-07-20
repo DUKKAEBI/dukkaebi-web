@@ -57,6 +57,7 @@ export default function SolvePage() {
   const {
     problems: courseProblems,
     timeLeft,
+    contestPhase,
     getTimeSpent,
   } = useContest({
     contestCode,
@@ -105,7 +106,15 @@ export default function SolvePage() {
     testCode(code, language);
   };
 
+  const isContestOngoing = contestPhase === "ONGOING";
+
   const handleSubmitCode = () => {
+    // 대회 제출은 진행 중 상태에서만 허용
+    if (!isContestOngoing) {
+      alert("대회 진행 중에만 제출할 수 있습니다.");
+      return;
+    }
+
     saveToLocalStorage();
     const { code, language } = getValues();
     submitCode(code, language, getTimeSpent(problemId));
@@ -223,7 +232,7 @@ export default function SolvePage() {
                 </Style.SubmitButton>
                 <Style.SubmitButton
                   onClick={handleSubmitCode}
-                  disabled={!problemId || isSubmitting}
+                  disabled={!problemId || isSubmitting || !isContestOngoing}
                 >
                   {isSubmitting ? "제출 중..." : "제출"}
                 </Style.SubmitButton>
