@@ -31,6 +31,7 @@ type ContestInfo = {
   endDate?: string;
   status?: string;
 };
+type ContestPhase = "BEFORE" | "ONGOING" | "ENDED"; //대회 상태를 나타내는 타입 추가
 
 interface UseContestProps {
   contestCode?: string;
