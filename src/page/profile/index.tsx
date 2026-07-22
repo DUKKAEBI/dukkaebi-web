@@ -18,7 +18,7 @@ import {
   StreakCard,
   HeatmapCard,
 } from "../../components/profile";
-import axiosInstance from "../../api/axiosInstance";
+import userApi from "../../api/userApi";
 
 interface UserData {
   id?: number;
@@ -172,7 +172,7 @@ const Profile = () => {
 
   const handleLogout = async () => {
     try {
-      await axiosInstance.post("/user/logout");
+      await userApi.logout();
     } catch (error) {
       console.error("Logout failed:", error);
     } finally {
@@ -187,7 +187,7 @@ const Profile = () => {
 
   const handleDeleteAccount = async () => {
     try {
-      await axiosInstance.delete("/user/delete");
+      await userApi.deleteAccount();
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       window.location.assign("/");
@@ -222,22 +222,17 @@ const Profile = () => {
 
         const [userResponse, contributionsResponse, streakResponse] =
           await Promise.all([
-            axiosInstance.get<UserData>("/user"),
-            axiosInstance.get<ContributionsResponse>(
-              "/user/activity/contributions",
-              {
-                params: {
-                  start: formatDate(startDate),
-                  end: formatDate(endDate),
-                },
-              },
+            userApi.getUser<UserData>(),
+            userApi.getContributions<ContributionsResponse>(
+              formatDate(startDate),
+              formatDate(endDate),
             ),
-            axiosInstance.get<StreakResponse>("/user/activity/streak"),
+            userApi.getStreak<StreakResponse>(),
           ]);
 
         const userData =
-          (userResponse.data as UserData & { data?: UserData })?.data ||
-          userResponse.data;
+          (userResponse as UserData & { data?: UserData })?.data ||
+          userResponse;
 
         if (userData?.name || userData?.nickname) {
           setName(userData.name || userData.nickname || "");
@@ -246,12 +241,12 @@ const Profile = () => {
           setScore(userData.score);
         }
 
-        const contributionsData = contributionsResponse.data || {};
+        const contributionsData = contributionsResponse || {};
         setHeatmapData(generateHeatmapData(contributionsData));
 
         const streakData =
-          (streakResponse.data as StreakResponse & { data?: StreakResponse })
-            ?.data || streakResponse.data;
+          (streakResponse as StreakResponse & { data?: StreakResponse })
+            ?.data || streakResponse;
         setStreak(
           typeof streakData?.streak === "number" ? streakData.streak : 0,
         );
