@@ -3,7 +3,8 @@ import * as S from "./styles";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
 import { HeroSection, StatsCard, NoticeSection } from "../../components/main";
-import axiosInstance from "../../api/axiosInstance";
+import noticeApi from "../../api/noticeApi";
+import userApi from "../../api/userApi";
 import { useNavigate } from "react-router-dom";
 
 type ContributionsResponse = Record<string, number>;
@@ -119,33 +120,25 @@ const Main = () => {
 
         const [contributionsResponse, streakResponse, noticeResponse] =
           await Promise.all([
-            axiosInstance.get<ContributionsResponse>(
-              "/user/activity/contributions",
-              {
-                params: {
-                  start: formatDate(contributionsStart),
-                  end: formatDate(contributionsEnd),
-                },
-              },
+            userApi.getContributions<ContributionsResponse>(
+              formatDate(contributionsStart),
+              formatDate(contributionsEnd),
             ),
-            axiosInstance.get<StreakResponse>("/user/activity/streak"),
-            axiosInstance.get<{ content: Notice[] }>("/notice/home"),
+            userApi.getStreak<StreakResponse>(),
+            noticeApi.getHomeNotices<{ content: Notice[] }>(),
           ]);
 
         const contributionsData =
-          (contributionsResponse.data as any)?.data ||
-          contributionsResponse.data ||
-          {};
+          (contributionsResponse as any)?.data || contributionsResponse || {};
         setContributions(contributionsData);
 
-        const streakData =
-          (streakResponse.data as any)?.data || streakResponse.data;
+        const streakData = (streakResponse as any)?.data || streakResponse;
         setStreak(
           typeof streakData?.streak === "number" ? streakData.streak : 0,
         );
 
         const noticeData =
-          (noticeResponse.data as any)?.content || noticeResponse.data || [];
+          (noticeResponse as any)?.content || noticeResponse || [];
         setNotices(noticeData.slice(0, 5));
       } catch (error) {
         console.error("Failed to load home data:", error);
