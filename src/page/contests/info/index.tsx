@@ -124,19 +124,19 @@ const ContestDetailPage = () => {
   };
 
   useEffect(() => {
+    if (!contestCode) return;
+
     const fetchContestDetails = async () => {
       try {
         const data = await contestApi.getContest<ContestDetail>(contestCode);
         setContestDetails(data);
 
-        if (contestCode) {
-          localStorage.removeItem(`dukkaebi_codes${contestCode}`);
-          localStorage.removeItem(`dukkaebi_langs_${contestCode}`);
-          localStorage.removeItem(`dukkaebi_timeSpent_${contestCode}`);
-          console.log(
-            `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`,
-          );
-        }
+        localStorage.removeItem(`dukkaebi_codes${contestCode}`);
+        localStorage.removeItem(`dukkaebi_langs_${contestCode}`);
+        localStorage.removeItem(`dukkaebi_timeSpent_${contestCode}`);
+        console.log(
+          `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`,
+        );
       } catch (error) {
         console.error("Error fetching contest details:", error);
       }
