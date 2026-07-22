@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { EventSourcePolyfill } from "event-source-polyfill";
 import { toast } from "react-toastify";
 import { z } from "zod";
-import axiosInstance from "../../api/axiosInstance";
+import contestApi from "../../api/contestApi";
 
 const API_BASE_URL = (() => {
   const raw = import.meta.env.VITE_API_URL;
@@ -61,13 +61,11 @@ export function useContest({ contestCode, problemId }: UseContestProps) {
     const fetchContest = async () => {
       try {
         setIsLoading(true);
-        const accessToken = localStorage.getItem("accessToken");
-        const res = await axiosInstance(`${API_BASE_URL}contest/${contestCode}`, {
+        const res = await contestApi.getContest(contestCode, {
           signal: controller.signal,
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
         });
 
-        const data = contestResponseSchema.parse(res.data);
+        const data = contestResponseSchema.parse(res);
         setContestInfo({
           startDate: data.startDate,
           endDate: data.endDate,
