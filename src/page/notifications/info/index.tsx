@@ -4,9 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Header } from "../../../components/header";
 import { Footer } from "../../../components/footer";
 import * as S from "./style";
-import axiosInstance from "../../../api/axiosInstance";
-// TODO: Uncomment when API is ready
-// import axiosInstance from "../../../api/axiosInstance";
+import noticeApi from "../../../api/noticeApi";
 
 interface NoticeDetail {
   title: string;
@@ -25,12 +23,12 @@ export default function NoticeInfoPage() {
 
   useEffect(() => {
     const fetchNotice = async () => {
-      if (hasFetched.current) return;
+      if (!id || hasFetched.current) return;
       hasFetched.current = true;
       
       try {
-        const response = await axiosInstance.get(`/notice/${id}`);
-        setNotice(response.data);
+        const data = await noticeApi.getNotice<NoticeDetail>(id);
+        setNotice(data);
       } catch (error) {
         console.error("Error fetching notice:", error);
       } finally {
