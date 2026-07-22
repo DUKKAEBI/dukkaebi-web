@@ -11,7 +11,8 @@ import wisp from "../../assets/image/profile/dubi-rank/wisp.png";
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../api/axiosInstance";
+import courseApi from "../../api/courseApi";
+import userApi from "../../api/userApi";
 import { ProfileSection, Tabs, CourseGrid, Pagination } from "../../components/courses";
 
 interface CourseItem {
@@ -116,14 +117,14 @@ export default function CoursesPage() {
         });
 
         // 사용자 정보 조회
-        const userRes = await axiosInstance.get("/user");
-        if (userRes.data) {
-          setUserInfo(userRes.data);
+        const user = await userApi.getUser<UserInfo>();
+        if (user) {
+          setUserInfo(user);
         }
 
         const [inProgressRes, completedRes] = await Promise.allSettled([
-          axiosInstance.get("/student/course/in-progress"),
-          axiosInstance.get("/student/course/completed"),
+          courseApi.getInProgressCourses(),
+          courseApi.getCompletedCourses(),
         ]);
 
         const nextCourses: CourseItem[] = [];
@@ -132,10 +133,10 @@ export default function CoursesPage() {
 
         if (
           inProgressRes.status === "fulfilled" &&
-          Array.isArray(inProgressRes.value.data)
+          Array.isArray(inProgressRes.value)
         ) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = inProgressRes.value.data as any[];
+          const data = inProgressRes.value as any[];
           inProgressCount = data.length;
           nextCourses.push(
             ...data.map<CourseItem>((it) => ({
@@ -154,7 +155,7 @@ export default function CoursesPage() {
 
         if (completedRes.status === "fulfilled") {
           // 응답 스키마: { inProgressCount: number, courses: [...] }
-          const raw = completedRes.value.data as any;
+          const raw = completedRes.value as any;
           const list = Array.isArray(raw)
             ? (raw as any[])
             : Array.isArray(raw?.courses)
@@ -197,8 +198,8 @@ export default function CoursesPage() {
     const fetchCompletedTab = async () => {
       try {
         const [inProgressRes, completedRes] = await Promise.allSettled([
-          axiosInstance.get("/student/course/in-progress"),
-          axiosInstance.get("/student/course/completed"),
+          courseApi.getInProgressCourses(),
+          courseApi.getCompletedCourses(),
         ]);
 
         const nextCourses: CourseItem[] = [];
@@ -207,10 +208,10 @@ export default function CoursesPage() {
 
         if (
           inProgressRes.status === "fulfilled" &&
-          Array.isArray(inProgressRes.value.data)
+          Array.isArray(inProgressRes.value)
         ) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = inProgressRes.value.data as any[];
+          const data = inProgressRes.value as any[];
           inProgressCount = data.length;
           nextCourses.push(
             ...data.map<CourseItem>((it) => ({
@@ -228,7 +229,7 @@ export default function CoursesPage() {
         }
 
         if (completedRes.status === "fulfilled") {
-          const raw = completedRes.value.data as any;
+          const raw = completedRes.value as any;
           const list = Array.isArray(raw)
             ? (raw as any[])
             : Array.isArray(raw?.courses)

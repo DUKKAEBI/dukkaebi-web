@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Header } from "../../../components/header";
-import axiosInstance from "../../../api/axiosInstance";
+import courseApi from "../../../api/courseApi";
 import * as S from "./style";
 import { IntroSection, ProblemsTable, SideCard } from "../../../components/courses/info";
 
@@ -148,10 +148,8 @@ const CourseDetailPage = () => {
     setError(null);
 
     try {
-      const response = await axiosInstance.get<ApiCourseDetail>(
-        `/course/${id}`
-      );
-      setCourseData(mapCourseDetail(response.data));
+      const data = await courseApi.getCourse<ApiCourseDetail>(id);
+      setCourseData(mapCourseDetail(data));
     } catch (err) {
       console.error("Failed to fetch course detail:", err);
       setError("코스 정보를 불러오지 못했습니다.");
@@ -178,7 +176,7 @@ const CourseDetailPage = () => {
     if (!courseId || joinLoading || courseData.isJoined) return;
     setJoinLoading(true);
     try {
-      await axiosInstance.post(`/student/course/${courseId}/join`);
+      await courseApi.joinCourse(courseId);
       setCourseData((prev) => ({ ...prev, isJoined: true }));
       await fetchCourseDetail(courseId);
     } catch (err) {

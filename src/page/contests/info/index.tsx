@@ -1,5 +1,5 @@
 import * as S from "./style";
-import axiosInstance from "../../../api/axiosInstance";
+import contestApi from "../../../api/contestApi";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Header } from "../../../components/header";
@@ -106,17 +106,13 @@ const ContestDetailPage = () => {
       const input = prompt("대회 코드를 입력해주세요.");
       if (!input) return;
 
-      axiosInstance
-        .post(`/student/contest/${contestDetails.code}/join`, null, {
-          params: { code: input },
-        })
+      contestApi
+        .joinContest(contestDetails.code, input)
         .then(() => {
           toast.success("대회 참가에 성공했습니다.");
-          axiosInstance
-            .get<ContestDetail>(`/contest/${contestCode}`)
-            .then((response) => {
-              setContestDetails(response.data);
-            });
+          contestApi.getContest<ContestDetail>(contestCode).then((data) => {
+            setContestDetails(data);
+          });
         })
         .catch(() => {
           toast.error("대회 코드가 일치하지 않거나 참여할 수 없습니다.");
@@ -128,21 +124,19 @@ const ContestDetailPage = () => {
   };
 
   useEffect(() => {
+    if (!contestCode) return;
+
     const fetchContestDetails = async () => {
       try {
-        const response = await axiosInstance.get<ContestDetail>(
-          `/contest/${contestCode}`,
-        );
-        setContestDetails(response.data);
+        const data = await contestApi.getContest<ContestDetail>(contestCode);
+        setContestDetails(data);
 
-        if (contestCode) {
-          localStorage.removeItem(`dukkaebi_codes${contestCode}`);
-          localStorage.removeItem(`dukkaebi_langs_${contestCode}`);
-          localStorage.removeItem(`dukkaebi_timeSpent_${contestCode}`);
-          console.log(
-            `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`,
-          );
-        }
+        localStorage.removeItem(`dukkaebi_codes${contestCode}`);
+        localStorage.removeItem(`dukkaebi_langs_${contestCode}`);
+        localStorage.removeItem(`dukkaebi_timeSpent_${contestCode}`);
+        console.log(
+          `Contest ${contestCode} 관련 로컬 데이터가 초기화되었습니다.`,
+        );
       } catch (error) {
         console.error("Error fetching contest details:", error);
       }

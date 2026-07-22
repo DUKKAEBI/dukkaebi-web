@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header } from "../../../components/header";
 import { Footer } from "../../../components/footer";
-import axiosInstance from "../../../api/axiosInstance";
+import noticeApi from "../../../api/noticeApi";
 import { SearchBar, NoticeTable, Pagination } from "../../../components/notifications";
 
 import {
@@ -43,16 +43,11 @@ export default function NoticesPage() {
     size: number = 15
   ): Promise<NoticePageResponse> => {
     try {
-      const res = await axiosInstance.get<NoticePageResponse>("/notice", {
-        params: {
-          page: page,
-          size: size,
-        },
-      });
-      const pageNumbers = Array.from({ length: res.data.totalPages }, (_, i) => i + 1);
+      const data = await noticeApi.getNotices<NoticePageResponse>(page, size);
+      const pageNumbers = Array.from({ length: data.totalPages }, (_, i) => i + 1);
       setPageArray(pageNumbers);
-      setTotalPages(res.data.totalPages);
-      return res.data;
+      setTotalPages(data.totalPages);
+      return data;
     } catch (error) {
       console.error("Error fetching notices:", error);
       throw error;
@@ -61,12 +56,8 @@ export default function NoticesPage() {
 
   const searchNotices = async () => {
     try {
-      const res = await axiosInstance.get<Notice[]>("/notice/search", {
-        params: {
-          keyword: searchQuery,
-        },
-      });
-      const sortedNotices = [...res.data].sort(
+      const data = await noticeApi.searchNotices<Notice[]>(searchQuery);
+      const sortedNotices = [...data].sort(
         (a, b) => b.noticeId - a.noticeId
       );
       setNotices(sortedNotices);

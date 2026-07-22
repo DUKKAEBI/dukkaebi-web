@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { Header } from "../../../components/header";
 import { Footer } from "../../../components/footer";
-import axiosInstance from "../../../api/axiosInstance";
+import contestApi from "../../../api/contestApi";
 import { useNavigate } from "react-router-dom";
 import * as S from "./style";
 import {
@@ -55,11 +55,10 @@ const ContestPage = () => {
   useEffect(() => {
     const fetchContests = async () => {
       try {
-        const res = await axiosInstance.get(`/contest/list`, {
-          params: { page: currentPage - 1, size: 12 },
-        });
-
-        const data = res.data;
+        const data = await contestApi.getContests<{
+          content: ContestAPIResponse[];
+          totalPages: number;
+        }>(currentPage - 1, 12);
 
         if (data && Array.isArray(data.content)) {
           const mappedContests = data.content.map((c: ContestAPIResponse) => ({

@@ -5,7 +5,7 @@ import { Header } from "../../../components/header";
 import { Footer } from "../../../components/footer";
 import * as S from "./style";
 import { SearchBar, CourseCard, Pagination } from "../../../components/courses/explore";
-import axiosInstance from "../../../api/axiosInstance";
+import courseApi from "../../../api/courseApi";
 
 interface CourseItem {
   id: string;
@@ -28,10 +28,10 @@ const CoursePage = () => {
     const fetchJoinableCourses = async () => {
       setLoading(true);
       try {
-        const res = await axiosInstance.get("/student/course/joinable");
-        if (Array.isArray(res.data)) {
+        const res = await courseApi.getJoinableCourses();
+        if (Array.isArray(res)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = res.data as any[];
+          const data = res as any[];
           console.log(data);
           const mapped = data.map<CourseItem>((it) => ({
             id: String(it.courseId ?? it.id ?? it.code ?? it.title),
