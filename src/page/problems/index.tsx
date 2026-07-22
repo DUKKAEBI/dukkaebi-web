@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../../api/axiosInstance";
+import problemApi from "../../api/problemApi";
 import * as S from "./style";
 import { Header } from "../../components/header";
 import { Footer } from "../../components/footer";
@@ -123,8 +123,13 @@ export default function Problems() {
         params.name = searchTerm;
       }
 
-      const response = await axiosInstance.get(`/problems`, { params });
-      const { content, totalPages: tp, first, last } = response.data;
+      const data = await problemApi.getProblems<{
+        content: unknown[];
+        totalPages: number;
+        first: boolean;
+        last: boolean;
+      }>(params);
+      const { content, totalPages: tp, first, last } = data;
 
       mapProblems(content || []);
       setTotalPages(tp || 0);
