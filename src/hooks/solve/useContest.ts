@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
 import { EventSourcePolyfill } from "event-source-polyfill";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import axiosInstance from "../../api/axiosInstance";
@@ -32,6 +32,9 @@ type ContestInfo = {
   status?: string;
 };
 
+// 제출/화면 분기에 쓰는 시간 기준 대회 상태
+type ContestPhase = "BEFORE" | "ONGOING" | "ENDED";
+
 interface UseContestProps {
   contestCode?: string;
   problemId?: string;
@@ -41,8 +44,11 @@ export function useContest({ contestCode, problemId }: UseContestProps) {
   const [problems, setProblems] = useState<ContestProblemItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [contestInfo, setContestInfo] = useState<ContestInfo | null>(null);
+  const [contestPhase, setContestPhase] = useState<ContestPhase>("BEFORE");
   const [timeLeft, setTimeLeft] = useState("");
-  const [timeSpentByProblem, setTimeSpentByProblem] = useState<Record<string, number>>(() => {
+  const [timeSpentByProblem, setTimeSpentByProblem] = useState<
+    Record<string, number>
+  >(() => {
     try {
       const stored = localStorage.getItem(`dukkaebi_timeSpent_${contestCode}`);
       return stored ? JSON.parse(stored) : {};
@@ -62,10 +68,15 @@ export function useContest({ contestCode, problemId }: UseContestProps) {
       try {
         setIsLoading(true);
         const accessToken = localStorage.getItem("accessToken");
-        const res = await axiosInstance(`${API_BASE_URL}contest/${contestCode}`, {
-          signal: controller.signal,
-          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
-        });
+        const res = await axiosInstance(
+          `${API_BASE_URL}contest/${contestCode}`,
+          {
+            signal: controller.signal,
+            headers: accessToken
+              ? { Authorization: `Bearer ${accessToken}` }
+              : undefined,
+          },
+        );
 
         const data = contestResponseSchema.parse(res.data);
         setContestInfo({
@@ -151,7 +162,7 @@ export function useContest({ contestCode, problemId }: UseContestProps) {
         try {
           localStorage.setItem(
             `dukkaebi_timeSpent_${contestCode}`,
-            JSON.stringify(newTimes)
+            JSON.stringify(newTimes),
           );
         } catch (e) {
           console.error("Failed to save time spent:", e);
@@ -164,20 +175,26 @@ export function useContest({ contestCode, problemId }: UseContestProps) {
     return () => clearInterval(timer);
   }, [problemId, contestCode]);
 
-  // Live countdown
+  // 남은 시간과 제출 가능 상태를 같은 기준으로 갱신
   useEffect(() => {
     if (!contestInfo) {
       setTimeLeft("");
+      setContestPhase("BEFORE");
       return;
     }
 
     const compute = () => {
       const now = new Date();
-      const start = contestInfo.startDate ? new Date(contestInfo.startDate) : null;
+      const start = contestInfo.startDate
+        ? new Date(contestInfo.startDate)
+        : null;
       const end = contestInfo.endDate ? new Date(contestInfo.endDate) : null;
-      const status = contestInfo.status;
+      const status = contestInfo.status?.toUpperCase();
 
-      if (status === "ENDED" || (end && now > end)) return "종료됨";
+      if (status === "ENDED" || (end && now > end)) {
+        setContestPhase("ENDED");
+        return "종료됨";
+      }
 
       const fmt = (ms: number) => {
         const totalSec = Math.max(0, Math.floor(ms / 1000));
@@ -191,8 +208,15 @@ export function useContest({ contestCode, problemId }: UseContestProps) {
         return d > 0 ? `D-${d} ${hh}:${mm}:${ss}` : `${hh}:${mm}:${ss}`;
       };
 
-      if (start && now < start) return `시작까지 ${fmt(start.getTime() - now.getTime())}`;
-      if (end && now < end) return `종료까지 ${fmt(end.getTime() - now.getTime())}`;
+      if (start && now < start) {
+        setContestPhase("BEFORE");
+        return `시작까지 ${fmt(start.getTime() - now.getTime())}`;
+      }
+      if (end && now < end) {
+        setContestPhase("ONGOING");
+        return `종료까지 ${fmt(end.getTime() - now.getTime())}`;
+      }
+      setContestPhase("ONGOING");
       return "";
     };
 
@@ -209,6 +233,7 @@ export function useContest({ contestCode, problemId }: UseContestProps) {
     problems,
     isLoading,
     contestInfo,
+    contestPhase,
     timeLeft,
     getTimeSpent,
   };
